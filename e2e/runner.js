@@ -79,7 +79,8 @@ async function extensionMessage(controller, message) {
 
 async function runTrace({ browser, worker, controller, baseUrl, pathname, selector, traceWindowMs = 1200 }) {
   const page = await browser.newPage();
-  await page.goto(`${baseUrl}${pathname}`, { waitUntil: "networkidle0" });
+  await page.goto(`${baseUrl}${pathname}`, { waitUntil: "domcontentloaded" });
+  await page.waitForSelector(selector);
   const tabId = await worker.evaluate(async (url) => {
     const tabs = await chrome.tabs.query({ url });
     return tabs[0]?.id;
