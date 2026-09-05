@@ -40,7 +40,7 @@ jobs:
       - name: Run checks
         run: npm run check
       - name: Install automated browser
-        run: echo "PUPPETEER_EXECUTABLE_PATH=$(npx puppeteer browsers install chrome@139 --format '{{path}}')" >> "$GITHUB_ENV"
+        run: echo "PUPPETEER_EXECUTABLE_PATH=$(npx puppeteer browsers install chrome --format '{{path}}')" >> "$GITHUB_ENV"
       - name: Run extension corpus
         run: xvfb-run --auto-servernum npm run test:e2e
         env:
