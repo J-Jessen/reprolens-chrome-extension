@@ -89,8 +89,7 @@ async function extensionMessage(controller, message) {
   return controller.evaluate((payload) => chrome.runtime.sendMessage(payload), message);
 }
 
-async function runTrace({ browser, worker, controller, baseUrl, pathname, selector, traceWindowMs = 1200 }) {
-  const page = await browser.newPage();
+async function runTrace({ page, worker, controller, baseUrl, pathname, selector, traceWindowMs = 1200 }) {
   await page.goto(`${baseUrl}${pathname}`, { waitUntil: "domcontentloaded" });
   await page.waitForSelector(selector);
   const tabId = await worker.evaluate(async (url) => {
@@ -121,7 +120,6 @@ async function runTrace({ browser, worker, controller, baseUrl, pathname, select
     };
     poll().catch(reject);
   });
-  await page.close();
   return state;
 }
 
@@ -149,6 +147,7 @@ async function main() {
     const extensionId = new URL(workerTarget.url()).host;
     const controller = await browser.newPage();
     await controller.goto(`chrome-extension://${extensionId}/panel.html`);
+    const page = await browser.newPage();
     const cases = [
       ["react-timer", "/demo-react/index.html", "button", 3500],
       ["native-success", "/demo/index.html", "#checkout"],
@@ -169,7 +168,7 @@ async function main() {
     const results = [];
     for (const [scenarioId, pathname, selector, traceWindowMs] of selectedCases) {
       const trace = await runTrace({
-        browser,
+        page,
         worker,
         controller,
         baseUrl: `http://127.0.0.1:${port}`,
