@@ -101,7 +101,7 @@ Before any AI feature, version 0.2 needs a visible redaction preview and an expl
 
 1. Extend async lineage beyond the current `setTimeout` path to promises, intervals, animation frames, workers, and WebSockets.
 2. Extend the React adapter beyond component ownership only after defining safe state/props redaction.
-3. Distinguish first-party application requests from background page traffic.
+3. ✅ Distinguish same-origin application requests from cross-origin page traffic.
 4. ✅ Add trace quality diagnostics and coverage metrics.
 5. Add optional AI explanation over a user-reviewed, redacted trace.
 

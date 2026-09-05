@@ -43,13 +43,14 @@ test("parses Chrome Error stacks into zero-based frames for source-map resolutio
 
 test("builds an ordered timeline with explicit confidence", () => {
   const session = {
+    pageUrl: "http://localhost:4173/cart",
     startedAt: 1000,
     interactionAt: 1100,
     interaction: { eventType: "click", element: { selector: "#checkout", text: "Complete order" } },
     handlers: [{ at: 1110, eventName: "click", callFrames: [{ functionName: "submitOrder", url: "", location: { scriptId: "39", lineNumber: 5, columnNumber: 0 } }] }],
     network: [
-      { phase: "request", at: 1170, requestId: "1", method: "GET", url: "http://localhost/order.json", type: "Fetch", initiatorCallFrames: [{ functionName: "submitOrder", url: "http://localhost/demo.js", scriptId: "39", lineNumber: 8, columnNumber: 2 }] },
-      { phase: "response", at: 1200, requestId: "1", status: 200, url: "http://localhost/order.json", type: "Fetch" }
+      { phase: "request", at: 1170, requestId: "1", method: "GET", url: "http://localhost:4173/order.json", type: "Fetch", initiatorCallFrames: [{ functionName: "submitOrder", url: "http://localhost:4173/demo.js", scriptId: "39", lineNumber: 8, columnNumber: 2 }] },
+      { phase: "response", at: 1200, requestId: "1", status: 200, url: "http://localhost:4173/order.json", type: "Fetch" }
     ],
     mutations: [{ at: 1250, summary: "Text content changed", target: "#result" }],
     exceptions: [],
@@ -61,8 +62,16 @@ test("builds an ordered timeline with explicit confidence", () => {
   assert.equal(timeline[1].location.lineNumber, 6);
   assert.equal(timeline[2].confidenceLabel, "direct");
   assert.equal(timeline[2].location.lineNumber, 9);
+  assert.equal(timeline[2].networkScope, "same-origin");
+  assert.match(timeline[2].detail, /^same-origin/);
   assert.equal(timeline[3].confidence, 0.92);
   assert.equal(timeline[0].confidence, 1);
+});
+
+test("distinguishes same-origin and cross-origin network traffic", () => {
+  assert.equal(TraceCore.networkScope("/api/order", "https://shop.example/cart"), "same-origin");
+  assert.equal(TraceCore.networkScope("https://analytics.example/event", "https://shop.example/cart"), "cross-origin");
+  assert.equal(TraceCore.networkScope("not a url", "not a page url"), "unknown-origin");
 });
 
 test("summary states captured evidence without overclaiming causality", () => {

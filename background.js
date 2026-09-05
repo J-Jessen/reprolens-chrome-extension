@@ -14,6 +14,7 @@ function blankSession(tabId) {
     tabId,
     status: "idle",
     selectedElement: null,
+    pageUrl: "",
     framework: null,
     startedAt: null,
     interactionAt: null,
@@ -257,6 +258,7 @@ async function startTrace(tabId, traceWindowMs = TRACE_WINDOW_MS) {
   session.selectedElement = previous.selectedElement;
   session.status = "attaching";
   session.startedAt = Date.now();
+  session.pageUrl = (await chrome.tabs.get(tabId)).url || "";
   sessions.set(tabId, session);
   publish(session);
 

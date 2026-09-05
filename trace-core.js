@@ -36,6 +36,16 @@
     return 0.5;
   }
 
+  function networkScope(requestUrl, pageUrl) {
+    try {
+      const request = new URL(requestUrl, pageUrl);
+      const page = new URL(pageUrl);
+      return request.origin === page.origin ? "same-origin" : "cross-origin";
+    } catch (_) {
+      return "unknown-origin";
+    }
+  }
+
   function normalizeFrame(frame) {
     const location = frame.location || {};
     const rawLine = Number.isFinite(location.lineNumber) ? location.lineNumber : frame.lineNumber;
@@ -264,6 +274,7 @@
       const delta = relativeMs(item.at, origin, session.startedAt);
       const kind = item.phase === "response" ? "response" : "request";
       const request = item.phase === "response" ? requestById.get(item.requestId) : item;
+      const scope = networkScope(request?.url || item.url, session.pageUrl);
       const evidence = request ? requestEvidence(request) : { allInitiatorFrames: [], displayFrames: [], matchesHandler: false };
       const initiatorFrames = evidence.displayFrames;
       const score = item.phase === "response"
@@ -297,7 +308,8 @@
         title: item.phase === "response"
           ? `${item.status || ""} ${request?.url || item.url || "response"}`.trim()
           : `${item.method || "GET"} ${item.url}`,
-        detail: `${item.type || "Network"}${initiatorFrames[0] ? ` · from ${initiatorFrames[0].functionName}()` : ""}${locationLabel(initiatorFrames[0]) ? ` · ${locationLabel(initiatorFrames[0])}` : ""}`,
+        detail: `${scope} · ${item.type || "Network"}${initiatorFrames[0] ? ` · from ${initiatorFrames[0].functionName}()` : ""}${locationLabel(initiatorFrames[0]) ? ` · ${locationLabel(initiatorFrames[0])}` : ""}`,
+        networkScope: scope,
         location: initiatorFrames[0] || null,
         frames: initiatorFrames,
         confidence: normalizeConfidence(score),
@@ -492,6 +504,7 @@
     compactFrame,
     confidenceFor,
     confidenceLabel,
+    networkScope,
     parseBrowserStack,
     sanitizePublicSession,
     summarize,
