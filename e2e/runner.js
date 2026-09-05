@@ -161,10 +161,16 @@ async function main() {
         "hash-navigation", "history-replace"
       ].map((id) => [id, `/demo-corpus/automated.html?case=${id}`, "#action"])
     ];
-    const selectedCases = process.env.CORPUS_CASE
-      ? cases.filter(([scenarioId]) => scenarioId === process.env.CORPUS_CASE)
+    const requestedIds = (process.env.CORPUS_CASES || process.env.CORPUS_CASE || "")
+      .split(",")
+      .map((value) => value.trim())
+      .filter(Boolean);
+    const selectedCases = requestedIds.length
+      ? cases.filter(([scenarioId]) => requestedIds.includes(scenarioId))
       : cases;
-    if (!selectedCases.length) throw new Error(`Unknown corpus case: ${process.env.CORPUS_CASE}`);
+    if (selectedCases.length !== (requestedIds.length || cases.length)) {
+      throw new Error(`Unknown or duplicate corpus case in: ${requestedIds.join(", ")}`);
+    }
     const results = [];
     for (const [scenarioId, pathname, selector, traceWindowMs] of selectedCases) {
       const trace = await runTrace({

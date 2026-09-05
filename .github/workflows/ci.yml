@@ -11,6 +11,14 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        corpus:
+          - react-timer,native-success,fetch-failure,navigation,minified-map
+          - minified-no-map,dom-text,dom-attribute,dom-add,dom-remove
+          - timer-zero,timer-delayed,fetch-get,fetch-post,fetch-404
+          - parallel-fetch,console-warning,sync-error,hash-navigation,history-replace
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -34,3 +42,5 @@ jobs:
         run: npx puppeteer browsers install chrome
       - name: Run extension corpus
         run: npm run test:e2e
+        env:
+          CORPUS_CASES: ${{ matrix.corpus }}
