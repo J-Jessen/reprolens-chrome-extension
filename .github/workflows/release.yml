@@ -23,7 +23,13 @@ jobs:
         run: node scripts/check-release-tag.js "$GITHUB_REF_NAME"
       - name: Create installable archive
         run: cd dist && zip -r "../behaviour-tracer-${GITHUB_REF_NAME}.zip" .
-      - name: Publish GitHub release
+      - name: Publish beta pre-release
+        if: contains(github.ref_name, '-beta.')
+        run: gh release create "$GITHUB_REF_NAME" "behaviour-tracer-${GITHUB_REF_NAME}.zip" --notes-file BETA_RELEASE_NOTES.md --prerelease --latest=false
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - name: Publish stable release
+        if: contains(github.ref_name, '-beta.') == false
         run: gh release create "$GITHUB_REF_NAME" "behaviour-tracer-${GITHUB_REF_NAME}.zip" --generate-notes
         env:
           GH_TOKEN: ${{ github.token }}

@@ -1,0 +1,88 @@
+name: Beta bug report
+description: Report one reproducible problem from the private beta
+title: "[Beta] "
+labels: ["beta-bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Never post credentials, cookies, tokens, customer data, or a raw trace. Screenshots and redacted exports are optional.
+  - type: input
+    id: version
+    attributes:
+      label: Beta version
+      description: Find this in the release name or manifest.
+      placeholder: v0.7.0-beta.1
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Chrome version, operating system, and framework. Do not include a private URL.
+      placeholder: Chrome 140, macOS, React 19, local development site
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      options:
+        - Installation or permissions
+        - Element selection
+        - Trace recording
+        - Primary chain or confidence
+        - Handler or source location
+        - Network
+        - Async, Worker, or WebSocket
+        - DOM or navigation
+        - History, import, or export
+        - Privacy or redaction
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Safe reproduction steps
+      description: Use generic names and staging/local data only.
+      placeholder: |
+        1. Open a local test page
+        2. Select the Search button
+        3. Record one click
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual result
+    validations:
+      required: true
+  - type: dropdown
+    id: frequency
+    attributes:
+      label: Frequency
+      options:
+        - Every time
+        - More than once
+        - Once
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy confirmation
+      options:
+        - label: I have not included credentials, tokens, cookies, customer data, or a raw unreviewed trace.
+          required: true
+  - type: textarea
+    id: attachment
+    attributes:
+      label: Optional reviewed evidence
+      description: Attach only a safe screenshot or a redacted export you reviewed in full.

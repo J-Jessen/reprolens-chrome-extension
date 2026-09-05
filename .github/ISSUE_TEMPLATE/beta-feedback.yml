@@ -1,0 +1,72 @@
+name: Beta feedback
+description: Submit the final structured evaluation after completing the test guide
+title: "[Beta feedback] "
+labels: ["beta-feedback"]
+body:
+  - type: input
+    id: profile
+    attributes:
+      label: Role and primary framework
+      placeholder: Frontend developer, React
+    validations:
+      required: true
+  - type: input
+    id: count
+    attributes:
+      label: Interactions tested
+      description: Give useful traces as a fraction of total traces.
+      placeholder: 4 useful of 5 total
+    validations:
+      required: true
+  - type: input
+    id: first_trace
+    attributes:
+      label: Time to first useful trace
+      placeholder: 7 minutes
+    validations:
+      required: true
+  - type: dropdown
+    id: usefulness
+    attributes:
+      label: Overall usefulness
+      options: ["5 - Very useful", "4 - Useful", "3 - Mixed", "2 - Low", "1 - Not useful"]
+    validations:
+      required: true
+  - type: dropdown
+    id: trust
+    attributes:
+      label: Trust in the trace's certainty labels
+      options: ["5 - Very high", "4 - High", "3 - Mixed", "2 - Low", "1 - Very low"]
+    validations:
+      required: true
+  - type: textarea
+    id: valuable
+    attributes:
+      label: Most valuable part
+    validations:
+      required: true
+  - type: textarea
+    id: confusing
+    attributes:
+      label: Most confusing or frustrating part
+    validations:
+      required: true
+  - type: textarea
+    id: missing
+    attributes:
+      label: Missing or misleading evidence
+      description: Describe the pattern without sharing private application data.
+  - type: textarea
+    id: future_use
+    attributes:
+      label: Would you use it again?
+      description: Explain which debugging task you would or would not use it for.
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy confirmation
+      options:
+        - label: This feedback contains no credentials, customer data, or unreviewed trace content.
+          required: true

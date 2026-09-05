@@ -1,6 +1,8 @@
 # Behaviour Tracer PoC
 
-Current build: **0.6.0**
+Current build: **0.7.0**
+
+Private beta: **v0.7.0-beta.1**
 
 A local-first Chrome Manifest V3 proof-of-concept for the product hypothesis:
 
@@ -97,6 +99,7 @@ npm test
 GitHub Actions runs the same test suite and rebuilds the checked-in React demo on every push and pull request.
 After the tests pass, CI also creates an installable `behaviour-tracer-extension` artifact containing runtime files only. A matching `v*` tag creates a GitHub release archive automatically.
 
+The private beta plan, recruitment messages, tester instructions, and repository access guide are in `BETA.md`, `TESTER_RECRUITMENT.md`, `BETA_TEST_GUIDE.md`, and `GITHUB_SHARING_GUIDE.md`.
 Privacy and security details are documented in `PRIVACY.md` and `SECURITY.md`. Contribution and verification requirements are in `CONTRIBUTING.md`.
 The versioned export contract and migration rules are documented in `TRACE_SCHEMA.md`.
 

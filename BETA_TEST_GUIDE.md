@@ -1,0 +1,94 @@
+# Behaviour Tracer private beta test guide
+
+Thank you for testing Behaviour Tracer. Plan for 45–60 minutes. You do not need to change code or investigate failures for us.
+
+## Safety first
+
+- Test only on a local or staging website you are authorized to inspect.
+- Do not use real customer records, payment pages, health data, or other sensitive production content.
+- The extension does not automatically upload traces or analytics.
+- Never attach a raw trace. Use **Review export**, inspect the full preview, and share only the redacted export if it is genuinely needed.
+- Do not paste credentials, cookies, tokens, private keys, or customer data into a GitHub issue.
+
+Stop testing and contact the owner privately if the browser behaves abnormally or an export exposes sensitive information.
+
+## Install the beta
+
+1. Open the [v0.7.0-beta.1 release](https://github.com/J-Jessen/behavior-trace-chrome-extension/releases/tag/v0.7.0-beta.1).
+2. Download `behaviour-tracer-v0.7.0-beta.1.zip` from **Assets**.
+3. Extract the ZIP into a folder you will keep for the duration of the beta.
+4. Open `chrome://extensions` in Chrome.
+5. Enable **Developer mode**.
+6. Choose **Load unpacked** and select the extracted folder containing `manifest.json`.
+7. Pin **Behaviour Tracer PoC** from Chrome's Extensions menu.
+
+Chrome shows a debugging banner during a 3.5-second trace. This is expected. The debugger detaches automatically when the trace ends.
+
+When you choose **Select element** on a website for the first time, Chrome asks for access to that website. Approve only the test website. Previously approved websites do not prompt again, and access can be revoked in Chrome's extension settings.
+
+## Part A: first trace
+
+1. Open a local or staging page with a button or link that has a visible result.
+2. Open Behaviour Tracer from the toolbar.
+3. Choose **Select element** and approve access to this website if Chrome asks.
+4. Move over the page and click the chosen element.
+5. Choose **Record one click**.
+6. Perform the same interaction once.
+7. Wait for the trace to complete.
+8. Record how many minutes elapsed from step 2 until you understood the result.
+
+Check whether the result shows the correct interaction and whether the summary is understandable without inspecting the source code first.
+
+## Part B: real-project scenarios
+
+Test 3–5 safe interactions. Choose as many of these shapes as your application naturally contains:
+
+| Scenario | Example | What to inspect |
+|---|---|---|
+| Synchronous UI change | Open/close a panel | Handler and DOM mutation |
+| Successful request | Load, save, search, or validate | Request, response, duration, and initiator |
+| Async update | Debounce, timer, Promise, or animation | Schedule/callback ordering and delayed DOM result |
+| Client navigation | Router link, hash, or History API | Navigation event and preceding handler |
+| Handled failure | Safe test endpoint returning an error | Failed/non-2xx request and visible error state |
+
+For every interaction, answer:
+
+1. Did the trace show the behaviour you expected?
+2. Did **Primary chain** contain only evidence you considered explicitly connected?
+3. Was important evidence missing?
+4. Did any event look unrelated or more certain than the evidence justified?
+5. Were source locations usable and source-mapped when your project supplies maps?
+6. Did this save time compared with your normal DevTools workflow?
+
+## Part C: product controls
+
+Verify these once:
+
+- filter the trace using **Primary chain**, **Handlers**, **Network**, **App network**, **Async**, and **DOM**;
+- open **Review export** and confirm that private-looking values are masked;
+- copy a Markdown report, but do not share it if it contains anything sensitive;
+- reopen a trace from local history;
+- delete one history item;
+- reload the extension and confirm the approved test site still works.
+
+## Report a defect
+
+Open the private repository's **Issues** tab, choose **Beta bug report**, and submit one issue per distinct problem. Use a concise title such as:
+
+`[Beta] Promise callback missing after search click`
+
+Include the beta version, Chrome version, framework, safe reproduction steps, expected result, actual result, and whether the problem repeats. A screenshot or redacted trace is optional, never required.
+
+## Complete the beta
+
+Open one final issue using **Beta feedback**. Submit it even if you found no defects. Report:
+
+- number and type of interactions tested;
+- time to first useful trace;
+- useful traces versus total traces;
+- usefulness and trust ratings;
+- the most valuable part;
+- the most confusing part;
+- whether you would use the product again and for which task.
+
+When finished, remove the extension from `chrome://extensions` and delete the extracted beta folder if you no longer need it.
