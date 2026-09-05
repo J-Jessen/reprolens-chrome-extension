@@ -89,6 +89,15 @@ async function extensionMessage(controller, message) {
   return controller.evaluate((payload) => chrome.runtime.sendMessage(payload), message);
 }
 
+async function closeBrowser(browser) {
+  const process = browser.process();
+  await Promise.race([
+    browser.close().catch(() => {}),
+    new Promise((resolve) => setTimeout(resolve, 2000))
+  ]);
+  if (process?.exitCode == null) process.kill("SIGKILL");
+}
+
 async function runTrace({ page, worker, controller, baseUrl, pathname, selector, traceWindowMs = 1200 }) {
   await page.goto(`${baseUrl}${pathname}`, { waitUntil: "domcontentloaded" });
   await page.waitForSelector(selector);
@@ -199,7 +208,8 @@ async function main() {
     process.stdout.write(`\n${passed}/${results.length} useful traces (${rate}%)\n`);
     if (passed !== results.length) process.exitCode = 1;
   } finally {
-    await browser.close();
+    await closeBrowser(browser);
+    server.closeAllConnections();
     await new Promise((resolve) => server.close(resolve));
   }
 }
