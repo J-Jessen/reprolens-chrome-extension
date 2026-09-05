@@ -30,6 +30,7 @@ function blankSession(tabId) {
     sourceMaps: null,
     timeline: [],
     summary: "",
+    quality: null,
     error: null
   };
 }
@@ -294,6 +295,7 @@ async function finishTrace(tabId) {
   await SourceMapResolver.enrichSession(session);
   session.timeline = TraceCore.buildTimeline(session);
   session.summary = TraceCore.summarize(session);
+  session.quality = TraceCore.assessQuality(session);
   session.status = "complete";
   publish(session);
 }
@@ -470,6 +472,7 @@ chrome.debugger.onDetach.addListener(async (source, reason) => {
   await SourceMapResolver.enrichSession(session);
   session.timeline = TraceCore.buildTimeline(session);
   session.summary = TraceCore.summarize(session);
+  session.quality = TraceCore.assessQuality(session);
   session.status = "complete";
   if (reason !== "target_closed" && reason !== "canceled_by_user") {
     session.error = `Debugger detached: ${reason}`;

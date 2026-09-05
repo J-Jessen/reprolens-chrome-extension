@@ -97,6 +97,43 @@ test("summary includes captured same-document navigation", () => {
   assert.match(TraceCore.summarize(session), /1 navigation event was observed/);
 });
 
+test("scores trace coverage and explains missing evidence", () => {
+  const quality = TraceCore.assessQuality({
+    interaction: { eventType: "click", element: { selector: "#buy" } },
+    timeline: [
+      { kind: "interaction", confidence: 1 },
+      { kind: "request", confidence: 0.88 }
+    ],
+    sourceMaps: { attempted: 1, mappedFrames: 0, errors: [] }
+  });
+
+  assert.equal(quality.score, 50);
+  assert.equal(quality.label, "partial");
+  assert.deepEqual(quality.diagnostics, [
+    "JavaScript handler captured",
+    "Network responses completed",
+    "Authored source mapped"
+  ]);
+});
+
+test("reports strong coverage for a complete trace", () => {
+  const quality = TraceCore.assessQuality({
+    interaction: { eventType: "click", element: { selector: "#buy" } },
+    timeline: [
+      { kind: "interaction", confidence: 1 },
+      { kind: "handler", confidence: 1 },
+      { kind: "request", confidence: 0.98 },
+      { kind: "response", confidence: 0.92 }
+    ],
+    sourceMaps: { attempted: 1, mappedFrames: 2, errors: [] }
+  });
+
+  assert.equal(quality.score, 100);
+  assert.equal(quality.label, "strong");
+  assert.equal(quality.highConfidenceEvents, 3);
+  assert.deepEqual(quality.diagnostics, []);
+});
+
 test("drops network noise observed before the marked interaction", () => {
   const timeline = TraceCore.buildTimeline({
     startedAt: 1000,

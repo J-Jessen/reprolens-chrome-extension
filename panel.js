@@ -10,6 +10,11 @@ const result = document.getElementById("result");
 const empty = document.getElementById("empty");
 const summary = document.getElementById("summary");
 const timeline = document.getElementById("timeline");
+const qualityLabel = document.getElementById("quality-label");
+const qualityScore = document.getElementById("quality-score");
+const qualityFill = document.getElementById("quality-fill");
+const qualityMetrics = document.getElementById("quality-metrics");
+const qualityDiagnostics = document.getElementById("quality-diagnostics");
 
 function setStatus(text, recording) {
   status.textContent = text;
@@ -60,6 +65,13 @@ function render(state) {
   empty.style.display = "none";
   result.classList.remove("hidden");
   summary.textContent = state.summary;
+  const quality = state.quality || { score: 0, label: "limited", observedEvents: 0, highConfidenceEvents: 0, diagnostics: [] };
+  qualityLabel.textContent = `${quality.label[0].toUpperCase()}${quality.label.slice(1)} coverage`;
+  qualityScore.textContent = `${quality.score}%`;
+  qualityFill.style.width = `${quality.score}%`;
+  qualityMetrics.textContent = `${quality.observedEvents} observed events · ${quality.highConfidenceEvents} with strong or direct evidence`;
+  qualityDiagnostics.innerHTML = quality.diagnostics.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
+  qualityDiagnostics.classList.toggle("hidden", !quality.diagnostics.length);
   timeline.innerHTML = events.map((event) => `
     <li class="event ${escapeHtml(event.kind)}">
       <div class="time">+${escapeHtml(event.atMs)}ms</div>

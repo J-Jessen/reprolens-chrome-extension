@@ -451,8 +451,43 @@
     return sentences.join(" ");
   }
 
+  function assessQuality(session) {
+    const timeline = session.timeline?.length ? session.timeline : buildTimeline(session);
+    const observed = timeline.filter((event) => event.kind !== "interaction");
+    const requests = timeline.filter((event) => event.kind === "request");
+    const responses = timeline.filter((event) => event.kind === "response");
+    const checks = [
+      { id: "interaction", passed: Boolean(session.interaction), label: "Interaction captured" },
+      { id: "handler", passed: timeline.some((event) => event.kind === "handler"), label: "JavaScript handler captured" },
+      { id: "effect", passed: observed.some((event) => !["handler"].includes(event.kind)), label: "Observable effect captured" },
+      { id: "confidence", passed: observed.some((event) => event.confidence >= 0.7), label: "Strong supporting evidence" }
+    ];
+    if (requests.length) {
+      checks.push({ id: "responses", passed: responses.length >= requests.length, label: "Network responses completed" });
+    }
+    if ((session.sourceMaps?.attempted || 0) > 0) {
+      checks.push({ id: "source-maps", passed: (session.sourceMaps?.mappedFrames || 0) > 0, label: "Authored source mapped" });
+    }
+
+    const passed = checks.filter((check) => check.passed).length;
+    const score = Math.round((passed / checks.length) * 100);
+    const diagnostics = checks.filter((check) => !check.passed).map((check) => check.label);
+    if (session.timerCapture?.fallbackReason) diagnostics.push("Timer tracing used the compatibility fallback");
+    for (const error of session.sourceMaps?.errors || []) diagnostics.push(`Source map: ${error.message || error}`);
+
+    return {
+      score,
+      label: score >= 80 ? "strong" : score >= 50 ? "partial" : "limited",
+      observedEvents: observed.length,
+      highConfidenceEvents: observed.filter((event) => event.confidence >= 0.7).length,
+      checks,
+      diagnostics
+    };
+  }
+
   const api = {
     asyncEventFrames,
+    assessQuality,
     buildTimeline,
     compactFrame,
     confidenceFor,

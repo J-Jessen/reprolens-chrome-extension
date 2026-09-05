@@ -1,6 +1,6 @@
 # Behaviour Tracer PoC
 
-Current build: **0.1.7**
+Current build: **0.1.8**
 
 A local-first Chrome Manifest V3 proof-of-concept for the product hypothesis:
 
@@ -20,6 +20,7 @@ This is an instrumentation experiment, not a production extension. It tests whet
 8. Detects the nearest owning React component without exporting props or state.
 9. Instruments `setTimeout` scheduling and callbacks with asynchronous call stacks. If Chrome does not expose the experimental CDP breakpoint domain, a temporary local MAIN-world hook is used automatically.
 10. Produces a deterministic summary and schema-versioned, privacy-sanitized JSON export.
+11. Scores trace coverage and shows concrete diagnostics for missing evidence, incomplete responses, timer fallbacks, and source-map failures.
 
 All trace processing is local. Version 0.1 has no backend, analytics, login, or AI call.
 
