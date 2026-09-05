@@ -2,11 +2,11 @@
 
 ## Product boundary
 
-Version 0.1 proves one claim only:
+The proof of concept is organized around one claim:
 
 > For one user click, can the browser automatically assemble a useful, honest behavioural trace?
 
-It deliberately excludes authentication, teams, history, cloud storage, AI explanations, integrations, screenshot editing, responsive tools, and general-purpose DevTools features.
+It deliberately excludes authentication, teams, cloud storage, AI explanations, integrations, screenshot editing, responsive tools, and general-purpose DevTools features. It retains only bounded, user-controlled local trace history.
 
 ## Runtime components
 
@@ -34,6 +34,7 @@ background.js (MV3 service worker)
      ├─ local source-map resolution
      ├─ privacy-safe React component detection
      ├─ confidence scoring
+     ├─ explicit relationship graph and deterministic primary chain
      ├─ chronological timeline
      └─ deterministic summary
             │ state updates
@@ -66,6 +67,10 @@ Each timeline item contains:
   "atMs": 70,
   "title": "POST https://example.test/api/cart",
   "detail": "Fetch",
+  "parentId": "handler-0",
+  "relationType": "request-from-handler",
+  "relationshipEvidence": "explicit",
+  "primaryChain": true,
   "confidence": 0.88,
   "confidenceLabel": "strong"
 }
@@ -78,7 +83,7 @@ Confidence semantics:
 - `correlated / 40–69%`: occurred inside the trace window and may be related.
 - `possible / <40%`: weak timing-only association.
 
-The UI must never rewrite a correlated event as proven causality.
+The UI must never rewrite a correlated event as proven causality. The primary chain begins at the interaction and follows only explicit parent relationships with strong or direct confidence; timing-only correlations remain outside it.
 
 Timer capture is capability-based. The service worker first attempts the current `EventBreakpoints` CDP domain, then its deprecated `DOMDebugger` predecessor. If neither exists, it installs a trace-scoped MAIN-world `setTimeout` wrapper, collects only timing metadata and error-stack locations, and restores the native function when the trace ends or after a 10-second safety timeout.
 
@@ -97,10 +102,10 @@ The interaction happens on the normal page, while the result remains visible bes
 
 Before any AI feature, version 0.2 needs a visible redaction preview and an explicit send action.
 
-## Version 0.2 roadmap
+## Product roadmap
 
 0. ✅ Add timeline filters, strong-evidence emphasis, and request/response grouping.
-1. ◐ Extend async lineage beyond the original `setTimeout` path: intervals, animation frames, Promise initiator parents, and privacy-safe WebSocket lifecycles are complete; standalone Promise events and workers remain.
+1. ✅ Extend async lineage beyond the original `setTimeout` path with intervals, animation frames, Promise continuations, queued microtasks, and privacy-safe Worker/WebSocket lifecycles.
 2. Extend the React adapter beyond component ownership only after defining safe state/props redaction.
 3. ✅ Distinguish same-origin application requests from cross-origin page traffic.
 4. ✅ Add trace quality diagnostics and coverage metrics.
@@ -121,6 +126,13 @@ Before any AI feature, version 0.2 needs a visible redaction preview and an expl
 - Local, non-destructive migration of schema version 1 imports.
 - Standalone Promise and microtask boundaries through a trace-scoped MAIN-world hook.
 - Privacy-safe Worker creation and message-direction events without message content.
+
+## Version 0.5 foundations
+
+- Deterministic primary-chain classification from explicit parent relationships, never timing alone.
+- A dedicated primary-chain timeline filter and additive relationship-evidence metadata.
+- Stronger provider-token, named-credential, and private-key redaction for explicit exports.
+- A visible 5 MB local-history budget in addition to the 25-trace count limit.
 
 ## Validation harness
 

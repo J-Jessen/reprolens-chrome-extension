@@ -4,6 +4,7 @@ const sessions = new Map();
 const TRACE_WINDOW_MS = 3500;
 const TIMER_STORE_KEY = "__behaviourTracerAsyncStore_v020";
 const HISTORY_LIMIT = 25;
+const HISTORY_BYTE_LIMIT = 5_000_000;
 
 chrome.sidePanel
   .setPanelBehavior({ openPanelOnActionClick: true })
@@ -67,7 +68,11 @@ async function saveTraceToHistory(session) {
   const trace = publicSession(session);
   trace.historyId = `${Date.now()}-${session.tabId}`;
   trace.savedAt = Date.now();
-  const traceHistory = [trace, ...stored.traceHistory].slice(0, HISTORY_LIMIT);
+  const traceHistory = TraceCore.limitHistory(
+    [trace, ...stored.traceHistory],
+    HISTORY_LIMIT,
+    HISTORY_BYTE_LIMIT
+  ).traces;
   await chrome.storage.local.set({ traceHistory });
 }
 
@@ -453,12 +458,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     Promise.all([
       chrome.storage.local.get({ traceHistory: [] }),
       historySettings()
-    ]).then(([stored, settings]) => sendResponse({
-      ...settings,
-      traces: stored.traceHistory.map((trace) => {
+    ]).then(([stored, settings]) => {
+      const migrated = stored.traceHistory.map((trace) => {
         try { return TraceCore.migrateTrace(trace); } catch (_) { return null; }
-      }).filter(Boolean)
-    }));
+      }).filter(Boolean);
+      const bounded = TraceCore.limitHistory(migrated, HISTORY_LIMIT, HISTORY_BYTE_LIMIT);
+      sendResponse({
+        ...settings,
+        traces: bounded.traces,
+        historyBytes: bounded.bytes,
+        historyByteLimit: HISTORY_BYTE_LIMIT
+      });
+    });
     return true;
   }
 
@@ -491,7 +502,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       const trace = TraceCore.sanitizePublicSession(TraceCore.migrateTrace(message.trace));
       trace.historyId = `import-${Date.now()}`;
       trace.savedAt = Date.now();
-      return chrome.storage.local.set({ traceHistory: [trace, ...traceHistory].slice(0, HISTORY_LIMIT) });
+      const bounded = TraceCore.limitHistory([trace, ...traceHistory], HISTORY_LIMIT, HISTORY_BYTE_LIMIT);
+      if (!bounded.traces.some((item) => item.historyId === trace.historyId)) {
+        throw new Error("Imported trace exceeds the local history size budget.");
+      }
+      return chrome.storage.local.set({ traceHistory: bounded.traces });
     }).then(() => sendResponse({ ok: true })).catch((error) => sendResponse({ ok: false, error: error.message }));
     return true;
   }

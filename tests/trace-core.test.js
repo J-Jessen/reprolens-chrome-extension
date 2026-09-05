@@ -63,12 +63,16 @@ test("builds an ordered timeline with explicit confidence", () => {
   assert.equal(timeline[2].confidenceLabel, "direct");
   assert.equal(timeline[2].location.lineNumber, 9);
   assert.equal(timeline[2].networkScope, "same-origin");
+  assert.equal(timeline[1].parentId, timeline[0].id);
+  assert.equal(timeline[2].parentId, timeline[1].id);
   assert.match(timeline[2].detail, /^same-origin/);
   assert.equal(timeline[3].confidence, 0.92);
   assert.equal(timeline[3].parentId, timeline[2].id);
   assert.equal(timeline[3].durationMs, 30);
   assert.match(timeline[3].detail, /30ms/);
   assert.equal(timeline[0].confidence, 1);
+  assert.deepEqual(timeline.slice(0, 4).map((event) => event.primaryChain), [true, true, true, true]);
+  assert.equal(timeline[4].primaryChain, false);
 });
 
 test("distinguishes same-origin and cross-origin network traffic", () => {
@@ -101,6 +105,37 @@ test("filters timeline categories while retaining the interaction anchor", () =>
     { id: "app", kind: "request", networkScope: "same-origin" },
     { id: "external", kind: "request", networkScope: "cross-origin" }
   ], "same-origin").map((event) => event.id), ["interaction", "app"]);
+  assert.deepEqual(TraceCore.filterTimeline([
+    { id: "interaction", kind: "interaction", primaryChain: true },
+    { id: "handler", kind: "handler", primaryChain: true },
+    { id: "mutation", kind: "mutation", primaryChain: false }
+  ], "primary").map((event) => event.id), ["interaction", "handler"]);
+});
+
+test("marks only explicitly related evidence as the primary chain", () => {
+  const timeline = TraceCore.markPrimaryChain([
+    { id: "interaction", kind: "interaction", relationType: "root", relationshipEvidence: "root", confidence: 1 },
+    { id: "handler", kind: "handler", parentId: "interaction", relationshipEvidence: "explicit", confidence: 1 },
+    { id: "request", kind: "request", parentId: "handler", relationshipEvidence: "explicit", confidence: 0.98 },
+    { id: "correlated", kind: "mutation", parentId: "handler", relationshipEvidence: "correlated", confidence: 0.9 },
+    { id: "unrelated", kind: "mutation", relationshipEvidence: "none", confidence: 1 }
+  ]);
+  assert.deepEqual(timeline.filter((event) => event.primaryChain).map((event) => event.id), [
+    "interaction", "handler", "request"
+  ]);
+});
+
+test("bounds local trace history by both count and serialized size", () => {
+  const traces = [
+    { id: "newest", payload: "x".repeat(30) },
+    { id: "middle", payload: "x".repeat(30) },
+    { id: "oldest", payload: "x".repeat(30) }
+  ];
+  assert.deepEqual(TraceCore.limitHistory(traces, 2, 10_000).traces.map((trace) => trace.id), ["newest", "middle"]);
+  const oneTraceBudget = TraceCore.serializedBytes([traces[0]]);
+  const bounded = TraceCore.limitHistory(traces, 25, oneTraceBudget);
+  assert.deepEqual(bounded.traces.map((trace) => trace.id), ["newest"]);
+  assert.ok(bounded.bytes <= oneTraceBudget);
 });
 
 test("redacts sensitive values from exported traces", () => {
@@ -122,6 +157,27 @@ test("redacts sensitive values from exported traces", () => {
   assert.match(json, /safe=yes/);
   assert.equal(exported.totalRedactions, 6);
   assert.equal(exported.report.sensitiveFields, 1);
+});
+
+test("redacts common provider secrets and named credentials embedded in text", () => {
+  const exported = TraceCore.redactForExport({
+    schemaVersion: 2,
+    status: "complete",
+    logs: [{
+      text: [
+        "api_key=plain-secret",
+        "AKIAIOSFODNN7EXAMPLE",
+        "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",
+        "sk_live_abcdefghijklmnopqrstuvwxyz123456",
+        "sk-proj-abcdefghijklmnopqrstuvwxyz123456",
+        "-----BEGIN PRIVATE KEY-----\nprivate-material\n-----END PRIVATE KEY-----"
+      ].join(" ")
+    }],
+    timeline: []
+  });
+  const json = JSON.stringify(exported.trace);
+  assert.doesNotMatch(json, /plain-secret|AKIAIOSFODNN7EXAMPLE|ghp_|sk_live_|sk-proj-|private-material/);
+  assert.equal(exported.report.credentials, 6);
 });
 
 test("validates imported trace schema", () => {
@@ -351,6 +407,9 @@ test("shows a fallback timer chain and strengthens its adjacent DOM mutation", (
   assert.match(timerEvents[1].detail, /scheduled by handleReactCheckout/);
   assert.equal(timerEvents[1].frames[1].functionName, "handleReactCheckout");
   assert.equal(mutation.confidence, 0.9);
+  assert.equal(mutation.parentId, timerEvents[1].id);
+  assert.equal(mutation.relationshipEvidence, "correlated");
+  assert.equal(mutation.primaryChain, false);
   assert.match(mutation.detail, /immediately after async callback/);
   assert.match(TraceCore.summarize(session), /2 async boundary events were captured with the local MAIN-world fallback/);
 });

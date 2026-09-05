@@ -22,8 +22,10 @@ Every event includes:
 - `atMs`: milliseconds relative to the interaction.
 - `title` and optional `detail`.
 - `confidence` and `confidenceLabel`.
-- `parentId`: related parent event when directly available.
+- `parentId`: related parent event when available; use `relationshipEvidence` to distinguish an explicit link from a correlation target.
 - `relationType`: semantic relationship or `observed-after-interaction` when causality is not established.
+- `relationshipEvidence`: `root`, `explicit`, `correlated`, or `none`.
+- `primaryChain`: true only for the interaction and strong evidence connected to it through explicit parent relationships.
 - `captureMethod`: browser/content/hook mechanism that produced the evidence.
 - `privacyClassification`: the category of retained information.
 

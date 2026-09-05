@@ -1,6 +1,6 @@
 {
   "name": "behavior-trace-chrome-extension",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "private": true,
   "description": "Local-first Chrome extension for tracing browser behaviour from a selected interaction",
   "scripts": {

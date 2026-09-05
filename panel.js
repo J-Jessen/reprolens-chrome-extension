@@ -13,6 +13,7 @@ const exportPreview = document.getElementById("export-preview");
 const redactionReport = document.getElementById("redaction-report");
 const historyEnabled = document.getElementById("history-enabled");
 const historyList = document.getElementById("history-list");
+const historyUsage = document.getElementById("history-usage");
 const clearHistoryButton = document.getElementById("clear-history");
 const importTraceButton = document.getElementById("import-trace");
 const importFile = document.getElementById("import-file");
@@ -62,21 +63,11 @@ function statusText(state) {
   return labels[state.status] || state.status;
 }
 
-function eventCategory(event) {
-  if (["request", "response"].includes(event.kind)) return "network";
-  if (event.kind === "mutation") return "dom";
-  if (event.kind === "exception") return "errors";
-  return event.kind;
-}
-
 function renderTimeline(events) {
-  const visible = activeFilter === "all"
-    ? events
-    : events.filter((event) => event.kind === "interaction"
-      || (activeFilter === "same-origin" ? event.networkScope === "same-origin" : eventCategory(event) === activeFilter));
+  const visible = TraceCore.filterTimeline(events, activeFilter);
   const visibleIds = new Set(visible.map((event) => event.id));
   timeline.innerHTML = visible.map((event) => `
-    <li class="event ${escapeHtml(event.kind)} ${event.confidence >= .7 ? "primary-chain" : ""} ${event.parentId && visibleIds.has(event.parentId) ? "child-event" : ""}">
+    <li class="event ${escapeHtml(event.kind)} ${event.primaryChain ? "primary-chain" : ""} ${event.parentId && visibleIds.has(event.parentId) ? "child-event" : ""}">
       <div class="time">+${escapeHtml(event.atMs)}ms</div>
       <div class="dot"></div>
       <div class="event-body">
@@ -124,6 +115,9 @@ async function refreshHistory() {
   const history = await chrome.runtime.sendMessage({ type: "GET_HISTORY" });
   historyEnabled.checked = history.historyEnabled;
   clearHistoryButton.disabled = !history.traces.length;
+  const usedMb = ((history.historyBytes || 0) / 1_000_000).toFixed(2);
+  const limitMb = ((history.historyByteLimit || 0) / 1_000_000).toFixed(0);
+  historyUsage.textContent = `${history.traces.length} of 25 traces · ${usedMb} MB of ${limitMb} MB local budget`;
   historyList.innerHTML = history.traces.length ? history.traces.map((trace) => `
     <div class="history-item" data-history-id="${escapeHtml(trace.historyId)}">
       <button class="history-open">

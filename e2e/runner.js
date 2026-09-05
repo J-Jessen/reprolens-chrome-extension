@@ -218,6 +218,8 @@ async function main() {
     if (blockingViolations.length) {
       throw new Error(`Panel accessibility violations: ${blockingViolations.map((item) => item.id).join(", ")}`);
     }
+    const primaryFilterLabel = await controller.$eval('[data-filter="primary"]', (button) => button.textContent.trim());
+    if (primaryFilterLabel !== "Primary chain") throw new Error("Primary-chain timeline filter is unavailable");
     process.stdout.write("Panel accessibility audit passed\n");
     const page = await browser.newPage();
     const cases = [
@@ -256,6 +258,12 @@ async function main() {
         traceWindowMs
       }), CASE_TIMEOUT_MS, scenarioId);
       const result = CorpusEvaluator.evaluateTrace(trace, scenarioId);
+      if (trace.timeline.some((event) => typeof event.primaryChain !== "boolean")) {
+        throw new Error(`${scenarioId} produced timeline events without primary-chain classification`);
+      }
+      if (!trace.timeline.find((event) => event.kind === "interaction")?.primaryChain) {
+        throw new Error(`${scenarioId} did not anchor the primary chain at the interaction`);
+      }
       results.push(result);
       const mark = result.passed ? "PASS" : "FAIL";
       process.stdout.write(`${mark} ${scenarioId} (${result.score}%)\n`);
@@ -278,6 +286,9 @@ async function main() {
     } while (Date.now() < historyDeadline);
     if (history.historyEnabled !== true || history.traces?.length < Math.min(selectedCases.length, 25)) {
       throw new Error(`Local history did not retain completed traces (${history.traces?.length || 0}/${selectedCases.length})`);
+    }
+    if (!(history.historyBytes > 0) || history.historyBytes > history.historyByteLimit) {
+      throw new Error("Local history size budget was not enforced");
     }
     process.stdout.write(`\n${passed}/${results.length} useful traces (${rate}%)\n`);
     if (passed !== results.length) process.exitCode = 1;

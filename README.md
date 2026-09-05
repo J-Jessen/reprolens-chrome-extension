@@ -1,6 +1,6 @@
 # Behaviour Tracer PoC
 
-Current build: **0.4.0**
+Current build: **0.5.0**
 
 A local-first Chrome Manifest V3 proof-of-concept for the product hypothesis:
 
@@ -22,8 +22,8 @@ This is an instrumentation experiment, not a production extension. It tests whet
 10. Produces a deterministic summary and schema-versioned, privacy-sanitized JSON export.
 11. Scores trace coverage and shows concrete diagnostics for missing evidence, incomplete responses, timer fallbacks, and source-map failures.
 12. Labels every observed network event as same-origin, cross-origin, or unknown-origin relative to the traced page.
-13. Filters the timeline by evidence type, visually emphasizes strong evidence, and nests network responses beneath their requests.
-14. Keeps up to 25 completed traces locally, with history disable, delete, clear, and version-validated JSON import controls.
+13. Builds a deterministic primary chain from explicit event relationships, offers a dedicated filter, and keeps timing-only correlations outside that chain.
+14. Keeps up to 25 completed traces within a 5 MB local budget, with visible usage, automatic oldest-first eviction, history disable, delete, clear, and version-validated JSON import controls.
 15. Provides reviewed, automatically redacted JSON downloads and redacted Markdown reports.
 16. Correlates Promise-parented network initiators and privacy-safe WebSocket lifecycle/frame metadata without storing message content.
 17. Uses trace schema version 2 with explicit relationship, capture-method, and privacy metadata plus local migration of version 1 imports.
@@ -80,7 +80,7 @@ The checked-in `app.js.map` maps the handler, timer schedule, and callback frame
 
 ## Run the validation corpus
 
-The automated corpus starts a fixture server and headless Chrome, loads the unpacked extension, runs all 23 interactions, and evaluates each captured trace:
+The automated corpus starts a fixture server and headless Chrome, loads the unpacked extension, runs all 26 interactions, and evaluates each captured trace:
 
 ```bash
 npm run test:e2e
@@ -112,7 +112,7 @@ The versioned export contract and migration rules are documented in `TRACE_SCHEM
 
 ## Known limits
 
-- A request is “direct” only when its CDP initiator stack matches a captured click-handler frame. Other requests are assigned lower confidence from their initiator evidence and timing. Time proximity is not proof of causality.
+- A request is “direct” only when its CDP initiator stack matches a captured click-handler frame. The primary chain follows explicit parent relationships; timing-only correlations remain visible but are excluded. Time proximity is not proof of causality.
 - Framework event delegation can expose a framework dispatcher rather than the authored handler.
 - Available source maps are fetched and applied locally. Missing, inaccessible, malformed, or unsupported maps fall back to deployed JavaScript locations.
 - Timer capture prefers CDP instrumentation. On Chrome builds without `EventBreakpoints`, the extension temporarily wraps the page's MAIN-world `setTimeout` during the trace and restores it on completion or automatically after 10 seconds.
