@@ -1,6 +1,6 @@
 # Behaviour Tracer PoC
 
-Current build: **0.1.9**
+Current build: **0.2.0**
 
 A local-first Chrome Manifest V3 proof-of-concept for the product hypothesis:
 
@@ -22,6 +22,7 @@ This is an instrumentation experiment, not a production extension. It tests whet
 10. Produces a deterministic summary and schema-versioned, privacy-sanitized JSON export.
 11. Scores trace coverage and shows concrete diagnostics for missing evidence, incomplete responses, timer fallbacks, and source-map failures.
 12. Labels every observed network event as same-origin, cross-origin, or unknown-origin relative to the traced page.
+13. Filters the timeline by evidence type, visually emphasizes strong evidence, and nests network responses beneath their requests.
 
 All trace processing is local. Version 0.1 has no backend, analytics, login, or AI call.
 

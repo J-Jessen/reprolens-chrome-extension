@@ -65,6 +65,7 @@ test("builds an ordered timeline with explicit confidence", () => {
   assert.equal(timeline[2].networkScope, "same-origin");
   assert.match(timeline[2].detail, /^same-origin/);
   assert.equal(timeline[3].confidence, 0.92);
+  assert.equal(timeline[3].parentId, timeline[2].id);
   assert.equal(timeline[0].confidence, 1);
 });
 
@@ -72,6 +73,27 @@ test("distinguishes same-origin and cross-origin network traffic", () => {
   assert.equal(TraceCore.networkScope("/api/order", "https://shop.example/cart"), "same-origin");
   assert.equal(TraceCore.networkScope("https://analytics.example/event", "https://shop.example/cart"), "cross-origin");
   assert.equal(TraceCore.networkScope("not a url", "not a page url"), "unknown-origin");
+});
+
+test("filters timeline categories while retaining the interaction anchor", () => {
+  const timeline = [
+    { id: "interaction", kind: "interaction" },
+    { id: "handler", kind: "handler" },
+    { id: "request", kind: "request" },
+    { id: "response", kind: "response" },
+    { id: "mutation", kind: "mutation" },
+    { id: "exception", kind: "exception" }
+  ];
+
+  assert.deepEqual(TraceCore.filterTimeline(timeline, "network").map((event) => event.id), [
+    "interaction", "request", "response"
+  ]);
+  assert.deepEqual(TraceCore.filterTimeline(timeline, "dom").map((event) => event.id), [
+    "interaction", "mutation"
+  ]);
+  assert.deepEqual(TraceCore.filterTimeline(timeline, "errors").map((event) => event.id), [
+    "interaction", "exception"
+  ]);
 });
 
 test("summary states captured evidence without overclaiming causality", () => {

@@ -106,6 +106,9 @@ button.quiet { min-height: auto; padding: 5px 8px; background: transparent; font
 #quality-diagnostics { margin: 8px 0 0; padding-left: 18px; color: var(--amber); font-size: 11px; }
 .timeline-header { display: flex; align-items: center; justify-content: space-between; margin: 18px 2px 8px; }
 h2 { margin: 0; font-size: 14px; }
+.filters { display: flex; gap: 5px; margin: 0 0 12px; padding-bottom: 3px; overflow-x: auto; scrollbar-width: thin; }
+button.filter { flex: 0 0 auto; min-height: 28px; padding: 4px 9px; border-radius: 999px; background: transparent; color: var(--muted); font-size: 10px; }
+button.filter.active { border-color: var(--purple); background: var(--purple-soft); color: #b7b0ff; }
 .timeline { list-style: none; margin: 0; padding: 0; }
 .event {
   position: relative;
@@ -125,6 +128,9 @@ h2 { margin: 0; font-size: 14px; }
 }
 .time { color: #747482; font: 10px/1 ui-monospace, monospace; padding-top: 8px; text-align: right; }
 .dot { z-index: 1; width: 9px; height: 9px; margin-top: 8px; border-radius: 50%; background: var(--purple); box-shadow: 0 0 0 4px var(--bg); }
+.event:not(.primary-chain) .dot { opacity: .45; }
+.event.child-event .event-body { margin-left: 9px; padding-left: 10px; border-left: 1px solid #31313d; }
+.event.child-event .event-title::before { content: "↳ "; color: var(--muted); }
 .event-body { padding: 1px 0 15px; min-width: 0; }
 .event-title { margin: 0 0 2px; color: #eeeeF3; font-weight: 650; overflow-wrap: anywhere; }
 .event-detail { margin: 0 0 5px; color: var(--muted); font: 11px/1.35 ui-monospace, monospace; overflow-wrap: anywhere; }

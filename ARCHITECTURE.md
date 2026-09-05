@@ -97,8 +97,9 @@ The interaction happens on the normal page, while the result remains visible bes
 
 Before any AI feature, version 0.2 needs a visible redaction preview and an explicit send action.
 
-## Version 0.2, only after technical validation
+## Version 0.2 roadmap
 
+0. ✅ Add timeline filters, strong-evidence emphasis, and request/response grouping.
 1. Extend async lineage beyond the current `setTimeout` path to promises, intervals, animation frames, workers, and WebSockets.
 2. Extend the React adapter beyond component ownership only after defining safe state/props redaction.
 3. ✅ Distinguish same-origin application requests from cross-origin page traffic.

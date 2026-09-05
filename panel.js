@@ -15,6 +15,8 @@ const qualityScore = document.getElementById("quality-score");
 const qualityFill = document.getElementById("quality-fill");
 const qualityMetrics = document.getElementById("quality-metrics");
 const qualityDiagnostics = document.getElementById("quality-diagnostics");
+const filters = document.getElementById("filters");
+let activeFilter = "all";
 
 function setStatus(text, recording) {
   status.textContent = text;
@@ -41,6 +43,31 @@ function statusText(state) {
     error: state.error || "Trace failed"
   };
   return labels[state.status] || state.status;
+}
+
+function eventCategory(event) {
+  if (["request", "response"].includes(event.kind)) return "network";
+  if (event.kind === "mutation") return "dom";
+  if (event.kind === "exception") return "errors";
+  return event.kind;
+}
+
+function renderTimeline(events) {
+  const visible = activeFilter === "all"
+    ? events
+    : events.filter((event) => event.kind === "interaction" || eventCategory(event) === activeFilter);
+  const visibleIds = new Set(visible.map((event) => event.id));
+  timeline.innerHTML = visible.map((event) => `
+    <li class="event ${escapeHtml(event.kind)} ${event.confidence >= .7 ? "primary-chain" : ""} ${event.parentId && visibleIds.has(event.parentId) ? "child-event" : ""}">
+      <div class="time">+${escapeHtml(event.atMs)}ms</div>
+      <div class="dot"></div>
+      <div class="event-body">
+        <p class="event-title">${escapeHtml(event.title)}</p>
+        ${event.detail ? `<p class="event-detail">${escapeHtml(event.detail)}</p>` : ""}
+        <span class="badge ${escapeHtml(event.confidenceLabel)}">${escapeHtml(event.confidenceLabel)} · ${Math.round(event.confidence * 100)}%</span>
+      </div>
+    </li>
+  `).join("");
 }
 
 function render(state) {
@@ -72,18 +99,20 @@ function render(state) {
   qualityMetrics.textContent = `${quality.observedEvents} observed events · ${quality.highConfidenceEvents} with strong or direct evidence`;
   qualityDiagnostics.innerHTML = quality.diagnostics.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
   qualityDiagnostics.classList.toggle("hidden", !quality.diagnostics.length);
-  timeline.innerHTML = events.map((event) => `
-    <li class="event ${escapeHtml(event.kind)}">
-      <div class="time">+${escapeHtml(event.atMs)}ms</div>
-      <div class="dot"></div>
-      <div class="event-body">
-        <p class="event-title">${escapeHtml(event.title)}</p>
-        ${event.detail ? `<p class="event-detail">${escapeHtml(event.detail)}</p>` : ""}
-        <span class="badge ${escapeHtml(event.confidenceLabel)}">${escapeHtml(event.confidenceLabel)} · ${Math.round(event.confidence * 100)}%</span>
-      </div>
-    </li>
-  `).join("");
+  renderTimeline(events);
 }
+
+filters.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-filter]");
+  if (!button || !currentState?.timeline) return;
+  activeFilter = button.dataset.filter;
+  for (const item of filters.querySelectorAll("[data-filter]")) {
+    const active = item === button;
+    item.classList.toggle("active", active);
+    item.setAttribute("aria-pressed", String(active));
+  }
+  renderTimeline(currentState.timeline);
+});
 
 async function getActiveTab() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });

@@ -46,6 +46,18 @@
     }
   }
 
+  function eventCategory(event) {
+    if (["request", "response"].includes(event?.kind)) return "network";
+    if (event?.kind === "mutation") return "dom";
+    if (event?.kind === "exception") return "errors";
+    return event?.kind || "unknown";
+  }
+
+  function filterTimeline(timeline, category = "all") {
+    if (category === "all") return [...(timeline || [])];
+    return (timeline || []).filter((event) => event.kind === "interaction" || eventCategory(event) === category);
+  }
+
   function normalizeFrame(frame) {
     const location = frame.location || {};
     const rawLine = Number.isFinite(location.lineNumber) ? location.lineNumber : frame.lineNumber;
@@ -265,12 +277,15 @@
       });
     });
 
+    const relevantNetwork = (session.network || []).filter(afterInteraction);
     const requestById = new Map();
-    (session.network || []).filter(afterInteraction).forEach((item) => {
+    const requestEventIdById = new Map();
+    relevantNetwork.forEach((item, index) => {
       if (item.phase === "request") requestById.set(item.requestId, item);
+      if (item.phase === "request") requestEventIdById.set(item.requestId, `network-${index}`);
     });
 
-    (session.network || []).filter(afterInteraction).forEach((item, index) => {
+    relevantNetwork.forEach((item, index) => {
       const delta = relativeMs(item.at, origin, session.startedAt);
       const kind = item.phase === "response" ? "response" : "request";
       const request = item.phase === "response" ? requestById.get(item.requestId) : item;
@@ -310,6 +325,7 @@
           : `${item.method || "GET"} ${item.url}`,
         detail: `${scope} · ${item.type || "Network"}${initiatorFrames[0] ? ` · from ${initiatorFrames[0].functionName}()` : ""}${locationLabel(initiatorFrames[0]) ? ` · ${locationLabel(initiatorFrames[0])}` : ""}`,
         networkScope: scope,
+        parentId: item.phase === "response" ? requestEventIdById.get(item.requestId) || null : null,
         location: initiatorFrames[0] || null,
         frames: initiatorFrames,
         confidence: normalizeConfidence(score),
@@ -504,6 +520,8 @@
     compactFrame,
     confidenceFor,
     confidenceLabel,
+    eventCategory,
+    filterTimeline,
     networkScope,
     parseBrowserStack,
     sanitizePublicSession,
