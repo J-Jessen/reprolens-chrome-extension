@@ -41,6 +41,7 @@ jobs:
       - name: Install automated browser
         run: echo "PUPPETEER_EXECUTABLE_PATH=$(npx puppeteer browsers install chrome@139 --format '{{path}}')" >> "$GITHUB_ENV"
       - name: Run extension corpus
-        run: npm run test:e2e
+        run: xvfb-run --auto-servernum npm run test:e2e
         env:
           CORPUS_CASES: ${{ matrix.corpus }}
+          HEADLESS: "false"

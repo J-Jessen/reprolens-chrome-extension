@@ -136,7 +136,7 @@ async function main() {
   const server = createFixtureServer();
   const port = await listen(server);
   const browser = await puppeteer.launch({
-    headless: true,
+    headless: process.env.HEADLESS !== "false",
     pipe: true,
     args: [
       "--disable-background-timer-throttling",
