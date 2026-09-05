@@ -5,10 +5,14 @@
   "description": "Local-first Chrome extension for tracing browser behaviour from a selected interaction",
   "scripts": {
     "test": "node --test tests/*.test.js",
+    "test:e2e": "node e2e/runner.js",
     "build:react": "npm --prefix demo-react run build",
-    "check": "node --check background.js && node --check trace-core.js && node --check corpus-evaluator.js && npm test"
+    "check": "node --check background.js && node --check content.js && node --check trace-core.js && node --check corpus-evaluator.js && node --check e2e/runner.js && npm test"
   },
   "engines": {
     "node": ">=20"
+  },
+  "devDependencies": {
+    "puppeteer": "^25.10.0"
   }
 }

@@ -73,17 +73,13 @@ The checked-in `app.js.map` maps the handler, timer schedule, and callback frame
 
 ## Run the validation corpus
 
-Version 0.1.6 adds deterministic targets for a handled 404, History API navigation, and minified bundles with and without source maps:
+The automated corpus starts a fixture server and headless Chrome, loads the unpacked extension, runs all 20 interactions, and evaluates each captured trace:
 
 ```bash
-python3 -m http.server 4176 --bind 127.0.0.1 --directory demo-corpus
+npm run test:e2e
 ```
 
-Open `http://127.0.0.1:4176/` and run one scenario at a time. The full matrix and fixed pass criteria are in `CORPUS.md`. A saved trace can be evaluated with:
-
-```bash
-node corpus-evaluator.js <scenario-id> trace.json
-```
+The full matrix and fixed pass criteria are in `CORPUS.md`. Set `CORPUS_CASE` to an ID from that file to run a single scenario.
 
 ## Test
 
@@ -99,8 +95,9 @@ GitHub Actions runs the same test suite and rebuilds the checked-in React demo o
 - `tests/`: deterministic Node tests for trace normalization, source maps, privacy, React ownership, and corpus evaluation.
 - `demo/`: native listener and successful fetch target.
 - `demo-react/`: React delegation, fetch, timer, and source-map target.
-- `demo-corpus/`: failure, navigation, and minification edge cases.
-- `CORPUS.md`: manual validation matrix and current go/no-go evidence.
+- `demo-corpus/`: deterministic mutation, timer, network, error, navigation, and minification fixtures.
+- `e2e/`: the browser runner that drives the extension without manual interaction.
+- `CORPUS.md`: automated validation matrix and current go/no-go evidence.
 
 ## Known limits
 

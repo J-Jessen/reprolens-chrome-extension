@@ -17,7 +17,11 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: demo-react/package-lock.json
+          cache-dependency-path: |
+            package-lock.json
+            demo-react/package-lock.json
+      - name: Install test dependencies
+        run: npm ci
       - name: Install demo build dependencies
         run: npm ci --prefix demo-react
       - name: Rebuild React fixture
@@ -26,3 +30,7 @@ jobs:
         run: git diff --exit-code -- demo-react/app.js demo-react/app.js.map
       - name: Run checks
         run: npm run check
+      - name: Install automated browser
+        run: npx puppeteer browsers install chrome --install-deps
+      - name: Run extension corpus
+        run: npm run test:e2e

@@ -11,6 +11,7 @@
   let mutations = [];
   let observer = null;
   let badgeTimer = null;
+  let captureMs = 3000;
 
   function cssEscape(value) {
     if (window.CSS?.escape) return window.CSS.escape(value);
@@ -228,7 +229,7 @@
       }).catch(() => {});
       showBadge("Trace captured — open the side panel");
       __behaviourTracerHideBadge(1800);
-    }, 3000);
+    }, captureMs);
   }
 
   document.addEventListener("pointermove", onPointerMove, true);
@@ -245,6 +246,7 @@
     } else if (message.type === "ARM_INTERACTION") {
       picking = false;
       armed = true;
+      captureMs = Math.max(300, Number(message.captureMs) || 3000);
       hideOverlay();
       showBadge("Recording armed — perform one click");
       sendResponse({ ok: true });

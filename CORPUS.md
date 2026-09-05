@@ -1,27 +1,43 @@
 # Validation corpus
 
-The first corpus slice contains six distinct interaction shapes. A case passes only when every evaluator check succeeds; the overall product threshold remains at least 80% useful traces across 20 or more interactions.
+The corpus contains 20 distinct interaction shapes. A case passes only when every evaluator check succeeds; the product threshold is at least 80% useful traces across 20 or more interactions.
 
-| ID | Scenario | Target | Status |
-|---|---|---|---|
-| `react-timer` | React delegated handler, fetch, timer, state render | `http://127.0.0.1:4175/` | PASS — validated on 0.1.5 |
-| `native-success` | Native listener and successful fetch | `http://127.0.0.1:4173/` | PASS — 7/7 checks on 0.1.7 |
-| `fetch-failure` | Handled 404 and console error | `http://127.0.0.1:4176/fetch-failure.html` | PASS — 8/8 checks on 0.1.6 |
-| `navigation` | History API same-document navigation | `http://127.0.0.1:4176/navigation.html` | PASS — 6/6 checks on 0.1.6 |
-| `minified-map` | Minified handler with source map | `http://127.0.0.1:4176/minified-map.html` | PASS — 6/6 checks on 0.1.7 |
-| `minified-no-map` | Minified handler without source map | `http://127.0.0.1:4176/minified-no-map.html` | PASS — 6/6 checks on 0.1.7 |
+| ID | Scenario | Status |
+|---|---|---|
+| `react-timer` | React delegated handler, fetch, timer, state render | PASS |
+| `native-success` | Native listener and successful fetch | PASS |
+| `fetch-failure` | Handled 404 and console error | PASS |
+| `navigation` | History API same-document navigation | PASS |
+| `minified-map` | Minified bundle with source map | PASS |
+| `minified-no-map` | Minified bundle without source map | PASS |
+| `dom-text` | Text mutation | PASS |
+| `dom-attribute` | Attribute mutation | PASS |
+| `dom-add` | Node insertion | PASS |
+| `dom-remove` | Node removal | PASS |
+| `timer-zero` | Zero-delay timer | PASS |
+| `timer-delayed` | Delayed timer | PASS |
+| `fetch-get` | Successful GET | PASS |
+| `fetch-post` | Successful POST | PASS |
+| `fetch-404` | Handled 404 response | PASS |
+| `parallel-fetch` | Parallel requests | PASS |
+| `console-warning` | Console warning | PASS |
+| `sync-error` | Uncaught synchronous exception | PASS |
+| `hash-navigation` | Hash navigation | PASS |
+| `history-replace` | History API replacement | PASS |
 
-For each case, select the scenario button, record one click, copy the completed JSON, save it as `trace.json`, and run:
+Run the complete corpus locally with:
 
 ```bash
-node corpus-evaluator.js <scenario-id> trace.json
+npm run test:e2e
 ```
 
-The command exits with status 0 only when every required piece of evidence is present and prints the failed checks otherwise.
+The runner starts its own fixture server and headless Chrome, loads the unpacked extension, selects each target, performs the interaction, collects the trace, and evaluates every check. It exits with status 0 only when all cases pass. `CORPUS_CASE=minified-map npm run test:e2e` runs one case while debugging.
 
-## Round 1 result
+GitHub Actions runs the same end-to-end corpus on every push and pull request, so no manual browser work is required.
 
-- Executed: 6 interactions
-- Passed: 6
+## Automated result
+
+- Executed: 20 interactions
+- Passed: 20
 - Useful-trace rate: 100%
-- Decision: promising, but not a final go; 14 additional interactions are required to reach the predefined minimum sample of 20.
+- Decision: the predefined minimum sample and useful-trace threshold are satisfied.

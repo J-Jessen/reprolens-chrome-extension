@@ -53,8 +53,83 @@
         ["fallback", "No authored source is claimed", (trace) => !hasAnyOriginalSource(trace)],
         ["mutation", "Unmapped action DOM change is captured", (trace) => events(trace, "mutation").some((event) => event.title.includes("Unmapped"))]
       ]
-    }
+    },
+    "dom-text": mutationScenario("Text content mutation", "Text mutation complete"),
+    "dom-attribute": mutationScenario("Attribute mutation", "data-state"),
+    "dom-add": mutationScenario("Node insertion", "node(s) added"),
+    "dom-remove": mutationScenario("Node removal", "removed"),
+    "timer-zero": timerScenario("Zero-delay timer", "Immediate timer complete"),
+    "timer-delayed": timerScenario("Delayed timer", "Delayed timer complete"),
+    "fetch-get": networkScenario("GET request", "GET ", "200 "),
+    "fetch-post": networkScenario("POST request", "POST ", "200 "),
+    "fetch-404": networkScenario("404 response without thrown error", "GET ", "404 "),
+    "parallel-fetch": {
+      label: "Parallel requests",
+      checks: [
+        ["requests", "Both parallel requests are captured", (trace) => events(trace, "request").length === 2],
+        ["responses", "Both parallel responses are captured", (trace) => events(trace, "response").filter((event) => event.title.startsWith("200 ")).length === 2],
+        ["mutation", "Parallel completion state is captured", (trace) => hasTitle(trace, "2 requests complete", "mutation")]
+      ]
+    },
+    "console-warning": {
+      label: "Console warning",
+      checks: [
+        ["warning", "Expected warning is captured", (trace) => hasTitle(trace, "Expected automated corpus warning", "exception")],
+        ["mutation", "Post-warning DOM change is captured", (trace) => hasTitle(trace, "Warning logged", "mutation")]
+      ]
+    },
+    "sync-error": {
+      label: "Synchronous exception",
+      checks: [
+        ["exception", "Uncaught exception is captured", (trace) => events(trace, "exception").some((event) => event.title.includes("Uncaught") || event.title.includes("automated corpus exception"))],
+        ["mutation", "Pre-exception DOM change is captured", (trace) => hasTitle(trace, "About to throw", "mutation")]
+      ]
+    },
+    "hash-navigation": navigationScenario("Hash navigation", "#trace-complete"),
+    "history-replace": navigationScenario("History state replacement", "view=complete")
   };
+
+  function mutationScenario(label, expected) {
+    return {
+      label,
+      checks: [
+        ["handler", "Authored click handler is captured", (trace) => events(trace, "handler").length > 0],
+        ["mutation", "Expected DOM mutation is captured", (trace) => hasTitle(trace, expected, "mutation")]
+      ]
+    };
+  }
+
+  function timerScenario(label, expectedMutation) {
+    return {
+      label,
+      checks: [
+        ["timer", "Timer schedule and callback are captured", (trace) => events(trace, "async").length >= 2],
+        ["lineage", "Timer callback points to its schedule", (trace) => events(trace, "async").some((event) => Boolean(event.parentId))],
+        ["mutation", "Timer-driven DOM change is captured", (trace) => hasTitle(trace, expectedMutation, "mutation")]
+      ]
+    };
+  }
+
+  function networkScenario(label, requestPrefix, responsePrefix) {
+    return {
+      label,
+      checks: [
+        ["request", "Expected request is captured", (trace) => events(trace, "request").some((event) => event.title.startsWith(requestPrefix))],
+        ["response", "Expected response is captured", (trace) => events(trace, "response").some((event) => event.title.startsWith(responsePrefix))],
+        ["mutation", "Resulting DOM change is captured", (trace) => events(trace, "mutation").length > 0]
+      ]
+    };
+  }
+
+  function navigationScenario(label, urlFragment) {
+    return {
+      label,
+      checks: [
+        ["navigation", "Expected navigation is captured", (trace) => hasTitle(trace, urlFragment, "navigation")],
+        ["mutation", "Navigation-related DOM change is captured", (trace) => events(trace, "mutation").length > 0]
+      ]
+    };
+  }
 
   function events(trace, kind) {
     return (trace.timeline || []).filter((event) => !kind || event.kind === kind);

@@ -245,13 +245,14 @@ async function detach(tabId) {
   }
 }
 
-async function startTrace(tabId) {
+async function startTrace(tabId, traceWindowMs = TRACE_WINDOW_MS) {
   const previous = getSession(tabId);
   if (previous.status === "recording" || previous.status === "armed") {
     throw new Error("A trace is already running in this tab.");
   }
 
   const session = blankSession(tabId);
+  session.traceWindowMs = Math.max(500, Math.min(Number(traceWindowMs) || TRACE_WINDOW_MS, TRACE_WINDOW_MS));
   session.selectedElement = previous.selectedElement;
   session.status = "attaching";
   session.startedAt = Date.now();
@@ -262,7 +263,10 @@ async function startTrace(tabId) {
     session.timerCapture = await attach(tabId);
     session.framework = await inspectFramework(tabId, session.selectedElement?.selector).catch(() => null);
     session.status = "armed";
-    await chrome.tabs.sendMessage(tabId, { type: "ARM_INTERACTION" });
+    await chrome.tabs.sendMessage(tabId, {
+      type: "ARM_INTERACTION",
+      captureMs: Math.max(300, session.traceWindowMs - 200)
+    });
     publish(session);
     return publicSession(session);
   } catch (error) {
@@ -312,7 +316,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message.type === "START_TRACE") {
-    startTrace(tabId)
+    startTrace(tabId, message.traceWindowMs)
       .then((state) => sendResponse({ ok: true, state }))
       .catch((error) => sendResponse({ ok: false, error: error.message || String(error) }));
     return true;
@@ -333,7 +337,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       element: message.element
     };
     publish(session);
-    setTimeout(() => finishTrace(tabId), TRACE_WINDOW_MS);
+    setTimeout(() => finishTrace(tabId), session.traceWindowMs || TRACE_WINDOW_MS);
     sendResponse({ ok: true });
     return false;
   }
