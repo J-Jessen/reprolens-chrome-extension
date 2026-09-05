@@ -617,6 +617,7 @@
         title: `${action} · ${top.functionName}()`,
         detail,
         parentId,
+        relationType: parentId ? (isCallback ? "async-callback-of" : "async-scheduled-by") : null,
         location: top,
         frames,
         confidence: score,
@@ -678,6 +679,7 @@
         title: mutation.summary,
         detail: `${mutation.target || "DOM"}${followsAsyncCallback ? " · immediately after async callback" : ""}`,
         parentId: adjacentCallback ? asyncCallbackEventIds.get(adjacentCallback) || null : null,
+        relationType: adjacentCallback ? "observed-after-async-callback" : null,
         relationshipEvidence: adjacentCallback ? "correlated" : "none",
         confidence: score,
         confidenceLabel: confidenceLabel(score)

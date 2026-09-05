@@ -403,11 +403,13 @@ test("shows a fallback timer chain and strengthens its adjacent DOM mutation", (
     "setTimeout callback · applyConfirmedOrder()"
   ]);
   assert.equal(timerEvents[1].parentId, timerEvents[0].id);
+  assert.equal(timerEvents[1].relationType, "async-callback-of");
   assert.equal(timerEvents[1].confidence, 0.95);
   assert.match(timerEvents[1].detail, /scheduled by handleReactCheckout/);
   assert.equal(timerEvents[1].frames[1].functionName, "handleReactCheckout");
   assert.equal(mutation.confidence, 0.9);
   assert.equal(mutation.parentId, timerEvents[1].id);
+  assert.equal(mutation.relationType, "observed-after-async-callback");
   assert.equal(mutation.relationshipEvidence, "correlated");
   assert.equal(mutation.primaryChain, false);
   assert.match(mutation.detail, /immediately after async callback/);
