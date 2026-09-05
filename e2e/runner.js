@@ -117,7 +117,12 @@ async function main() {
   const browser = await puppeteer.launch({
     headless: true,
     pipe: true,
-    args: ["--disable-web-security"],
+    args: [
+      "--disable-background-timer-throttling",
+      "--disable-backgrounding-occluded-windows",
+      "--disable-renderer-backgrounding",
+      "--disable-web-security"
+    ],
     enableExtensions: [ROOT]
   });
 
