@@ -11,7 +11,8 @@ chrome.sidePanel
 
 function blankSession(tabId) {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
+    traceId: crypto.randomUUID(),
     tabId,
     status: "idle",
     selectedElement: null,
@@ -22,6 +23,7 @@ function blankSession(tabId) {
     interaction: null,
     handlers: [],
     asyncEvents: [],
+    workerEvents: [],
     timerCapture: null,
     network: [],
     webSockets: [],
@@ -73,8 +75,8 @@ function command(tabId, method, params = {}) {
   return chrome.debugger.sendCommand({ tabId }, method, params);
 }
 
-function installTimerHookExpression() {
-  function __behaviourTracerInstallTimerHook() {
+function installTimerHookExpression(captureTimers = true) {
+  function __behaviourTracerInstallTimerHook(captureTimers) {
     const key = "__behaviourTracerAsyncStore_v020";
     const existing = window[key];
     if (existing?.installed) {
@@ -85,14 +87,19 @@ function installTimerHookExpression() {
     const native = {
       setTimeout: window.setTimeout,
       setInterval: window.setInterval,
-      requestAnimationFrame: window.requestAnimationFrame
+      requestAnimationFrame: window.requestAnimationFrame,
+      queueMicrotask: window.queueMicrotask,
+      promiseThen: window.Promise?.prototype?.then,
+      Worker: window.Worker
     };
     const store = {
       installed: true,
       events: [],
       native,
       nextTimerId: 1,
+      nextWorkerId: 1,
       wrappers: {},
+      workerRestores: [],
       autoRestoreId: null
     };
 
@@ -137,10 +144,56 @@ function installTimerHookExpression() {
       return Reflect.apply(native.requestAnimationFrame, this, [captured.callback]);
     }
 
-    store.wrappers.setTimeout = __behaviourTracerSetTimeout;
-    store.wrappers.setInterval = __behaviourTracerSetInterval;
-    if (typeof native.requestAnimationFrame === "function") {
-      store.wrappers.requestAnimationFrame = __behaviourTracerRequestAnimationFrame;
+    function __behaviourTracerQueueMicrotask(callback) {
+      const captured = schedule("queueMicrotask", callback, 0);
+      return Reflect.apply(native.queueMicrotask, this, [captured.callback]);
+    }
+
+    function __behaviourTracerPromiseThen(onFulfilled, onRejected) {
+      const fulfilled = typeof onFulfilled === "function" ? schedule("Promise", onFulfilled, 0).callback : onFulfilled;
+      const rejected = typeof onRejected === "function" ? schedule("Promise", onRejected, 0).callback : onRejected;
+      return Reflect.apply(native.promiseThen, this, [fulfilled, rejected]);
+    }
+
+    function __behaviourTracerWorker(url, options) {
+      const workerId = store.nextWorkerId++;
+      store.events.push({ type: "Worker", phase: "created", at: Date.now(), workerId, url: String(url), stack: new Error().stack || "" });
+      const worker = Reflect.construct(native.Worker, options === undefined ? [url] : [url, options]);
+      const nativePostMessage = worker.postMessage;
+      function __behaviourTracerWorkerPostMessage(...args) {
+        store.events.push({ type: "Worker", phase: "sent", at: Date.now(), workerId });
+        return Reflect.apply(nativePostMessage, worker, args);
+      }
+      function __behaviourTracerWorkerMessage() {
+        store.events.push({ type: "Worker", phase: "received", at: Date.now(), workerId });
+      }
+      function __behaviourTracerWorkerError() {
+        store.events.push({ type: "Worker", phase: "error", at: Date.now(), workerId });
+      }
+      worker.postMessage = __behaviourTracerWorkerPostMessage;
+      worker.addEventListener("message", __behaviourTracerWorkerMessage);
+      worker.addEventListener("error", __behaviourTracerWorkerError);
+      store.workerRestores.push(() => {
+        if (worker.postMessage === __behaviourTracerWorkerPostMessage) worker.postMessage = nativePostMessage;
+        worker.removeEventListener("message", __behaviourTracerWorkerMessage);
+        worker.removeEventListener("error", __behaviourTracerWorkerError);
+      });
+      return worker;
+    }
+
+    if (captureTimers) {
+      store.wrappers.setTimeout = __behaviourTracerSetTimeout;
+      store.wrappers.setInterval = __behaviourTracerSetInterval;
+      if (typeof native.requestAnimationFrame === "function") {
+        store.wrappers.requestAnimationFrame = __behaviourTracerRequestAnimationFrame;
+      }
+    }
+    if (typeof native.queueMicrotask === "function") store.wrappers.queueMicrotask = __behaviourTracerQueueMicrotask;
+    if (typeof native.promiseThen === "function") window.Promise.prototype.then = __behaviourTracerPromiseThen;
+    if (typeof native.Worker === "function") {
+      __behaviourTracerWorker.prototype = native.Worker.prototype;
+      Object.setPrototypeOf(__behaviourTracerWorker, native.Worker);
+      store.wrappers.Worker = __behaviourTracerWorker;
     }
     Object.defineProperty(window, key, { configurable: true, value: store });
     for (const [name, wrapper] of Object.entries(store.wrappers)) window[name] = wrapper;
@@ -148,12 +201,14 @@ function installTimerHookExpression() {
       for (const [name, wrapper] of Object.entries(store.wrappers)) {
         if (window[name] === wrapper) window[name] = store.native[name];
       }
+      if (window.Promise?.prototype?.then === __behaviourTracerPromiseThen) window.Promise.prototype.then = store.native.promiseThen;
+      for (const restore of store.workerRestores) restore();
       delete window[key];
     }, 10000]);
     return { installed: true, reused: false };
   }
 
-  return `(${__behaviourTracerInstallTimerHook.toString()})()`;
+  return `(${__behaviourTracerInstallTimerHook.toString()})(${JSON.stringify(captureTimers)})`;
 }
 
 function collectTimerHookExpression() {
@@ -166,14 +221,18 @@ function collectTimerHookExpression() {
     for (const [name, wrapper] of Object.entries(store.wrappers || {})) {
       if (window[name] === wrapper) window[name] = store.native[name];
     }
+    if (window.Promise?.prototype?.then?.name === "__behaviourTracerPromiseThen") {
+      window.Promise.prototype.then = store.native.promiseThen;
+    }
+    for (const restore of store.workerRestores || []) restore();
     delete window[key];
     return events;
   })()`;
 }
 
-async function installTimerHook(tabId) {
+async function installTimerHook(tabId, captureTimers = true) {
   const response = await command(tabId, "Runtime.evaluate", {
-    expression: installTimerHookExpression(),
+    expression: installTimerHookExpression(captureTimers),
     returnByValue: true,
     silent: true
   });
@@ -196,7 +255,8 @@ async function configureTimerCapture(tabId) {
         `${domain}.setInstrumentationBreakpoint`,
         { eventName }
       )));
-      return { mode: "cdp", domain };
+      await installTimerHook(tabId, false);
+      return { mode: "cdp+main-world-hook", domain };
     } catch (error) {
       failures.push(error.message || String(error));
       await Promise.all(eventNames.map((eventName) => command(
@@ -219,7 +279,7 @@ async function configureTimerCapture(tabId) {
 }
 
 async function collectTimerHookEvents(tabId, session) {
-  if (session.timerCapture?.mode !== "main-world-hook") return;
+  if (!session.timerCapture?.mode?.includes("main-world-hook")) return;
   const response = await command(tabId, "Runtime.evaluate", {
     expression: collectTimerHookExpression(),
     returnByValue: true,
@@ -230,7 +290,15 @@ async function collectTimerHookEvents(tabId, session) {
 
   const schedules = new Map();
   for (const raw of rawEvents) {
-    if (raw.phase === "scheduled") {
+    if (raw.type === "Worker") {
+      session.workerEvents.push({
+        at: raw.at,
+        phase: raw.phase,
+        workerId: raw.workerId,
+        url: raw.url || "",
+        callFrames: raw.stack ? TraceCore.parseBrowserStack(raw.stack) : []
+      });
+    } else if (raw.phase === "scheduled") {
       const event = {
         at: raw.at,
         eventName: `hook:${raw.type || "setTimeout"}`,
@@ -385,7 +453,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     Promise.all([
       chrome.storage.local.get({ traceHistory: [] }),
       historySettings()
-    ]).then(([stored, settings]) => sendResponse({ ...settings, traces: stored.traceHistory }));
+    ]).then(([stored, settings]) => sendResponse({
+      ...settings,
+      traces: stored.traceHistory.map((trace) => {
+        try { return TraceCore.migrateTrace(trace); } catch (_) { return null; }
+      }).filter(Boolean)
+    }));
     return true;
   }
 
@@ -415,7 +488,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       return false;
     }
     chrome.storage.local.get({ traceHistory: [] }).then(({ traceHistory }) => {
-      const trace = TraceCore.sanitizePublicSession(message.trace);
+      const trace = TraceCore.sanitizePublicSession(TraceCore.migrateTrace(message.trace));
       trace.historyId = `import-${Date.now()}`;
       trace.savedAt = Date.now();
       return chrome.storage.local.set({ traceHistory: [trace, ...traceHistory].slice(0, HISTORY_LIMIT) });

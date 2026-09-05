@@ -115,6 +115,13 @@ Before any AI feature, version 0.2 needs a visible redaction preview and an expl
 - Bounded local history with disable, deletion, clearing, and schema-validated import.
 - Automated runtime packaging and tag-based GitHub releases.
 
+## Version 0.4 foundations
+
+- Schema version 2 with unique trace IDs and explicit event relationship, capture-method, and privacy metadata.
+- Local, non-destructive migration of schema version 1 imports.
+- Standalone Promise and microtask boundaries through a trace-scoped MAIN-world hook.
+- Privacy-safe Worker creation and message-direction events without message content.
+
 ## Validation harness
 
 `demo-corpus/` provides deliberately small pages for failure, navigation, and minification edge cases. `corpus-evaluator.js` converts each copied trace into explicit pass/fail checks; `CORPUS.md` is the human-readable run matrix. This keeps the 80% go/no-go decision tied to repeatable evidence rather than subjective screenshots.

@@ -126,9 +126,29 @@ test("redacts sensitive values from exported traces", () => {
 
 test("validates imported trace schema", () => {
   assert.deepEqual(TraceCore.validateImportedTrace({ schemaVersion: 1, status: "complete", timeline: [] }), { ok: true, error: null });
-  assert.match(TraceCore.validateImportedTrace({ schemaVersion: 2, status: "complete", timeline: [] }).error, /Unsupported schema/);
+  assert.deepEqual(TraceCore.validateImportedTrace({ schemaVersion: 2, status: "complete", timeline: [] }), { ok: true, error: null });
+  assert.match(TraceCore.validateImportedTrace({ schemaVersion: 3, status: "complete", timeline: [] }).error, /Unsupported schema/);
   assert.match(TraceCore.validateImportedTrace({ schemaVersion: 1, status: "recording", timeline: [] }).error, /completed/);
   assert.match(TraceCore.validateImportedTrace({ schemaVersion: 1, status: "complete", timeline: [{}] }).error, /timeline/);
+});
+
+test("migrates schema version 1 traces to relation-aware version 2", () => {
+  const migrated = TraceCore.migrateTrace({
+    schemaVersion: 1,
+    status: "complete",
+    startedAt: 123,
+    tabId: 7,
+    timeline: [
+      { id: "interaction", kind: "interaction", atMs: 0 },
+      { id: "response", kind: "response", atMs: 5, parentId: "request" }
+    ]
+  });
+  assert.equal(migrated.schemaVersion, 2);
+  assert.equal(migrated.traceId, "legacy-123-7");
+  assert.equal(migrated.timeline[0].relationType, "root");
+  assert.equal(migrated.timeline[1].relationType, "response-to");
+  assert.equal(migrated.timeline[1].captureMethod, "chrome-devtools-protocol");
+  assert.equal(migrated.timeline[1].privacyClassification, "url-metadata");
 });
 
 test("builds a redacted Markdown trace report", () => {

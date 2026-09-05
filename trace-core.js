@@ -61,6 +61,31 @@
     return (timeline || []).filter((event) => event.kind === "interaction" || eventCategory(event) === category);
   }
 
+  function eventMetadata(event) {
+    const captureMethods = {
+      interaction: "content-script", handler: "chrome-debugger", request: "chrome-devtools-protocol",
+      response: "chrome-devtools-protocol", "network-failure": "chrome-devtools-protocol",
+      websocket: "chrome-devtools-protocol", worker: "main-world-hook", mutation: "content-script",
+      exception: "chrome-devtools-protocol", navigation: "chrome-devtools-protocol"
+    };
+    const privacyClasses = {
+      request: "url-metadata", response: "url-metadata", "network-failure": "url-metadata",
+      websocket: "metadata-only", worker: "metadata-only", mutation: "dom-summary"
+    };
+    const relationTypes = {
+      response: "response-to", "network-failure": "failure-of", websocket: "socket-lifecycle-of",
+      worker: "worker-lifecycle-of", async: "async-callback-of"
+    };
+    return {
+      ...event,
+      relationType: event.relationType || (event.kind === "interaction"
+        ? "root"
+        : event.parentId ? relationTypes[event.kind] || "child-of" : "observed-after-interaction"),
+      captureMethod: event.captureMethod || captureMethods[event.kind] || "derived",
+      privacyClassification: event.privacyClassification || privacyClasses[event.kind] || "source-metadata"
+    };
+  }
+
   function normalizeFrame(frame) {
     const location = frame.location || {};
     const rawLine = Number.isFinite(location.lineNumber) ? location.lineNumber : frame.lineNumber;
@@ -134,6 +159,10 @@
       callFrames: (event.callFrames || []).map(compactFrame).filter(Boolean),
       asyncStackTrace: compactAsyncStack(event.asyncStackTrace)
     }));
+    copy.workerEvents = (copy.workerEvents || []).map((event) => ({
+      ...event,
+      callFrames: (event.callFrames || []).map(compactFrame).filter(Boolean)
+    }));
     copy.timeline = (copy.timeline || []).map((event) => ({
       ...event,
       ...(event.location ? { location: compactFrame(event.location) } : {}),
@@ -202,12 +231,24 @@
 
   function validateImportedTrace(trace) {
     if (!trace || typeof trace !== "object" || Array.isArray(trace)) return { ok: false, error: "Trace must be a JSON object." };
-    if (trace.schemaVersion !== 1) return { ok: false, error: `Unsupported schema version: ${trace.schemaVersion ?? "missing"}.` };
+    if (![1, 2].includes(trace.schemaVersion)) return { ok: false, error: `Unsupported schema version: ${trace.schemaVersion ?? "missing"}.` };
     if (trace.status !== "complete") return { ok: false, error: "Only completed traces can be imported." };
     if (!Array.isArray(trace.timeline) || !trace.timeline.every((event) => event && typeof event.kind === "string")) {
       return { ok: false, error: "Trace timeline is invalid." };
     }
     return { ok: true, error: null };
+  }
+
+  function migrateTrace(trace) {
+    const validation = validateImportedTrace(trace);
+    if (!validation.ok) throw new Error(validation.error);
+    const copy = JSON.parse(JSON.stringify(trace));
+    if (copy.schemaVersion === 1) {
+      copy.schemaVersion = 2;
+      copy.traceId = copy.traceId || `legacy-${copy.startedAt || copy.savedAt || "unknown"}-${copy.tabId || "tab"}`;
+    }
+    copy.timeline = (copy.timeline || []).map(eventMetadata);
+    return copy;
   }
 
   function markdownReport(session) {
@@ -471,7 +512,11 @@
       const isCallback = event.eventName?.endsWith(".callback");
       const asyncType = event.eventName?.includes("requestAnimationFrame")
         ? "requestAnimationFrame"
-        : event.eventName?.includes("setInterval") ? "setInterval" : "setTimeout";
+        : event.eventName?.includes("setInterval")
+          ? "setInterval"
+          : event.eventName?.includes("queueMicrotask")
+            ? "queueMicrotask"
+            : event.eventName?.includes("Promise") ? "Promise" : "setTimeout";
       const action = `${asyncType} ${isCallback ? "callback" : "scheduled"}`;
       const id = `async-${index}`;
       const asyncParent = isCallback
@@ -481,8 +526,8 @@
         || (asyncParent ? timerSchedulesByFrame.get(frameKey(asyncParent)) : null)
         || null;
       const captureLabel = event.captureMode === "main-world-hook"
-        ? "local MAIN-world timer hook"
-        : "browser timer instrumentation";
+        ? "local MAIN-world async hook"
+        : "browser async instrumentation";
       const score = event.captureMode === "main-world-hook" ? 0.95 : 1;
       const detail = [
         locationLabel(top) || captureLabel,
@@ -506,6 +551,31 @@
         timerSchedulesByFrame.set(frameKey(top), id);
         if (event.timerId != null) timerSchedulesById.set(event.timerId, id);
       }
+    });
+
+    const workerCreatedById = new Map();
+    (session.workerEvents || []).filter(afterInteraction).forEach((event, index) => {
+      const id = `worker-${index}`;
+      if (event.phase === "created") workerCreatedById.set(event.workerId, id);
+      const frames = usefulFrames(event.callFrames, 5);
+      const labels = {
+        created: `Worker created${event.url ? ` · ${event.url}` : ""}`,
+        sent: "Worker message sent",
+        received: "Worker message received",
+        error: "Worker error"
+      };
+      events.push({
+        id,
+        kind: "worker",
+        atMs: relativeMs(event.at, origin, session.startedAt),
+        title: labels[event.phase] || `Worker ${event.phase}`,
+        detail: `${event.phase === "created" ? "creation metadata" : "message content not captured"}${locationLabel(frames[0]) ? ` · ${locationLabel(frames[0])}` : ""}`,
+        parentId: event.phase === "created" ? null : workerCreatedById.get(event.workerId) || null,
+        location: frames[0] || null,
+        frames,
+        confidence: 0.95,
+        confidenceLabel: "direct"
+      });
     });
 
     const asyncCallbacks = relevantAsyncEvents.filter((event) => event.eventName?.endsWith(".callback"));
@@ -574,8 +644,10 @@
       });
     });
 
-    const order = { interaction: 0, handler: 1, request: 2, response: 3, "network-failure": 3, async: 4, mutation: 5, exception: 6, navigation: 7 };
-    return events.sort((a, b) => a.atMs - b.atMs || (order[a.kind] ?? 99) - (order[b.kind] ?? 99) || a.id.localeCompare(b.id));
+    const order = { interaction: 0, handler: 1, request: 2, response: 3, "network-failure": 3, async: 4, worker: 4, websocket: 4, mutation: 5, exception: 6, navigation: 7 };
+    return events
+      .sort((a, b) => a.atMs - b.atMs || (order[a.kind] ?? 99) - (order[b.kind] ?? 99) || a.id.localeCompare(b.id))
+      .map(eventMetadata);
   }
 
   function summarize(session) {
@@ -590,6 +662,7 @@
     const asyncEvents = timeline.filter((event) => event.kind === "async");
     const navigations = timeline.filter((event) => event.kind === "navigation");
     const socketEvents = timeline.filter((event) => event.kind === "websocket");
+    const workerEvents = timeline.filter((event) => event.kind === "worker");
     const errors = timeline.filter((event) => event.kind === "exception");
     const authoredHandlers = timeline.filter((event) => event.kind === "handler" && event.origin === "request-initiator");
 
@@ -607,6 +680,7 @@
     if (mutations.length) sentences.push(`${mutations.length} DOM change group${mutations.length === 1 ? " was" : "s were"} recorded.`);
     if (navigations.length) sentences.push(`${navigations.length} navigation event${navigations.length === 1 ? " was" : "s were"} observed.`);
     if (socketEvents.length) sentences.push(`${socketEvents.length} WebSocket lifecycle event${socketEvents.length === 1 ? " was" : "s were"} observed without capturing message contents.`);
+    if (workerEvents.length) sentences.push(`${workerEvents.length} Worker lifecycle event${workerEvents.length === 1 ? " was" : "s were"} observed without capturing message contents.`);
     if (errors.length) sentences.push(`${errors.length} JavaScript error or warning event${errors.length === 1 ? " was" : "s were"} captured.`);
     if (!handlers.length) sentences.push("No page JavaScript handler frame was captured; native or framework-delegated behaviour may still have occurred.");
     return sentences.join(" ");
@@ -656,6 +730,7 @@
     eventCategory,
     filterTimeline,
     markdownReport,
+    migrateTrace,
     networkScope,
     parseBrowserStack,
     redactForExport,

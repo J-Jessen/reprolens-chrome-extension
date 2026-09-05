@@ -1,6 +1,6 @@
 # Behaviour Tracer PoC
 
-Current build: **0.3.2**
+Current build: **0.4.0**
 
 A local-first Chrome Manifest V3 proof-of-concept for the product hypothesis:
 
@@ -26,6 +26,7 @@ This is an instrumentation experiment, not a production extension. It tests whet
 14. Keeps up to 25 completed traces locally, with history disable, delete, clear, and version-validated JSON import controls.
 15. Provides reviewed, automatically redacted JSON downloads and redacted Markdown reports.
 16. Correlates Promise-parented network initiators and privacy-safe WebSocket lifecycle/frame metadata without storing message content.
+17. Uses trace schema version 2 with explicit relationship, capture-method, and privacy metadata plus local migration of version 1 imports.
 
 All trace processing is local. The current build has no backend, analytics, login, or AI call.
 
@@ -97,6 +98,7 @@ GitHub Actions runs the same test suite and rebuilds the checked-in React demo o
 After the tests pass, CI also creates an installable `behaviour-tracer-extension` artifact containing runtime files only. A matching `v*` tag creates a GitHub release archive automatically.
 
 Privacy and security details are documented in `PRIVACY.md` and `SECURITY.md`. Contribution and verification requirements are in `CONTRIBUTING.md`.
+The versioned export contract and migration rules are documented in `TRACE_SCHEMA.md`.
 
 ## Project structure
 
@@ -115,7 +117,7 @@ Privacy and security details are documented in `PRIVACY.md` and `SECURITY.md`. C
 - Available source maps are fetched and applied locally. Missing, inaccessible, malformed, or unsupported maps fall back to deployed JavaScript locations.
 - Timer capture prefers CDP instrumentation. On Chrome builds without `EventBreakpoints`, the extension temporarily wraps the page's MAIN-world `setTimeout` during the trace and restores it on completion or automatically after 10 seconds.
 - Public state and copied JSON retain function names, deployed locations, source-mapped locations, and async parents, but remove CDP `callFrameId`, scope objects, receiver objects, and return values.
-- Promise continuations are retained through CDP async stacks—including network initiator parents—when Chrome supplies them, but they do not yet appear as standalone timeline events. `setTimeout`, `setInterval`, and `requestAnimationFrame` boundaries are explicit. WebSocket lifecycle and frame direction are captured without message contents; workers are not yet correlated.
+- Promise continuations, queued microtasks, `setTimeout`, `setInterval`, and `requestAnimationFrame` boundaries are explicit when the browser or trace-scoped fallback exposes them. Worker and WebSocket lifecycle/message direction are captured without content; code running inside Workers is not yet inspected.
 - Same-document History API and fragment navigation are captured through `Page.navigatedWithinDocument` when the connected Chrome build exposes that experimental event.
 - Cross-origin iframes and browser-internal pages are outside this PoC.
 - Opening DevTools on the traced tab detaches `chrome.debugger`.

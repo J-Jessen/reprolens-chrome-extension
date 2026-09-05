@@ -1,6 +1,6 @@
 # Validation corpus
 
-The corpus contains 23 distinct interaction shapes. A case passes only when every evaluator check succeeds; the product threshold is at least 80% useful traces across 20 or more interactions.
+The corpus contains 26 distinct interaction shapes. A case passes only when every evaluator check succeeds; the product threshold is at least 80% useful traces across 20 or more interactions.
 
 | ID | Scenario | Status |
 |---|---|---|
@@ -18,6 +18,9 @@ The corpus contains 23 distinct interaction shapes. A case passes only when ever
 | `timer-delayed` | Delayed timer | PASS |
 | `timer-interval` | Repeating interval callback | PASS |
 | `animation-frame` | Animation frame callback | PASS |
+| `promise-chain` | Promise continuation chain | PASS |
+| `queue-microtask` | Queued microtask | PASS |
+| `worker-message` | Worker lifecycle without message content | PASS |
 | `fetch-get` | Successful GET | PASS |
 | `fetch-post` | Successful POST | PASS |
 | `fetch-404` | Handled 404 response | PASS |
@@ -40,7 +43,7 @@ GitHub Actions runs the same end-to-end corpus on every push and pull request, s
 
 ## Automated result
 
-- Executed: 23 interactions
-- Passed: 23
+- Executed: 26 interactions
+- Passed: 26
 - Useful-trace rate: 100%
 - Decision: the predefined minimum sample and useful-trace threshold are satisfied.

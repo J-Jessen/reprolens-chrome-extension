@@ -39,6 +39,27 @@ const actions = {
       status.textContent = "Animation frame complete";
     });
   },
+  "promise-chain": function runPromiseChain() {
+    Promise.resolve().then(function firstPromiseStep() {
+      status.textContent = "Promise step one";
+    }).then(function secondPromiseStep() {
+      status.textContent = "Promise chain complete";
+    });
+  },
+  "queue-microtask": function runMicrotask() {
+    queueMicrotask(function microtaskCallback() {
+      status.textContent = "Microtask complete";
+    });
+  },
+  "worker-message": function runWorker() {
+    const source = 'self.onmessage = () => self.postMessage("private worker result")';
+    const worker = new Worker(URL.createObjectURL(new Blob([source], { type: "text/javascript" })));
+    worker.addEventListener("message", () => {
+      status.textContent = "Worker result received";
+      worker.terminate();
+    });
+    worker.postMessage("private worker input");
+  },
   "fetch-get": async function fetchGet() {
     const response = await fetch("/api/ok?case=fetch-get");
     status.textContent = (await response.json()).message;

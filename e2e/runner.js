@@ -228,7 +228,7 @@ async function main() {
       ["minified-map", "/demo-corpus/minified-map.html", "#mapped-action", 3500],
       ["minified-no-map", "/demo-corpus/minified-no-map.html", "#unmapped-action"],
       ...[
-        "dom-text", "dom-attribute", "dom-add", "dom-remove", "timer-zero", "timer-delayed", "timer-interval", "animation-frame",
+        "dom-text", "dom-attribute", "dom-add", "dom-remove", "timer-zero", "timer-delayed", "timer-interval", "animation-frame", "promise-chain", "queue-microtask", "worker-message",
         "fetch-get", "fetch-post", "fetch-404", "parallel-fetch", "websocket-message", "console-warning", "sync-error",
         "hash-navigation", "history-replace"
       ].map((id) => [id, `/demo-corpus/automated.html?case=${id}`, "#action"])

@@ -3,10 +3,15 @@ const test = require("node:test");
 const CorpusEvaluator = require("../corpus-evaluator.js");
 
 function baseTrace(timeline, extra = {}) {
+  const metadata = { relationType: "observed-after-interaction", captureMethod: "test", privacyClassification: "test-metadata" };
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
+    traceId: "test-trace",
     status: "complete",
-    timeline: [{ kind: "interaction", title: "click button" }, ...timeline],
+    timeline: [
+      { ...metadata, kind: "interaction", title: "click button", relationType: "root" },
+      ...timeline.map((event) => ({ ...metadata, ...event }))
+    ],
     ...extra
   };
 }

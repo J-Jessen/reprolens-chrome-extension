@@ -63,7 +63,8 @@
       ...(session.asyncEvents || []).flatMap((event) => [
         ...(event.callFrames || []),
         ...asyncStackFrames(event.asyncStackTrace)
-      ])
+      ]),
+      ...(session.workerEvents || []).flatMap((event) => event.callFrames || [])
     ];
   }
 

@@ -62,6 +62,18 @@
     "timer-delayed": timerScenario("Delayed timer", "Delayed timer complete"),
     "timer-interval": asyncScenario("Interval callback", "setInterval", "Interval tick 2"),
     "animation-frame": asyncScenario("Animation frame callback", "requestAnimationFrame", "Animation frame complete"),
+    "promise-chain": asyncScenario("Promise continuation chain", "Promise", "Promise chain complete"),
+    "queue-microtask": asyncScenario("Queued microtask", "queueMicrotask", "Microtask complete"),
+    "worker-message": {
+      label: "Worker lifecycle without message content",
+      checks: [
+        ["created", "Worker creation is captured", (trace) => hasTitle(trace, "Worker created", "worker")],
+        ["sent", "Worker outbound message is captured", (trace) => hasTitle(trace, "message sent", "worker")],
+        ["received", "Worker inbound message is captured", (trace) => hasTitle(trace, "message received", "worker")],
+        ["privacy", "Worker message contents are absent", (trace) => !JSON.stringify(trace.workerEvents || []).includes("private worker")],
+        ["mutation", "Worker-driven DOM change is captured", (trace) => hasTitle(trace, "Worker result received", "mutation")]
+      ]
+    },
     "fetch-get": networkScenario("GET request", "GET ", "200 "),
     "fetch-post": networkScenario("POST request", "POST ", "200 "),
     "fetch-404": networkScenario("404 response without thrown error", "GET ", "404 "),
@@ -179,9 +191,10 @@
     const scenario = scenarios[scenarioId];
     if (!scenario) throw new Error(`Unknown scenario: ${scenarioId}`);
     const definitions = [
-      ["schema", "Trace uses schema version 1", (value) => value.schemaVersion === 1],
+      ["schema", "Trace uses schema version 2", (value) => value.schemaVersion === 2 && Boolean(value.traceId)],
       ["complete", "Trace completed", (value) => value.status === "complete"],
       ["interaction", "Interaction boundary is present", (value) => events(value, "interaction").length === 1],
+      ["metadata", "Timeline events include relationship, capture, and privacy metadata", (value) => events(value).every((event) => Boolean(event.relationType && event.captureMethod && event.privacyClassification))],
       ...scenario.checks
     ];
     const checks = definitions.map(([id, label, predicate]) => {
