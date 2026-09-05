@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: demo-react/package-lock.json
+      - name: Install demo build dependencies
+        run: npm ci --prefix demo-react
+      - name: Rebuild React fixture
+        run: npm run build:react
+      - name: Verify generated fixture is current
+        run: git diff --exit-code -- demo-react/app.js demo-react/app.js.map
+      - name: Run checks
+        run: npm run check

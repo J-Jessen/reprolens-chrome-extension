@@ -35,10 +35,10 @@ Chrome will show a debugging banner while a 3.5-second trace is active. This is 
 
 ## Run the deterministic demo
 
-This command works from any directory:
+Run this command from the project root:
 
 ```bash
-python3 -m http.server 4173 --directory "/home/tjums/Documents/Codex/2026-09-05/https-chatgpt-com-share-6a9bedea-5494/outputs/behaviour-tracer-poc/demo"
+python3 -m http.server 4173 --bind 127.0.0.1 --directory demo
 ```
 
 Then open exactly `http://127.0.0.1:4173/`, select **Complete order**, choose **Record one click**, and click the button again.
@@ -55,7 +55,7 @@ Expected evidence:
 The second test target uses React 19 with a delegated `onClick`, an authored async handler, a fetch request, and a timer-delayed state update.
 
 ```bash
-python3 -m http.server 4175 --bind 127.0.0.1 --directory "/home/tjums/Documents/Codex/2026-09-05/https-chatgpt-com-share-6a9bedea-5494/outputs/behaviour-tracer-poc/demo-react"
+python3 -m http.server 4175 --bind 127.0.0.1 --directory demo-react
 ```
 
 Open `http://127.0.0.1:4175/`, select **Complete React order**, record one click, and click it again.
@@ -76,7 +76,7 @@ The checked-in `app.js.map` maps the handler, timer schedule, and callback frame
 Version 0.1.6 adds deterministic targets for a handled 404, History API navigation, and minified bundles with and without source maps:
 
 ```bash
-python3 -m http.server 4176 --bind 127.0.0.1 --directory "/home/tjums/Documents/Codex/2026-09-05/https-chatgpt-com-share-6a9bedea-5494/outputs/behaviour-tracer-poc/demo-corpus"
+python3 -m http.server 4176 --bind 127.0.0.1 --directory demo-corpus
 ```
 
 Open `http://127.0.0.1:4176/` and run one scenario at a time. The full matrix and fixed pass criteria are in `CORPUS.md`. A saved trace can be evaluated with:
@@ -88,8 +88,19 @@ node corpus-evaluator.js <scenario-id> trace.json
 ## Test
 
 ```bash
-node --test tests/*.test.js
+npm test
 ```
+
+GitHub Actions runs the same test suite and rebuilds the checked-in React demo on every push and pull request.
+
+## Project structure
+
+- Extension runtime: root-level `manifest.json`, service worker, content script, side panel, and trace modules.
+- `tests/`: deterministic Node tests for trace normalization, source maps, privacy, React ownership, and corpus evaluation.
+- `demo/`: native listener and successful fetch target.
+- `demo-react/`: React delegation, fetch, timer, and source-map target.
+- `demo-corpus/`: failure, navigation, and minification edge cases.
+- `CORPUS.md`: manual validation matrix and current go/no-go evidence.
 
 ## Known limits
 
