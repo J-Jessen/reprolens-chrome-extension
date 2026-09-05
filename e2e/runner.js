@@ -94,6 +94,8 @@ async function runTrace({ browser, worker, controller, baseUrl, pathname, select
   const start = await extensionMessage(controller, { type: "START_TRACE", tabId, traceWindowMs });
   if (!start?.ok) throw new Error(start?.error || "Trace could not start");
   await page.click(selector);
+  await new Promise((resolve) => setTimeout(resolve, traceWindowMs + 100));
+  await extensionMessage(controller, { type: "CANCEL_TRACE", tabId });
 
   let state;
   await new Promise((resolve, reject) => {
