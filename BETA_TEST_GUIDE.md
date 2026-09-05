@@ -8,19 +8,19 @@ Thank you for testing Behaviour Tracer. Plan for 45–60 minutes. You do not nee
 - Do not use real customer records, payment pages, health data, or other sensitive production content.
 - The extension does not automatically upload traces or analytics.
 - Never attach a raw trace. Use **Review export**, inspect the full preview, and share only the redacted export if it is genuinely needed.
-- Do not paste credentials, cookies, tokens, private keys, or customer data into a GitHub issue.
+- Do not paste credentials, cookies, tokens, private keys, or customer data into a feedback file or message.
 
 Stop testing and contact the owner privately if the browser behaves abnormally or an export exposes sensitive information.
 
 ## Install the beta
 
-1. Open the [v0.7.0-beta.1 release](https://github.com/J-Jessen/behavior-trace-chrome-extension/releases/tag/v0.7.0-beta.1).
-2. Download `behaviour-tracer-v0.7.0-beta.1.zip` from **Assets**.
-3. Extract the ZIP into a folder you will keep for the duration of the beta.
+1. Save the `behaviour-tracer-v0.7.0-beta.2.zip` file supplied directly by the owner.
+2. Extract the ZIP into a folder you will keep for the duration of the beta.
+3. Confirm that the folder contains `manifest.json`, `START_HER.md`, and this guide.
 4. Open `chrome://extensions` in Chrome.
 5. Enable **Developer mode**.
 6. Choose **Load unpacked** and select the extracted folder containing `manifest.json`.
-7. Pin **Behaviour Tracer PoC** from Chrome's Extensions menu.
+7. Pin **Behaviour Tracer Beta** from Chrome's Extensions menu.
 
 Chrome shows a debugging banner during a 3.5-second trace. This is expected. The debugger detaches automatically when the trace ends.
 
@@ -73,7 +73,7 @@ Verify these once:
 
 ## Report a defect
 
-Open the private repository's **Issues** tab, choose **Beta bug report**, and submit one issue per distinct problem. Use a concise title such as:
+Make a copy of `BETA_BUG_REPORT.md`, complete it for one distinct problem, and return it through the same private channel that delivered the beta. Use a concise title such as:
 
 `[Beta] Promise callback missing after search click`
 
@@ -81,7 +81,7 @@ Include the beta version, Chrome version, framework, safe reproduction steps, ex
 
 ## Complete the beta
 
-Open one final issue using **Beta feedback**. Submit it even if you found no defects. Report:
+Complete `BETA_FEEDBACK_FORM.md` and return it through the same private channel. Submit it even if you found no defects. Report:
 
 - number and type of interactions tested;
 - time to first useful trace;

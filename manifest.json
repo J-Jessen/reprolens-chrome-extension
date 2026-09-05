@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Behaviour Tracer PoC",
+  "name": "Behaviour Tracer Beta",
   "version": "0.7.0",
-  "description": "Select an element, perform one interaction, and inspect the resulting browser behaviour.",
+  "description": "THIS EXTENSION IS FOR BETA TESTING. Select an element, perform one interaction, and inspect the resulting browser behaviour.",
   "permissions": [
     "debugger",
     "scripting",

@@ -47,11 +47,11 @@ Prefer people who can test on a local or staging application they are authorized
 ## Operating procedure
 
 1. Recruit testers using [TESTER_RECRUITMENT.md](TESTER_RECRUITMENT.md).
-2. Collect only name, email or preferred contact, GitHub username if repository access is needed, role, primary framework, and test availability.
-3. Send the invitation message and [BETA_TEST_GUIDE.md](BETA_TEST_GUIDE.md).
-4. Give each tester the same beta release. Never ask them to build from `main`.
-5. Ask testers to open one GitHub issue per defect and one final beta feedback issue.
-6. Triage incoming issues daily using the labels `beta-bug`, `beta-feedback`, `privacy-review`, and `blocked`.
+2. Collect only name, email or preferred contact, role, primary framework, and test availability. Testers do not receive GitHub repository access in Round 1.
+3. Send the invitation message and the complete beta ZIP through a private, access-controlled channel.
+4. Give each tester the same beta ZIP. Never ask them to build from `main` or download from the private repository.
+5. Ask testers to return one copy of `BETA_BUG_REPORT.md` per defect and one completed `BETA_FEEDBACK_FORM.md` through the same private channel.
+6. Create sanitized GitHub issues internally and triage them daily using the labels `beta-bug`, `beta-feedback`, `privacy-review`, and `blocked`.
 7. Stop a test immediately if a trace contains a secret or unauthorized personal/customer data. Remove the attachment and follow the privacy response below.
 8. At the end of each round, record totals in the scorecard below and publish the go/no-go decision in a GitHub issue.
 
@@ -64,13 +64,13 @@ Prefer people who can test on a local or staging application they are authorized
 | P2 | Trace is materially wrong, misleading, or misses common evidence | Fix or document before Round 2 ends |
 | P3 | Friction, wording, visual, or uncommon compatibility issue | Add to the prioritized backlog |
 
-Do not ask a tester to post a raw trace publicly. If a trace is required, they must use **Review export**, confirm the preview, and attach only the redacted export to the private repository issue.
+Do not ask a tester to post a raw trace publicly. If a trace is required, they must use **Review export**, confirm the preview, and return only the redacted export through the agreed private channel.
 
 ## Privacy response
 
 If sensitive data is shared:
 
-1. remove the attachment or issue content as soon as possible;
+1. remove the attachment or message content as soon as possible;
 2. tell the tester what was removed;
 3. advise rotation of an exposed credential;
 4. create a separate sanitized issue describing only the redaction failure pattern;

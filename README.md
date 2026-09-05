@@ -1,8 +1,8 @@
-# Behaviour Tracer PoC
+# Behaviour Tracer
 
 Current build: **0.7.0**
 
-Private beta: **v0.7.0-beta.1**
+Private beta: **v0.7.0-beta.2**
 
 A local-first Chrome Manifest V3 proof-of-concept for the product hypothesis:
 
@@ -122,14 +122,14 @@ The versioned export contract and migration rules are documented in `TRACE_SCHEM
 - Public state and copied JSON retain function names, deployed locations, source-mapped locations, and async parents, but remove CDP `callFrameId`, scope objects, receiver objects, and return values.
 - Promise continuations, queued microtasks, `setTimeout`, `setInterval`, and `requestAnimationFrame` boundaries are explicit when the browser or trace-scoped fallback exposes them. Worker and WebSocket lifecycle/message direction are captured without content; code running inside Workers is not yet inspected.
 - Same-document History API and fragment navigation are captured through `Page.navigatedWithinDocument` when the connected Chrome build exposes that experimental event.
-- Cross-origin iframes and browser-internal pages are outside this PoC.
+- Cross-origin iframes and browser-internal pages are outside this beta.
 - Site access is granted to one exact HTTP or HTTPS origin at a time. Cross-origin source maps may remain unavailable until their own host is explicitly supported; tracing does not silently expand access.
 - Opening DevTools on the traced tab detaches `chrome.debugger`.
 - The extension declares HTTP and HTTPS hosts as optional and requests only the active website from a direct **Select element** or **Record one click** action. Chrome's extension settings can revoke previously granted sites.
 
 ## Go/no-go test
 
-Run the PoC against a test corpus of at least 20 interactions:
+Run the beta against a test corpus of at least 20 interactions:
 
 - native DOM listener;
 - React delegated listener;
