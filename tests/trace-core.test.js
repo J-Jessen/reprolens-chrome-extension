@@ -66,6 +66,8 @@ test("builds an ordered timeline with explicit confidence", () => {
   assert.match(timeline[2].detail, /^same-origin/);
   assert.equal(timeline[3].confidence, 0.92);
   assert.equal(timeline[3].parentId, timeline[2].id);
+  assert.equal(timeline[3].durationMs, 30);
+  assert.match(timeline[3].detail, /30ms/);
   assert.equal(timeline[0].confidence, 1);
 });
 
@@ -94,6 +96,56 @@ test("filters timeline categories while retaining the interaction anchor", () =>
   assert.deepEqual(TraceCore.filterTimeline(timeline, "errors").map((event) => event.id), [
     "interaction", "exception"
   ]);
+  assert.deepEqual(TraceCore.filterTimeline([
+    { id: "interaction", kind: "interaction" },
+    { id: "app", kind: "request", networkScope: "same-origin" },
+    { id: "external", kind: "request", networkScope: "cross-origin" }
+  ], "same-origin").map((event) => event.id), ["interaction", "app"]);
+});
+
+test("redacts sensitive values from exported traces", () => {
+  const exported = TraceCore.redactForExport({
+    pageUrl: "https://shop.example/order?token=top-secret&mode=test",
+    selectedElement: {
+      text: "Contact dev@example.com",
+      html: '<input value="private" data-token="hidden">'
+    },
+    network: [{ url: "https://api.example/run?apiKey=123&safe=yes", authorization: "Bearer abc" }],
+    timeline: [],
+    handlers: [],
+    asyncEvents: []
+  });
+
+  const json = JSON.stringify(exported.trace);
+  assert.doesNotMatch(json, /top-secret|dev@example\.com|private|hidden|Bearer abc|apiKey=123/);
+  assert.match(json, /mode=test/);
+  assert.match(json, /safe=yes/);
+  assert.equal(exported.totalRedactions, 6);
+  assert.equal(exported.report.sensitiveFields, 1);
+});
+
+test("validates imported trace schema", () => {
+  assert.deepEqual(TraceCore.validateImportedTrace({ schemaVersion: 1, status: "complete", timeline: [] }), { ok: true, error: null });
+  assert.match(TraceCore.validateImportedTrace({ schemaVersion: 2, status: "complete", timeline: [] }).error, /Unsupported schema/);
+  assert.match(TraceCore.validateImportedTrace({ schemaVersion: 1, status: "recording", timeline: [] }).error, /completed/);
+  assert.match(TraceCore.validateImportedTrace({ schemaVersion: 1, status: "complete", timeline: [{}] }).error, /timeline/);
+});
+
+test("builds a redacted Markdown trace report", () => {
+  const report = TraceCore.markdownReport({
+    schemaVersion: 1,
+    status: "complete",
+    pageUrl: "https://shop.example/?token=secret",
+    selectedElement: { text: "Buy" },
+    summary: "One request.",
+    quality: { score: 100, label: "strong" },
+    timeline: [{ atMs: 5, kind: "request", title: "GET /order", detail: "same-origin" }],
+    handlers: [], network: [], asyncEvents: []
+  });
+  assert.match(report, /^# Behaviour trace/);
+  assert.match(report, /Quality: 100% \(strong\)/);
+  assert.match(report, /\+5ms · request/);
+  assert.doesNotMatch(report, /token=secret/);
 });
 
 test("summary states captured evidence without overclaiming causality", () => {
@@ -279,8 +331,8 @@ test("shows a fallback timer chain and strengthens its adjacent DOM mutation", (
   assert.match(timerEvents[1].detail, /scheduled by handleReactCheckout/);
   assert.equal(timerEvents[1].frames[1].functionName, "handleReactCheckout");
   assert.equal(mutation.confidence, 0.9);
-  assert.match(mutation.detail, /immediately after setTimeout callback/);
-  assert.match(TraceCore.summarize(session), /2 timer events were captured with the local MAIN-world fallback/);
+  assert.match(mutation.detail, /immediately after async callback/);
+  assert.match(TraceCore.summarize(session), /2 async boundary events were captured with the local MAIN-world fallback/);
 });
 
 test("drops internal extension timer frames with omitted URLs", () => {

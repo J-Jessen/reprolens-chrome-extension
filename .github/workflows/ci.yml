@@ -18,7 +18,7 @@ jobs:
         corpus:
           - react-timer,native-success,fetch-failure,navigation,minified-map
           - minified-no-map,dom-text,dom-attribute,dom-add,dom-remove
-          - timer-zero,timer-delayed,fetch-get,fetch-post,fetch-404
+          - timer-zero,timer-delayed,timer-interval,animation-frame,fetch-get,fetch-post,fetch-404
           - parallel-fetch,console-warning,sync-error,hash-navigation,history-replace
     steps:
       - uses: actions/checkout@v7
@@ -46,3 +46,27 @@ jobs:
         env:
           CORPUS_CASES: ${{ matrix.corpus }}
           HEADLESS: "false"
+
+  package:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Install automated browser
+        run: echo "PUPPETEER_EXECUTABLE_PATH=$(npx puppeteer browsers install chrome --format '{{path}}')" >> "$GITHUB_ENV"
+      - name: Smoke-test packaged extension
+        run: npm run test:e2e
+        env:
+          EXTENSION_ROOT: dist
+          CORPUS_CASE: native-success
+      - uses: actions/upload-artifact@v4
+        with:
+          name: behaviour-tracer-extension
+          path: dist/
+          if-no-files-found: error

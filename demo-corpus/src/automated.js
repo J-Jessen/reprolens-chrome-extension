@@ -26,6 +26,19 @@ const actions = {
   "timer-delayed": function scheduleDelayedTimer() {
     setTimeout(function delayedTimerCallback() { status.textContent = "Delayed timer complete"; }, 200);
   },
+  "timer-interval": function scheduleInterval() {
+    let count = 0;
+    const intervalId = setInterval(function intervalTimerCallback() {
+      count += 1;
+      status.textContent = `Interval tick ${count}`;
+      if (count === 2) clearInterval(intervalId);
+    }, 60);
+  },
+  "animation-frame": function scheduleAnimationFrame() {
+    requestAnimationFrame(function animationFrameCallback() {
+      status.textContent = "Animation frame complete";
+    });
+  },
   "fetch-get": async function fetchGet() {
     const response = await fetch("/api/ok?case=fetch-get");
     status.textContent = (await response.json()).message;

@@ -2,9 +2,13 @@ const http = require("node:http");
 const fs = require("node:fs");
 const path = require("node:path");
 const puppeteer = require("puppeteer");
+const { AxePuppeteer } = require("@axe-core/puppeteer");
 const CorpusEvaluator = require("../corpus-evaluator.js");
 
-const ROOT = path.resolve(__dirname, "..");
+const PROJECT_ROOT = path.resolve(__dirname, "..");
+const EXTENSION_ROOT = process.env.EXTENSION_ROOT
+  ? path.resolve(PROJECT_ROOT, process.env.EXTENSION_ROOT)
+  : PROJECT_ROOT;
 const PORT = 0;
 const CASE_TIMEOUT_MS = 30000;
 
@@ -18,9 +22,9 @@ const MIME_TYPES = {
 
 function createFixtureServer() {
   const mounts = new Map([
-    ["/demo/", path.join(ROOT, "demo")],
-    ["/demo-react/", path.join(ROOT, "demo-react")],
-    ["/demo-corpus/", path.join(ROOT, "demo-corpus")]
+    ["/demo/", path.join(PROJECT_ROOT, "demo")],
+    ["/demo-react/", path.join(PROJECT_ROOT, "demo-react")],
+    ["/demo-corpus/", path.join(PROJECT_ROOT, "demo-corpus")]
   ]);
 
   return http.createServer((request, response) => {
@@ -175,7 +179,7 @@ async function main() {
         "--disable-renderer-backgrounding",
         "--disable-web-security"
       ],
-      enableExtensions: [ROOT]
+      enableExtensions: [EXTENSION_ROOT]
     });
     process.stdout.write("Browser launched\n");
 
@@ -188,6 +192,12 @@ async function main() {
     const extensionId = new URL(workerTarget.url()).host;
     const controller = await browser.newPage();
     await controller.goto(`chrome-extension://${extensionId}/panel.html`);
+    const accessibility = await new AxePuppeteer(controller).analyze();
+    const blockingViolations = accessibility.violations.filter((violation) => ["serious", "critical"].includes(violation.impact));
+    if (blockingViolations.length) {
+      throw new Error(`Panel accessibility violations: ${blockingViolations.map((item) => item.id).join(", ")}`);
+    }
+    process.stdout.write("Panel accessibility audit passed\n");
     const page = await browser.newPage();
     const cases = [
       ["react-timer", "/demo-react/index.html", "button", 3500],
@@ -197,7 +207,7 @@ async function main() {
       ["minified-map", "/demo-corpus/minified-map.html", "#mapped-action", 3500],
       ["minified-no-map", "/demo-corpus/minified-no-map.html", "#unmapped-action"],
       ...[
-        "dom-text", "dom-attribute", "dom-add", "dom-remove", "timer-zero", "timer-delayed",
+        "dom-text", "dom-attribute", "dom-add", "dom-remove", "timer-zero", "timer-delayed", "timer-interval", "animation-frame",
         "fetch-get", "fetch-post", "fetch-404", "parallel-fetch", "console-warning", "sync-error",
         "hash-navigation", "history-replace"
       ].map((id) => [id, `/demo-corpus/automated.html?case=${id}`, "#action"])
@@ -238,6 +248,16 @@ async function main() {
 
     const passed = results.filter((result) => result.passed).length;
     const rate = Math.round((passed / results.length) * 100);
+    const historyDeadline = Date.now() + 5000;
+    let history;
+    do {
+      history = await extensionMessage(controller, { type: "GET_HISTORY" });
+      if (history.traces?.length >= Math.min(selectedCases.length, 25)) break;
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    } while (Date.now() < historyDeadline);
+    if (history.historyEnabled !== true || history.traces?.length < Math.min(selectedCases.length, 25)) {
+      throw new Error(`Local history did not retain completed traces (${history.traces?.length || 0}/${selectedCases.length})`);
+    }
     process.stdout.write(`\n${passed}/${results.length} useful traces (${rate}%)\n`);
     if (passed !== results.length) process.exitCode = 1;
   } finally {

@@ -1,6 +1,6 @@
 # Behaviour Tracer PoC
 
-Current build: **0.2.0**
+Current build: **0.3.0**
 
 A local-first Chrome Manifest V3 proof-of-concept for the product hypothesis:
 
@@ -8,7 +8,7 @@ A local-first Chrome Manifest V3 proof-of-concept for the product hypothesis:
 
 This is an instrumentation experiment, not a production extension. It tests whether a useful trace can be assembled from a selected DOM element, JavaScript event-listener pauses, network traffic, runtime exceptions, navigation, and DOM mutations.
 
-## What version 0.1 does
+## What the current build does
 
 1. Selects an element visually on any normal `http(s)` page.
 2. Arms a single-click trace from the side panel.
@@ -23,14 +23,16 @@ This is an instrumentation experiment, not a production extension. It tests whet
 11. Scores trace coverage and shows concrete diagnostics for missing evidence, incomplete responses, timer fallbacks, and source-map failures.
 12. Labels every observed network event as same-origin, cross-origin, or unknown-origin relative to the traced page.
 13. Filters the timeline by evidence type, visually emphasizes strong evidence, and nests network responses beneath their requests.
+14. Keeps up to 25 completed traces locally, with history disable, delete, clear, and version-validated JSON import controls.
+15. Provides reviewed, automatically redacted JSON downloads and redacted Markdown reports.
 
-All trace processing is local. Version 0.1 has no backend, analytics, login, or AI call.
+All trace processing is local. The current build has no backend, analytics, login, or AI call.
 
 ## Install
 
 1. Open `chrome://extensions` in Chrome.
 2. Enable **Developer mode**.
-3. Choose **Load unpacked** and select this `behaviour-tracer-poc` directory.
+3. Run `npm run build`, then choose **Load unpacked** and select the generated `dist` directory. A GitHub release archive can be extracted and loaded the same way.
 4. Open or reload a normal website after installing.
 5. Click the extension icon to open its side panel.
 
@@ -76,7 +78,7 @@ The checked-in `app.js.map` maps the handler, timer schedule, and callback frame
 
 ## Run the validation corpus
 
-The automated corpus starts a fixture server and headless Chrome, loads the unpacked extension, runs all 20 interactions, and evaluates each captured trace:
+The automated corpus starts a fixture server and headless Chrome, loads the unpacked extension, runs all 22 interactions, and evaluates each captured trace:
 
 ```bash
 npm run test:e2e
@@ -91,6 +93,9 @@ npm test
 ```
 
 GitHub Actions runs the same test suite and rebuilds the checked-in React demo on every push and pull request.
+After the tests pass, CI also creates an installable `behaviour-tracer-extension` artifact containing runtime files only. A matching `v*` tag creates a GitHub release archive automatically.
+
+Privacy and security details are documented in `PRIVACY.md` and `SECURITY.md`. Contribution and verification requirements are in `CONTRIBUTING.md`.
 
 ## Project structure
 
@@ -109,7 +114,7 @@ GitHub Actions runs the same test suite and rebuilds the checked-in React demo o
 - Available source maps are fetched and applied locally. Missing, inaccessible, malformed, or unsupported maps fall back to deployed JavaScript locations.
 - Timer capture prefers CDP instrumentation. On Chrome builds without `EventBreakpoints`, the extension temporarily wraps the page's MAIN-world `setTimeout` during the trace and restores it on completion or automatically after 10 seconds.
 - Public state and copied JSON retain function names, deployed locations, source-mapped locations, and async parents, but remove CDP `callFrameId`, scope objects, receiver objects, and return values.
-- Promise continuations are retained through CDP async stacks when Chrome supplies them, but they do not yet appear as standalone timeline events. WebSockets and workers are not yet correlated.
+- Promise continuations are retained through CDP async stacks when Chrome supplies them, but they do not yet appear as standalone timeline events. `setTimeout`, `setInterval`, and `requestAnimationFrame` boundaries are explicit. WebSockets and workers are not yet correlated.
 - Same-document History API and fragment navigation are captured through `Page.navigatedWithinDocument` when the connected Chrome build exposes that experimental event.
 - Cross-origin iframes and browser-internal pages are outside this PoC.
 - Opening DevTools on the traced tab detaches `chrome.debugger`.

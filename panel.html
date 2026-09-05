@@ -25,6 +25,10 @@
           <button id="record" class="primary" disabled>Record one click</button>
         </div>
         <p id="status" class="status">Ready</p>
+        <details class="permission-note">
+          <summary>Why Chrome shows a debugging banner</summary>
+          <p>A short, user-started trace uses Chrome’s debugger API to observe call frames and network timing. It detaches automatically when the trace ends. No trace is uploaded.</p>
+        </details>
       </section>
 
       <section id="result" class="result hidden">
@@ -48,12 +52,17 @@
 
         <div class="timeline-header">
           <h2>Trace</h2>
-          <button id="copy" class="quiet">Copy JSON</button>
+          <div class="export-actions">
+            <button id="preview" class="quiet">Review export</button>
+            <button id="copy-markdown" class="quiet">Copy report</button>
+            <button id="copy" class="quiet">Copy safe JSON</button>
+          </div>
         </div>
         <div id="filters" class="filters" aria-label="Filter trace events">
           <button class="filter active" data-filter="all" aria-pressed="true">All</button>
           <button class="filter" data-filter="handler" aria-pressed="false">Handlers</button>
           <button class="filter" data-filter="network" aria-pressed="false">Network</button>
+          <button class="filter" data-filter="same-origin" aria-pressed="false">App network</button>
           <button class="filter" data-filter="async" aria-pressed="false">Async</button>
           <button class="filter" data-filter="dom" aria-pressed="false">DOM</button>
           <button class="filter" data-filter="errors" aria-pressed="false">Errors</button>
@@ -63,11 +72,41 @@
         <p class="caveat">“Direct” means instrumented causality. Lower confidence means temporal correlation inside the trace window.</p>
       </section>
 
+      <section class="history card">
+        <div class="history-heading">
+          <div>
+            <div class="section-label">LOCAL HISTORY</div>
+            <h2>Recent traces</h2>
+          </div>
+          <label class="toggle"><input id="history-enabled" type="checkbox" checked> Save</label>
+        </div>
+        <div id="history-list" class="history-list"></div>
+        <div class="history-actions">
+          <button id="import-trace" class="quiet">Import JSON</button>
+          <button id="clear-history" class="quiet">Clear history</button>
+          <input id="import-file" type="file" accept="application/json,.json" hidden>
+        </div>
+      </section>
+
+      <dialog id="export-dialog">
+        <div class="dialog-heading">
+          <div>
+            <div class="section-label">REDACTED EXPORT PREVIEW</div>
+            <h2>Review before sharing</h2>
+          </div>
+          <button id="close-preview" class="quiet" aria-label="Close preview">Close</button>
+        </div>
+        <p id="redaction-report"></p>
+        <pre id="export-preview"></pre>
+        <button id="download" class="primary">Download safe JSON</button>
+      </dialog>
+
       <section id="empty" class="empty">
         <div class="pulse"></div>
         <p>Your trace will appear here.</p>
       </section>
     </main>
+    <script src="trace-core.js"></script>
     <script src="panel.js"></script>
   </body>
 </html>

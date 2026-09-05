@@ -60,6 +60,8 @@
     "dom-remove": mutationScenario("Node removal", "removed"),
     "timer-zero": timerScenario("Zero-delay timer", "Immediate timer complete"),
     "timer-delayed": timerScenario("Delayed timer", "Delayed timer complete"),
+    "timer-interval": asyncScenario("Interval callback", "setInterval", "Interval tick 2"),
+    "animation-frame": asyncScenario("Animation frame callback", "requestAnimationFrame", "Animation frame complete"),
     "fetch-get": networkScenario("GET request", "GET ", "200 "),
     "fetch-post": networkScenario("POST request", "POST ", "200 "),
     "fetch-404": networkScenario("404 response without thrown error", "GET ", "404 "),
@@ -106,6 +108,18 @@
         ["timer", "Timer schedule and callback are captured", (trace) => events(trace, "async").length >= 2],
         ["lineage", "Timer callback points to its schedule", (trace) => events(trace, "async").some((event) => Boolean(event.parentId))],
         ["mutation", "Timer-driven DOM change is captured", (trace) => hasTitle(trace, expectedMutation, "mutation")]
+      ]
+    };
+  }
+
+  function asyncScenario(label, expectedBoundary, expectedMutation) {
+    return {
+      label,
+      checks: [
+        ["schedule", `${expectedBoundary} schedule is captured`, (trace) => hasTitle(trace, `${expectedBoundary} scheduled`, "async")],
+        ["callback", `${expectedBoundary} callback is captured`, (trace) => hasTitle(trace, `${expectedBoundary} callback`, "async")],
+        ["lineage", "Callback points to its schedule", (trace) => events(trace, "async").some((event) => Boolean(event.parentId))],
+        ["mutation", "Async DOM change is captured", (trace) => hasTitle(trace, expectedMutation, "mutation")]
       ]
     };
   }

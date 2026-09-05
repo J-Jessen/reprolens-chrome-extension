@@ -1,4 +1,4 @@
-# Version 0.1 architecture
+# Behaviour Tracer architecture
 
 ## Product boundary
 
@@ -100,11 +100,20 @@ Before any AI feature, version 0.2 needs a visible redaction preview and an expl
 ## Version 0.2 roadmap
 
 0. ✅ Add timeline filters, strong-evidence emphasis, and request/response grouping.
-1. Extend async lineage beyond the current `setTimeout` path to promises, intervals, animation frames, workers, and WebSockets.
+1. ◐ Extend async lineage beyond the original `setTimeout` path: intervals and animation frames are complete; promises, workers, and WebSockets remain.
 2. Extend the React adapter beyond component ownership only after defining safe state/props redaction.
 3. ✅ Distinguish same-origin application requests from cross-origin page traffic.
 4. ✅ Add trace quality diagnostics and coverage metrics.
 5. Add optional AI explanation over a user-reviewed, redacted trace.
+
+## Completed 0.2 foundations
+
+- Trace quality and coverage diagnostics.
+- Same-origin/cross-origin network classification, duration, and failure visibility.
+- Timeline filtering and request/response grouping.
+- Explicit redacted JSON and Markdown export with preview.
+- Bounded local history with disable, deletion, clearing, and schema-validated import.
+- Automated runtime packaging and tag-based GitHub releases.
 
 ## Validation harness
 

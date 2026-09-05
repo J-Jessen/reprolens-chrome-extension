@@ -2,7 +2,8 @@ importScripts("trace-core.js", "vendor/trace-mapping.js", "source-map.js", "fram
 
 const sessions = new Map();
 const TRACE_WINDOW_MS = 3500;
-const TIMER_STORE_KEY = "__behaviourTracerTimerStore_v014";
+const TIMER_STORE_KEY = "__behaviourTracerAsyncStore_v020";
+const HISTORY_LIMIT = 25;
 
 chrome.sidePanel
   .setPanelBehavior({ openPanelOnActionClick: true })
@@ -52,32 +53,52 @@ function publish(session) {
   }).catch(() => {});
 }
 
+async function historySettings() {
+  const stored = await chrome.storage.local.get({ historyEnabled: true });
+  return { historyEnabled: stored.historyEnabled !== false };
+}
+
+async function saveTraceToHistory(session) {
+  if (!(await historySettings()).historyEnabled) return;
+  const stored = await chrome.storage.local.get({ traceHistory: [] });
+  const trace = publicSession(session);
+  trace.historyId = `${Date.now()}-${session.tabId}`;
+  trace.savedAt = Date.now();
+  const traceHistory = [trace, ...stored.traceHistory].slice(0, HISTORY_LIMIT);
+  await chrome.storage.local.set({ traceHistory });
+}
+
 function command(tabId, method, params = {}) {
   return chrome.debugger.sendCommand({ tabId }, method, params);
 }
 
 function installTimerHookExpression() {
   function __behaviourTracerInstallTimerHook() {
-    const key = "__behaviourTracerTimerStore_v014";
+    const key = "__behaviourTracerAsyncStore_v020";
     const existing = window[key];
     if (existing?.installed) {
       existing.events.length = 0;
       return { installed: true, reused: true };
     }
 
-    const nativeSetTimeout = window.setTimeout;
+    const native = {
+      setTimeout: window.setTimeout,
+      setInterval: window.setInterval,
+      requestAnimationFrame: window.requestAnimationFrame
+    };
     const store = {
       installed: true,
       events: [],
-      nativeSetTimeout,
+      native,
       nextTimerId: 1,
-      wrapper: null,
+      wrappers: {},
       autoRestoreId: null
     };
 
-    function __behaviourTracerSetTimeout(callback, delay, ...args) {
+    function schedule(type, callback, delay) {
       const timerId = store.nextTimerId++;
       store.events.push({
+        type,
         phase: "scheduled",
         at: Date.now(),
         timerId,
@@ -86,12 +107,10 @@ function installTimerHookExpression() {
         stack: new Error().stack || ""
       });
 
-      if (typeof callback !== "function") {
-        return Reflect.apply(nativeSetTimeout, this, [callback, delay, ...args]);
-      }
-
-      function __behaviourTracerTimerCallback(...callbackArgs) {
+      if (typeof callback !== "function") return { timerId, callback };
+      function __behaviourTracerAsyncCallback(...callbackArgs) {
         store.events.push({
+          type,
           phase: "callback",
           at: Date.now(),
           timerId,
@@ -99,15 +118,35 @@ function installTimerHookExpression() {
         });
         return Reflect.apply(callback, this, callbackArgs);
       }
-
-      return Reflect.apply(nativeSetTimeout, this, [__behaviourTracerTimerCallback, delay, ...args]);
+      return { timerId, callback: __behaviourTracerAsyncCallback };
     }
 
-    store.wrapper = __behaviourTracerSetTimeout;
+    function __behaviourTracerSetTimeout(callback, delay, ...args) {
+      const captured = schedule("setTimeout", callback, delay);
+      return Reflect.apply(native.setTimeout, this, [captured.callback, delay, ...args]);
+    }
+
+    function __behaviourTracerSetInterval(callback, delay, ...args) {
+      const captured = schedule("setInterval", callback, delay);
+      return Reflect.apply(native.setInterval, this, [captured.callback, delay, ...args]);
+    }
+
+    function __behaviourTracerRequestAnimationFrame(callback) {
+      const captured = schedule("requestAnimationFrame", callback, 0);
+      return Reflect.apply(native.requestAnimationFrame, this, [captured.callback]);
+    }
+
+    store.wrappers.setTimeout = __behaviourTracerSetTimeout;
+    store.wrappers.setInterval = __behaviourTracerSetInterval;
+    if (typeof native.requestAnimationFrame === "function") {
+      store.wrappers.requestAnimationFrame = __behaviourTracerRequestAnimationFrame;
+    }
     Object.defineProperty(window, key, { configurable: true, value: store });
-    window.setTimeout = __behaviourTracerSetTimeout;
-    store.autoRestoreId = Reflect.apply(nativeSetTimeout, window, [function __behaviourTracerAutoRestore() {
-      if (window.setTimeout === store.wrapper) window.setTimeout = store.nativeSetTimeout;
+    for (const [name, wrapper] of Object.entries(store.wrappers)) window[name] = wrapper;
+    store.autoRestoreId = Reflect.apply(native.setTimeout, window, [function __behaviourTracerAutoRestore() {
+      for (const [name, wrapper] of Object.entries(store.wrappers)) {
+        if (window[name] === wrapper) window[name] = store.native[name];
+      }
       delete window[key];
     }, 10000]);
     return { installed: true, reused: false };
@@ -123,7 +162,9 @@ function collectTimerHookExpression() {
     if (!store?.installed) return [];
     const events = store.events.slice();
     if (store.autoRestoreId != null) window.clearTimeout(store.autoRestoreId);
-    if (window.setTimeout === store.wrapper) window.setTimeout = store.nativeSetTimeout;
+    for (const [name, wrapper] of Object.entries(store.wrappers || {})) {
+      if (window[name] === wrapper) window[name] = store.native[name];
+    }
     delete window[key];
     return events;
   })()`;
@@ -142,19 +183,26 @@ async function installTimerHook(tabId) {
 
 async function configureTimerCapture(tabId) {
   const failures = [];
+  const eventNames = [
+    "setTimeout", "setTimeout.callback",
+    "setInterval", "setInterval.callback",
+    "requestAnimationFrame", "requestAnimationFrame.callback"
+  ];
   for (const domain of ["EventBreakpoints", "DOMDebugger"]) {
     try {
-      await Promise.all([
-        command(tabId, `${domain}.setInstrumentationBreakpoint`, { eventName: "setTimeout" }),
-        command(tabId, `${domain}.setInstrumentationBreakpoint`, { eventName: "setTimeout.callback" })
-      ]);
+      await Promise.all(eventNames.map((eventName) => command(
+        tabId,
+        `${domain}.setInstrumentationBreakpoint`,
+        { eventName }
+      )));
       return { mode: "cdp", domain };
     } catch (error) {
       failures.push(error.message || String(error));
-      await Promise.all([
-        command(tabId, `${domain}.removeInstrumentationBreakpoint`, { eventName: "setTimeout" }).catch(() => {}),
-        command(tabId, `${domain}.removeInstrumentationBreakpoint`, { eventName: "setTimeout.callback" }).catch(() => {})
-      ]);
+      await Promise.all(eventNames.map((eventName) => command(
+        tabId,
+        `${domain}.removeInstrumentationBreakpoint`,
+        { eventName }
+      ).catch(() => {})));
     }
   }
 
@@ -184,7 +232,7 @@ async function collectTimerHookEvents(tabId, session) {
     if (raw.phase === "scheduled") {
       const event = {
         at: raw.at,
-        eventName: "hook:setTimeout",
+        eventName: `hook:${raw.type || "setTimeout"}`,
         timerId: raw.timerId,
         delay: raw.delay,
         callbackName: raw.callbackName,
@@ -198,13 +246,13 @@ async function collectTimerHookEvents(tabId, session) {
       const schedule = schedules.get(raw.timerId);
       session.asyncEvents.push({
         at: raw.at,
-        eventName: "hook:setTimeout.callback",
+        eventName: `hook:${raw.type || "setTimeout"}.callback`,
         timerId: raw.timerId,
         callbackName: raw.callbackName,
         captureMode: "main-world-hook",
         callFrames: [{ functionName: raw.callbackName || "(anonymous)", url: "" }],
         asyncStackTrace: schedule ? {
-          description: "setTimeout",
+          description: raw.type || "setTimeout",
           callFrames: schedule.callFrames
         } : null
       });
@@ -300,6 +348,7 @@ async function finishTrace(tabId) {
   session.quality = TraceCore.assessQuality(session);
   session.status = "complete";
   publish(session);
+  saveTraceToHistory(session).catch(() => {});
 }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -328,6 +377,48 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if (message.type === "CANCEL_TRACE") {
     finishTrace(tabId).then(() => sendResponse({ ok: true }));
+    return true;
+  }
+
+  if (message.type === "GET_HISTORY") {
+    Promise.all([
+      chrome.storage.local.get({ traceHistory: [] }),
+      historySettings()
+    ]).then(([stored, settings]) => sendResponse({ ...settings, traces: stored.traceHistory }));
+    return true;
+  }
+
+  if (message.type === "SET_HISTORY_ENABLED") {
+    chrome.storage.local.set({ historyEnabled: Boolean(message.enabled) })
+      .then(() => sendResponse({ ok: true }));
+    return true;
+  }
+
+  if (message.type === "DELETE_HISTORY_TRACE") {
+    chrome.storage.local.get({ traceHistory: [] }).then(({ traceHistory }) => {
+      const traces = traceHistory.filter((trace) => trace.historyId !== message.historyId);
+      return chrome.storage.local.set({ traceHistory: traces });
+    }).then(() => sendResponse({ ok: true }));
+    return true;
+  }
+
+  if (message.type === "CLEAR_HISTORY") {
+    chrome.storage.local.set({ traceHistory: [] }).then(() => sendResponse({ ok: true }));
+    return true;
+  }
+
+  if (message.type === "IMPORT_TRACE") {
+    const validation = TraceCore.validateImportedTrace(message.trace);
+    if (!validation.ok) {
+      sendResponse({ ok: false, error: validation.error });
+      return false;
+    }
+    chrome.storage.local.get({ traceHistory: [] }).then(({ traceHistory }) => {
+      const trace = TraceCore.sanitizePublicSession(message.trace);
+      trace.historyId = `import-${Date.now()}`;
+      trace.savedAt = Date.now();
+      return chrome.storage.local.set({ traceHistory: [trace, ...traceHistory].slice(0, HISTORY_LIMIT) });
+    }).then(() => sendResponse({ ok: true })).catch((error) => sendResponse({ ok: false, error: error.message }));
     return true;
   }
 
@@ -379,7 +470,7 @@ chrome.debugger.onEvent.addListener(async (source, method, params) => {
 
   if (method === "Debugger.paused") {
     const eventName = params.data?.eventName || "";
-    if (eventName.startsWith("instrumentation:setTimeout")) {
+    if (["setTimeout", "setInterval", "requestAnimationFrame"].some((name) => eventName.startsWith(`instrumentation:${name}`))) {
       const asyncEvent = {
         at,
         eventName,
@@ -424,6 +515,15 @@ chrome.debugger.onEvent.addListener(async (source, method, params) => {
       requestId: params.requestId,
       status: params.response?.status,
       url: params.response?.url,
+      type: params.type
+    });
+  } else if (method === "Network.loadingFailed") {
+    session.network.push({
+      phase: "failure",
+      at,
+      requestId: params.requestId,
+      errorText: params.errorText || "Request failed",
+      canceled: Boolean(params.canceled),
       type: params.type
     });
   } else if (method === "Runtime.exceptionThrown") {
@@ -480,6 +580,7 @@ chrome.debugger.onDetach.addListener(async (source, reason) => {
     session.error = `Debugger detached: ${reason}`;
   }
   publish(session);
+  saveTraceToHistory(session).catch(() => {});
 });
 
 chrome.tabs.onRemoved.addListener((tabId) => sessions.delete(tabId));

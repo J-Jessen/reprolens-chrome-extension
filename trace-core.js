@@ -47,7 +47,7 @@
   }
 
   function eventCategory(event) {
-    if (["request", "response"].includes(event?.kind)) return "network";
+    if (["request", "response", "network-failure"].includes(event?.kind)) return "network";
     if (event?.kind === "mutation") return "dom";
     if (event?.kind === "exception") return "errors";
     return event?.kind || "unknown";
@@ -55,6 +55,9 @@
 
   function filterTimeline(timeline, category = "all") {
     if (category === "all") return [...(timeline || [])];
+    if (category === "same-origin") {
+      return (timeline || []).filter((event) => event.kind === "interaction" || event.networkScope === "same-origin");
+    }
     return (timeline || []).filter((event) => event.kind === "interaction" || eventCategory(event) === category);
   }
 
@@ -136,6 +139,97 @@
       ...(event.frames ? { frames: event.frames.map(compactFrame).filter(Boolean) } : {})
     }));
     return copy;
+  }
+
+  function redactUrl(value, report) {
+    try {
+      const url = new URL(value);
+      const sensitive = /token|key|secret|password|passcode|auth|session|code/i;
+      for (const key of [...url.searchParams.keys()]) {
+        if (sensitive.test(key)) {
+          url.searchParams.set(key, "[REDACTED]");
+          report.urlParameters += 1;
+        }
+      }
+      return url.toString();
+    } catch (_) {
+      return value;
+    }
+  }
+
+  function redactString(value, report) {
+    let redacted = redactUrl(value, report);
+    redacted = redacted.replace(/[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/g, () => {
+      report.emailAddresses += 1;
+      return "[REDACTED_EMAIL]";
+    });
+    redacted = redacted.replace(/\bBearer\s+[A-Za-z0-9._~+/=-]+/gi, () => {
+      report.credentials += 1;
+      return "Bearer [REDACTED]";
+    });
+    redacted = redacted.replace(/\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}(?:\.[A-Za-z0-9_-]{8,})?/g, () => {
+      report.credentials += 1;
+      return "[REDACTED_TOKEN]";
+    });
+    if (/</.test(redacted)) {
+      redacted = redacted.replace(/\s(value|data-token|data-secret|data-password)=(['"])[\s\S]*?\2/gi, (_match, name, quote) => {
+        report.domValues += 1;
+        return ` ${name}=${quote}[REDACTED]${quote}`;
+      });
+    }
+    return redacted;
+  }
+
+  function redactForExport(session) {
+    const report = { sensitiveFields: 0, urlParameters: 0, emailAddresses: 0, credentials: 0, domValues: 0 };
+    const sensitiveKey = /^(?:authorization|cookie|cookies|password|passcode|secret|token|accessToken|refreshToken|requestBody|responseBody|postData)$/i;
+    function visit(value, key = "") {
+      if (sensitiveKey.test(key)) {
+        report.sensitiveFields += 1;
+        return "[REDACTED]";
+      }
+      if (typeof value === "string") return redactString(value, report);
+      if (Array.isArray(value)) return value.map((item) => visit(item));
+      if (value && typeof value === "object") {
+        return Object.fromEntries(Object.entries(value).map(([childKey, child]) => [childKey, visit(child, childKey)]));
+      }
+      return value;
+    }
+    const trace = visit(sanitizePublicSession(session));
+    return { trace, report, totalRedactions: Object.values(report).reduce((sum, count) => sum + count, 0) };
+  }
+
+  function validateImportedTrace(trace) {
+    if (!trace || typeof trace !== "object" || Array.isArray(trace)) return { ok: false, error: "Trace must be a JSON object." };
+    if (trace.schemaVersion !== 1) return { ok: false, error: `Unsupported schema version: ${trace.schemaVersion ?? "missing"}.` };
+    if (trace.status !== "complete") return { ok: false, error: "Only completed traces can be imported." };
+    if (!Array.isArray(trace.timeline) || !trace.timeline.every((event) => event && typeof event.kind === "string")) {
+      return { ok: false, error: "Trace timeline is invalid." };
+    }
+    return { ok: true, error: null };
+  }
+
+  function markdownReport(session) {
+    const { trace } = redactForExport(session);
+    const clean = (value) => String(value || "").replace(/[\r\n]+/g, " ").trim();
+    const lines = [
+      "# Behaviour trace",
+      "",
+      `- Page: ${clean(trace.pageUrl) || "Unknown"}`,
+      `- Element: ${clean(trace.selectedElement?.text || trace.selectedElement?.selector) || "Unknown"}`,
+      `- Quality: ${trace.quality?.score ?? 0}% (${trace.quality?.label || "unknown"})`,
+      "",
+      "## Summary",
+      "",
+      clean(trace.summary) || "No summary available.",
+      "",
+      "## Timeline",
+      ""
+    ];
+    for (const event of trace.timeline || []) {
+      lines.push(`- **+${event.atMs || 0}ms · ${clean(event.kind)}:** ${clean(event.title)}${event.detail ? ` — ${clean(event.detail)}` : ""}`);
+    }
+    return `${lines.join("\n")}\n`;
   }
 
   function locationLabel(frame) {
@@ -287,14 +381,15 @@
 
     relevantNetwork.forEach((item, index) => {
       const delta = relativeMs(item.at, origin, session.startedAt);
-      const kind = item.phase === "response" ? "response" : "request";
-      const request = item.phase === "response" ? requestById.get(item.requestId) : item;
+      const kind = item.phase === "response" ? "response" : item.phase === "failure" ? "network-failure" : "request";
+      const request = item.phase === "request" ? item : requestById.get(item.requestId);
       const scope = networkScope(request?.url || item.url, session.pageUrl);
       const evidence = request ? requestEvidence(request) : { allInitiatorFrames: [], displayFrames: [], matchesHandler: false };
       const initiatorFrames = evidence.displayFrames;
-      const score = item.phase === "response"
+      const score = item.phase === "response" || item.phase === "failure"
         ? Math.min(0.92, request ? requestConfidence(request) - 0.06 : confidenceFor(kind, delta))
         : requestConfidence(item);
+      const durationMs = request ? Math.max(0, Math.round(item.at - request.at)) : null;
 
       if (item.phase === "request") {
         const authoredFrame = evidence.allInitiatorFrames[0];
@@ -322,10 +417,13 @@
         atMs: delta,
         title: item.phase === "response"
           ? `${item.status || ""} ${request?.url || item.url || "response"}`.trim()
+          : item.phase === "failure"
+            ? `FAILED ${request?.url || item.url || "request"}`
           : `${item.method || "GET"} ${item.url}`,
-        detail: `${scope} · ${item.type || "Network"}${initiatorFrames[0] ? ` · from ${initiatorFrames[0].functionName}()` : ""}${locationLabel(initiatorFrames[0]) ? ` · ${locationLabel(initiatorFrames[0])}` : ""}`,
+        detail: `${scope} · ${item.type || "Network"}${item.errorText ? ` · ${item.errorText}` : ""}${durationMs != null && item.phase !== "request" ? ` · ${durationMs}ms` : ""}${initiatorFrames[0] ? ` · from ${initiatorFrames[0].functionName}()` : ""}${locationLabel(initiatorFrames[0]) ? ` · ${locationLabel(initiatorFrames[0])}` : ""}`,
         networkScope: scope,
-        parentId: item.phase === "response" ? requestEventIdById.get(item.requestId) || null : null,
+        durationMs: item.phase === "request" ? null : durationMs,
+        parentId: item.phase !== "request" ? requestEventIdById.get(item.requestId) || null : null,
         location: initiatorFrames[0] || null,
         frames: initiatorFrames,
         confidence: normalizeConfidence(score),
@@ -341,7 +439,10 @@
       const top = frames[0];
       if (!top) return;
       const isCallback = event.eventName?.endsWith(".callback");
-      const action = isCallback ? "setTimeout callback" : "setTimeout scheduled";
+      const asyncType = event.eventName?.includes("requestAnimationFrame")
+        ? "requestAnimationFrame"
+        : event.eventName?.includes("setInterval") ? "setInterval" : "setTimeout";
+      const action = `${asyncType} ${isCallback ? "callback" : "scheduled"}`;
       const id = `async-${index}`;
       const asyncParent = isCallback
         ? usefulFrames(flattenAsyncStack(event.asyncStackTrace), 8)[0]
@@ -377,7 +478,7 @@
       }
     });
 
-    const timerCallbacks = relevantAsyncEvents.filter((event) => event.eventName?.endsWith(".callback"));
+    const asyncCallbacks = relevantAsyncEvents.filter((event) => event.eventName?.endsWith(".callback"));
 
     const relevantMutations = (session.mutations || []).filter(afterInteraction);
     relevantMutations.filter((mutation) => {
@@ -388,14 +489,14 @@
         && !other.summary.startsWith("Attribute “"));
     }).forEach((mutation, index) => {
       const delta = relativeMs(mutation.at, origin, session.startedAt);
-      const followsTimerCallback = timerCallbacks.some((event) => Math.abs(event.at - mutation.at) <= 20);
-      const score = followsTimerCallback ? 0.9 : confidenceFor("mutation", delta);
+      const followsAsyncCallback = asyncCallbacks.some((event) => Math.abs(event.at - mutation.at) <= 20);
+      const score = followsAsyncCallback ? 0.9 : confidenceFor("mutation", delta);
       events.push({
         id: `mutation-${index}`,
         kind: "mutation",
         atMs: delta,
         title: mutation.summary,
-        detail: `${mutation.target || "DOM"}${followsTimerCallback ? " · immediately after setTimeout callback" : ""}`,
+        detail: `${mutation.target || "DOM"}${followsAsyncCallback ? " · immediately after async callback" : ""}`,
         confidence: score,
         confidenceLabel: confidenceLabel(score)
       });
@@ -443,7 +544,7 @@
       });
     });
 
-    const order = { interaction: 0, handler: 1, request: 2, response: 3, async: 4, mutation: 5, exception: 6, navigation: 7 };
+    const order = { interaction: 0, handler: 1, request: 2, response: 3, "network-failure": 3, async: 4, mutation: 5, exception: 6, navigation: 7 };
     return events.sort((a, b) => a.atMs - b.atMs || (order[a.kind] ?? 99) - (order[b.kind] ?? 99) || a.id.localeCompare(b.id));
   }
 
@@ -470,7 +571,7 @@
       const capture = session.timerCapture?.mode === "main-world-hook"
         ? "with the local MAIN-world fallback"
         : "with browser instrumentation";
-      sentences.push(`${asyncEvents.length} timer event${asyncEvents.length === 1 ? " was" : "s were"} captured ${capture}.`);
+      sentences.push(`${asyncEvents.length} async boundary event${asyncEvents.length === 1 ? " was" : "s were"} captured ${capture}.`);
     }
     if (mutations.length) sentences.push(`${mutations.length} DOM change group${mutations.length === 1 ? " was" : "s were"} recorded.`);
     if (navigations.length) sentences.push(`${navigations.length} navigation event${navigations.length === 1 ? " was" : "s were"} observed.`);
@@ -522,10 +623,13 @@
     confidenceLabel,
     eventCategory,
     filterTimeline,
+    markdownReport,
     networkScope,
     parseBrowserStack,
+    redactForExport,
     sanitizePublicSession,
     summarize,
+    validateImportedTrace,
     usefulFrames
   };
   root.TraceCore = api;
