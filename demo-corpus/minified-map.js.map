@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/minified-mapped.js"],
+  "sourcesContent": ["const mappedButton = document.getElementById(\"mapped-action\");\nconst mappedStatus = document.getElementById(\"status\");\n\nfunction runMappedScenario() {\n  mappedStatus.textContent = \"Mapped bundle action completed.\";\n  mappedButton.textContent = \"Mapped action complete\";\n  document.body.dataset.corpusResult = \"mapped\";\n}\n\nmappedButton.addEventListener(\"click\", runMappedScenario);\n"],
+  "mappings": "MAAA,IAAMA,EAAe,SAAS,eAAe,eAAe,EACtDC,EAAe,SAAS,eAAe,QAAQ,EAErD,SAASC,GAAoB,CAC3BD,EAAa,YAAc,kCAC3BD,EAAa,YAAc,yBAC3B,SAAS,KAAK,QAAQ,aAAe,QACvC,CAEAA,EAAa,iBAAiB,QAASE,CAAiB",
+  "names": ["mappedButton", "mappedStatus", "runMappedScenario"]
+}

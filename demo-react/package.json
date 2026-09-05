@@ -1,0 +1,15 @@
+{
+  "name": "behaviour-tracer-react-demo",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "build": "esbuild src/main.jsx --bundle --outfile=app.js --sourcemap --define:process.env.NODE_ENV='\"development\"'"
+  },
+  "dependencies": {
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2"
+  }
+}

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Behaviour Tracer</title>
+    <link rel="stylesheet" href="panel.css">
+  </head>
+  <body>
+    <main>
+      <header>
+        <div class="eyebrow">BEHAVIOUR TRACER · POC</div>
+        <h1>See what happened.</h1>
+        <p>Select an element, perform one click, and inspect the observed chain.</p>
+      </header>
+
+      <section class="controls card">
+        <div class="step">
+          <span>1</span>
+          <button id="pick">Select element</button>
+        </div>
+        <div id="selection" class="selection muted">No element selected</div>
+        <div class="step">
+          <span>2</span>
+          <button id="record" class="primary" disabled>Record one click</button>
+        </div>
+        <p id="status" class="status">Ready</p>
+      </section>
+
+      <section id="result" class="result hidden">
+        <div class="summary card">
+          <div class="section-label">DETERMINISTIC SUMMARY</div>
+          <p id="summary"></p>
+        </div>
+
+        <div class="timeline-header">
+          <h2>Trace</h2>
+          <button id="copy" class="quiet">Copy JSON</button>
+        </div>
+        <ol id="timeline" class="timeline"></ol>
+        <p class="caveat">“Direct” means instrumented causality. Lower confidence means temporal correlation inside the trace window.</p>
+      </section>
+
+      <section id="empty" class="empty">
+        <div class="pulse"></div>
+        <p>Your trace will appear here.</p>
+      </section>
+    </main>
+    <script src="panel.js"></script>
+  </body>
+</html>

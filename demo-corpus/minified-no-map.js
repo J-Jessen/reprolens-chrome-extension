@@ -1,0 +1,1 @@
+(()=>{var t=document.getElementById("unmapped-action"),e=document.getElementById("status");function n(){e.textContent="Unmapped bundle action completed.",t.textContent="Unmapped action complete",document.body.dataset.corpusResult="unmapped"}t.addEventListener("click",n);})();

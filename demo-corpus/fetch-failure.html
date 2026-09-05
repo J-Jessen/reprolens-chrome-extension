@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Corpus · expected fetch failure</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main>
+      <a class="back" href="index.html">← Corpus</a>
+      <section class="card">
+        <div class="eyebrow">FETCH FAILURE</div>
+        <h1>Missing order endpoint</h1>
+        <p>Expected trace: authored handler, GET request, 404 response, console error, and handled DOM state.</p>
+        <div class="action">
+          <strong>Scenario · 404</strong>
+          <button class="danger" id="run-failure">Run failing fetch</button>
+        </div>
+        <div class="status" id="status">Ready.</div>
+      </section>
+    </main>
+    <script src="src/fetch-failure.js"></script>
+  </body>
+</html>
