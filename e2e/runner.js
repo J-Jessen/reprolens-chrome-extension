@@ -162,20 +162,23 @@ async function main() {
   const port = await listen(server);
   process.stdout.write(`Fixture server listening on ${port}\n`);
   process.stdout.write(`Launching browser (headless=${process.env.HEADLESS !== "false"})\n`);
-  const browser = await puppeteer.launch({
-    headless: process.env.HEADLESS !== "false",
-    pipe: true,
-    args: [
-      "--disable-background-timer-throttling",
-      "--disable-backgrounding-occluded-windows",
-      "--disable-renderer-backgrounding",
-      "--disable-web-security"
-    ],
-    enableExtensions: [ROOT]
-  });
-  process.stdout.write("Browser launched\n");
-
+  let browser;
   try {
+    browser = await puppeteer.launch({
+      headless: process.env.HEADLESS !== "false",
+      pipe: true,
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-background-timer-throttling",
+        "--disable-backgrounding-occluded-windows",
+        "--disable-renderer-backgrounding",
+        "--disable-web-security"
+      ],
+      enableExtensions: [ROOT]
+    });
+    process.stdout.write("Browser launched\n");
+
     const workerTarget = await browser.waitForTarget(
       (target) => target.type() === "service_worker" && target.url().endsWith("/background.js"),
       { timeout: 10000 }
@@ -238,7 +241,7 @@ async function main() {
     process.stdout.write(`\n${passed}/${results.length} useful traces (${rate}%)\n`);
     if (passed !== results.length) process.exitCode = 1;
   } finally {
-    await closeBrowser(browser);
+    if (browser) await closeBrowser(browser);
     server.closeAllConnections();
     await new Promise((resolve) => server.close(resolve));
   }
