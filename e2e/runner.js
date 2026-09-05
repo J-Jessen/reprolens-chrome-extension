@@ -56,11 +56,23 @@ function createFixtureServer() {
         response.writeHead(error.code === "ENOENT" ? 404 : 500).end("Not found");
         return;
       }
+      let payload = body;
+      if (path.extname(filename) === ".js") {
+        const sourceMapName = body.toString().match(/sourceMappingURL=([^\s]+)/)?.[1];
+        const sourceMapPath = sourceMapName && path.resolve(path.dirname(filename), sourceMapName);
+        if (sourceMapPath?.startsWith(`${directory}${path.sep}`) && fs.existsSync(sourceMapPath)) {
+          const encodedMap = fs.readFileSync(sourceMapPath).toString("base64");
+          payload = Buffer.from(body.toString().replace(
+            `sourceMappingURL=${sourceMapName}`,
+            `sourceMappingURL=data:application/json;base64,${encodedMap}`
+          ));
+        }
+      }
       response.writeHead(200, {
         "content-type": MIME_TYPES[path.extname(filename)] || "application/octet-stream",
         "access-control-allow-origin": "*"
       });
-      response.end(body);
+      response.end(payload);
     });
   });
 }
