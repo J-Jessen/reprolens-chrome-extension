@@ -62,6 +62,16 @@
     }
   }
 
+  function siteOriginPattern(value) {
+    try {
+      const url = new URL(value);
+      if (!["http:", "https:"].includes(url.protocol)) return null;
+      return `${url.protocol}//${url.host}/*`;
+    } catch (_) {
+      return null;
+    }
+  }
+
   function eventCategory(event) {
     if (["request", "response", "network-failure"].includes(event?.kind)) return "network";
     if (event?.kind === "mutation") return "dom";
@@ -822,6 +832,7 @@
     redactForExport,
     sanitizePublicSession,
     serializedBytes,
+    siteOriginPattern,
     summarize,
     validateImportedTrace,
     usefulFrames

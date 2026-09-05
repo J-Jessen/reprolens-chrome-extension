@@ -2,6 +2,10 @@
 
 Behaviour Tracer is local-first. Trace collection, source-map resolution, quality scoring, history, and export redaction run inside the browser extension. The project has no backend, analytics, account system, or automatic upload.
 
+## Website access
+
+The extension has no required website host permissions and no always-on content script. When the user chooses **Select element** or **Record one click**, Chrome requests optional access to that exact HTTP or HTTPS origin and the extension injects its picker on demand. A grant persists for that website until the user revokes it in Chrome's extension settings. Access is never expanded automatically to unrelated hosts.
+
 ## Data collected during a trace
 
 - Selected element metadata, capped text, and capped outer HTML.

@@ -12,7 +12,7 @@ It deliberately excludes authentication, teams, cloud storage, AI explanations, 
 
 ```text
 Website
-  └─ content.js
+  └─ content.js (injected on demand after an optional per-origin grant)
      ├─ element picker
      ├─ interaction marker
      └─ MutationObserver
@@ -94,6 +94,7 @@ The interaction happens on the normal page, while the result remains visible bes
 ## Security and privacy boundary
 
 - No data leaves the browser in version 0.1.
+- No host is granted at install time and no content script runs until the user approves the active origin.
 - Captured HTML is capped at 2,000 characters.
 - Text is capped at 160 characters.
 - Request bodies, response bodies, cookies, headers, storage values, and form values are not captured.
@@ -133,6 +134,12 @@ Before any AI feature, version 0.2 needs a visible redaction preview and an expl
 - A dedicated primary-chain timeline filter and additive relationship-evidence metadata.
 - Stronger provider-token, named-credential, and private-key redaction for explicit exports.
 - A visible 5 MB local-history budget in addition to the 25-trace count limit.
+
+## Version 0.6 foundations
+
+- Optional per-origin HTTP/HTTPS access requested from a direct user action.
+- On-demand, idempotent picker injection instead of an always-on content script.
+- Automated manifest-policy checks that prevent broad required host access from returning unnoticed.
 
 ## Validation harness
 

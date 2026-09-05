@@ -81,6 +81,13 @@ test("distinguishes same-origin and cross-origin network traffic", () => {
   assert.equal(TraceCore.networkScope("not a url", "not a page url"), "unknown-origin");
 });
 
+test("builds the narrow optional host pattern for a website", () => {
+  assert.equal(TraceCore.siteOriginPattern("https://shop.example:8443/cart?id=1"), "https://shop.example:8443/*");
+  assert.equal(TraceCore.siteOriginPattern("http://127.0.0.1:4173/"), "http://127.0.0.1:4173/*");
+  assert.equal(TraceCore.siteOriginPattern("chrome://extensions"), null);
+  assert.equal(TraceCore.siteOriginPattern("not a url"), null);
+});
+
 test("filters timeline categories while retaining the interaction anchor", () => {
   const timeline = [
     { id: "interaction", kind: "interaction" },

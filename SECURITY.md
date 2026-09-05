@@ -12,4 +12,6 @@ Include the extension version, Chrome version, reproduction steps, and a redacte
 
 ## Security boundary
 
-The extension uses Chrome's `debugger` permission for short, user-initiated traces. It detaches after trace completion and does not evaluate page code except for scoped framework inspection and temporary async instrumentation. Exported data is redacted as defense in depth, but users are required to review it before sharing.
+The extension has no required host access and no always-on content script. It requests an optional grant for the exact active HTTP or HTTPS origin from a direct user action, injects the picker on demand, and never expands that grant to unrelated hosts automatically.
+
+It uses Chrome's `debugger` permission for short, user-initiated traces. It detaches after trace completion and does not evaluate page code except for scoped framework inspection and temporary async instrumentation. Exported data is redacted as defense in depth, but users are required to review it before sharing.

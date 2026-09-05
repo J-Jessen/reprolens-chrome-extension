@@ -1,16 +1,19 @@
 {
   "manifest_version": 3,
   "name": "Behaviour Tracer PoC",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "description": "Select an element, perform one interaction, and inspect the resulting browser behaviour.",
   "permissions": [
-    "activeTab",
     "debugger",
+    "scripting",
     "sidePanel",
     "storage",
     "tabs"
   ],
-  "host_permissions": ["<all_urls>"],
+  "optional_host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
   "background": {
     "service_worker": "background.js"
   },
@@ -19,13 +22,5 @@
   },
   "side_panel": {
     "default_path": "panel.html"
-  },
-  "content_scripts": [
-    {
-      "matches": ["<all_urls>"],
-      "js": ["content.js"],
-      "run_at": "document_start",
-      "all_frames": false
-    }
-  ]
+  }
 }

@@ -1,6 +1,6 @@
 # Behaviour Tracer PoC
 
-Current build: **0.5.1**
+Current build: **0.6.0**
 
 A local-first Chrome Manifest V3 proof-of-concept for the product hypothesis:
 
@@ -10,7 +10,7 @@ This is an instrumentation experiment, not a production extension. It tests whet
 
 ## What the current build does
 
-1. Selects an element visually on any normal `http(s)` page.
+1. Requests persistent access only to the current website when the user selects an element, then injects the picker on demand.
 2. Arms a single-click trace from the side panel.
 3. Attaches Chrome DevTools Protocol through `chrome.debugger`.
 4. Pauses and immediately resumes at click event listeners, retaining useful call frames.
@@ -35,8 +35,8 @@ All trace processing is local. The current build has no backend, analytics, logi
 1. Open `chrome://extensions` in Chrome.
 2. Enable **Developer mode**.
 3. Run `npm run build`, then choose **Load unpacked** and select the generated `dist` directory. A GitHub release archive can be extracted and loaded the same way.
-4. Open or reload a normal website after installing.
-5. Click the extension icon to open its side panel.
+4. Open a normal website and click the extension icon to open its side panel.
+5. Choose **Select element** and approve that website the first time. Previously approved websites do not prompt again.
 
 Chrome will show a debugging banner while a 3.5-second trace is active. This is expected: deep runtime tracing requires the `debugger` permission.
 
@@ -120,8 +120,9 @@ The versioned export contract and migration rules are documented in `TRACE_SCHEM
 - Promise continuations, queued microtasks, `setTimeout`, `setInterval`, and `requestAnimationFrame` boundaries are explicit when the browser or trace-scoped fallback exposes them. Worker and WebSocket lifecycle/message direction are captured without content; code running inside Workers is not yet inspected.
 - Same-document History API and fragment navigation are captured through `Page.navigatedWithinDocument` when the connected Chrome build exposes that experimental event.
 - Cross-origin iframes and browser-internal pages are outside this PoC.
+- Site access is granted to one exact HTTP or HTTPS origin at a time. Cross-origin source maps may remain unavailable until their own host is explicitly supported; tracing does not silently expand access.
 - Opening DevTools on the traced tab detaches `chrome.debugger`.
-- The extension requests broad host access for the experiment, including local source-map fetching. A production version should use optional, per-site access where technically possible and explain the debugger permission before activation.
+- The extension declares HTTP and HTTPS hosts as optional and requests only the active website from a direct **Select element** or **Record one click** action. Chrome's extension settings can revoke previously granted sites.
 
 ## Go/no-go test
 

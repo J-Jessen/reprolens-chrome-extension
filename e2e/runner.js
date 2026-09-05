@@ -1,13 +1,14 @@
 const http = require("node:http");
 const crypto = require("node:crypto");
 const fs = require("node:fs");
+const os = require("node:os");
 const path = require("node:path");
 const puppeteer = require("puppeteer");
 const { AxePuppeteer } = require("@axe-core/puppeteer");
 const CorpusEvaluator = require("../corpus-evaluator.js");
 
 const PROJECT_ROOT = path.resolve(__dirname, "..");
-const EXTENSION_ROOT = process.env.EXTENSION_ROOT
+const SOURCE_EXTENSION_ROOT = process.env.EXTENSION_ROOT
   ? path.resolve(PROJECT_ROOT, process.env.EXTENSION_ROOT)
   : PROJECT_ROOT;
 const PORT = 0;
@@ -20,6 +21,32 @@ const MIME_TYPES = {
   ".json": "application/json; charset=utf-8",
   ".map": "application/json; charset=utf-8"
 };
+
+function createTestExtensionRoot() {
+  const runtimeFiles = [
+    "manifest.json", "background.js", "content.js", "trace-core.js", "source-map.js", "framework-adapter.js",
+    "panel.html", "panel.js", "panel.css", "vendor/trace-mapping.js", "vendor/TRACE_MAPPING_LICENSE.txt"
+  ];
+  const manifestPath = path.join(SOURCE_EXTENSION_ROOT, "manifest.json");
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+  if (manifest.host_permissions?.length || manifest.content_scripts?.length) {
+    throw new Error("Production manifest must not grant persistent host access or inject static content scripts");
+  }
+  if (!manifest.optional_host_permissions?.includes("http://*/*") || !manifest.optional_host_permissions?.includes("https://*/*")) {
+    throw new Error("Production manifest must declare optional HTTP and HTTPS host access");
+  }
+
+  const destination = fs.mkdtempSync(path.join(os.tmpdir(), "behaviour-tracer-e2e-"));
+  for (const relative of runtimeFiles) {
+    const source = path.join(SOURCE_EXTENSION_ROOT, relative);
+    const target = path.join(destination, relative);
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    fs.copyFileSync(source, target);
+  }
+  manifest.host_permissions = ["http://127.0.0.1/*"];
+  fs.writeFileSync(path.join(destination, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
+  return destination;
+}
 
 function createFixtureServer() {
   const mounts = new Map([
@@ -147,6 +174,9 @@ async function runTrace({ page, worker, controller, baseUrl, pathname, selector,
   }, page.url());
   if (!tabId) throw new Error(`Could not find Chrome tab for ${page.url()}`);
 
+  await worker.evaluate(async (id) => {
+    await chrome.scripting.executeScript({ target: { tabId: id }, files: ["content.js"] });
+  }, tabId);
   await worker.evaluate((id) => chrome.tabs.sendMessage(id, { type: "START_PICKER" }), tabId);
   await page.click(selector);
   await page.waitForFunction((value) => document.querySelector(value), {}, selector);
@@ -184,6 +214,7 @@ async function runTrace({ page, worker, controller, baseUrl, pathname, selector,
 
 async function main() {
   const server = createFixtureServer();
+  const testExtensionRoot = createTestExtensionRoot();
   const port = await listen(server);
   process.stdout.write(`Fixture server listening on ${port}\n`);
   process.stdout.write(`Launching browser (headless=${process.env.HEADLESS !== "false"})\n`);
@@ -200,7 +231,7 @@ async function main() {
         "--disable-renderer-backgrounding",
         "--disable-web-security"
       ],
-      enableExtensions: [EXTENSION_ROOT]
+      enableExtensions: [testExtensionRoot]
     });
     process.stdout.write("Browser launched\n");
 
@@ -296,6 +327,7 @@ async function main() {
     if (browser) await closeBrowser(browser);
     server.closeAllConnections();
     await new Promise((resolve) => server.close(resolve));
+    fs.rmSync(testExtensionRoot, { recursive: true, force: true });
   }
 }
 

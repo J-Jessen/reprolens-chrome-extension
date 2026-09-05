@@ -1,4 +1,5 @@
 let activeTabId = null;
+let activeOriginPattern = null;
 let currentState = null;
 
 const pickButton = document.getElementById("pick");
@@ -144,9 +145,21 @@ filters.addEventListener("click", (event) => {
 async function getActiveTab() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab?.id) throw new Error("No active browser tab found.");
-  if (!/^https?:/.test(tab.url || "")) throw new Error("Open a normal http(s) page to start tracing.");
+  const originPattern = TraceCore.siteOriginPattern(tab.url);
+  if (!originPattern) throw new Error("Open a normal http(s) page to start tracing.");
   activeTabId = tab.id;
+  activeOriginPattern = originPattern;
   return tab;
+}
+
+async function ensureSiteAccess() {
+  if (!activeTabId || !activeOriginPattern) throw new Error("Open the extension again on the website you want to inspect.");
+  const granted = await chrome.permissions.request({ origins: [activeOriginPattern] });
+  if (!granted) throw new Error("Site access was not granted. Select the element again when you are ready.");
+  await chrome.scripting.executeScript({
+    target: { tabId: activeTabId },
+    files: ["content.js"]
+  });
 }
 
 async function refresh() {
@@ -164,17 +177,18 @@ async function refresh() {
 
 pickButton.addEventListener("click", async () => {
   try {
-    await getActiveTab();
+    await ensureSiteAccess();
     await chrome.tabs.sendMessage(activeTabId, { type: "START_PICKER" });
     setStatus("Click an element on the page");
   } catch (error) {
-    setStatus(error.message || "Reload the page once after installing the extension.");
+    setStatus(error.message || "Site access could not be enabled.");
   }
 });
 
 recordButton.addEventListener("click", async () => {
   recordButton.disabled = true;
   try {
+    await ensureSiteAccess();
     const response = await chrome.runtime.sendMessage({ type: "START_TRACE", tabId: activeTabId });
     if (!response?.ok) throw new Error(response?.error || "Could not start trace.");
     render(response.state);
