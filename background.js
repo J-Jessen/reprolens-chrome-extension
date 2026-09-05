@@ -24,6 +24,7 @@ function blankSession(tabId) {
     asyncEvents: [],
     timerCapture: null,
     network: [],
+    webSockets: [],
     mutations: [],
     exceptions: [],
     logs: [],
@@ -506,7 +507,8 @@ chrome.debugger.onEvent.addListener(async (source, method, params) => {
       url: params.request?.url,
       type: params.type,
       initiator: params.initiator?.type,
-      initiatorCallFrames: params.initiator?.stack?.callFrames || []
+      initiatorCallFrames: params.initiator?.stack?.callFrames || [],
+      initiatorAsyncStack: params.initiator?.stack?.parent || null
     });
   } else if (method === "Network.responseReceived") {
     session.network.push({
@@ -526,6 +528,21 @@ chrome.debugger.onEvent.addListener(async (source, method, params) => {
       canceled: Boolean(params.canceled),
       type: params.type
     });
+  } else if (method === "Network.webSocketCreated") {
+    session.webSockets.push({ phase: "created", at, requestId: params.requestId, url: params.url });
+  } else if (method === "Network.webSocketHandshakeResponseReceived") {
+    session.webSockets.push({ phase: "open", at, requestId: params.requestId, status: params.response?.status });
+  } else if (method === "Network.webSocketFrameSent" || method === "Network.webSocketFrameReceived") {
+    const frame = params.response || {};
+    session.webSockets.push({
+      phase: method.endsWith("Sent") ? "sent" : "received",
+      at,
+      requestId: params.requestId,
+      opcode: frame.opcode,
+      payloadBytes: typeof frame.payloadData === "string" ? frame.payloadData.length : 0
+    });
+  } else if (method === "Network.webSocketClosed") {
+    session.webSockets.push({ phase: "closed", at, requestId: params.requestId });
   } else if (method === "Runtime.exceptionThrown") {
     session.exceptions.push({
       at,

@@ -73,3 +73,23 @@ test("maps frames nested in an async timer stack", async () => {
   assert.equal(result.mappedFrames, 1);
   assert.match(frame.originalLocation.source, /src\/main\.jsx$/);
 });
+
+test("maps frames nested in a network initiator parent", async () => {
+  const map = JSON.parse(fs.readFileSync(path.join(__dirname, "../demo-react/app.js.map"), "utf8"));
+  const frame = {
+    functionName: "handleReactCheckout",
+    scriptId: "73",
+    url: "http://127.0.0.1:4175/app.js",
+    lineNumber: generatedLineNumberFor("const response = await fetch"),
+    columnNumber: 29
+  };
+  const session = {
+    handlers: [],
+    asyncEvents: [],
+    network: [{ initiatorCallFrames: [], initiatorAsyncStack: { description: "Promise.then", callFrames: [frame] } }],
+    scripts: { "73": { url: frame.url, sourceMapURL: "app.js.map" } }
+  };
+  const result = await SourceMapResolver.enrichSession(session, { fetchMap: async () => map });
+  assert.equal(result.mappedFrames, 1);
+  assert.match(frame.originalLocation.source, /src\/main\.jsx$/);
+});

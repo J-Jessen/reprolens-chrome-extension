@@ -56,7 +56,10 @@
 
     return [
       ...(session.handlers || []).flatMap((handler) => handler.callFrames || []),
-      ...(session.network || []).flatMap((item) => item.initiatorCallFrames || []),
+      ...(session.network || []).flatMap((item) => [
+        ...(item.initiatorCallFrames || []),
+        ...asyncStackFrames(item.initiatorAsyncStack)
+      ]),
       ...(session.asyncEvents || []).flatMap((event) => [
         ...(event.callFrames || []),
         ...asyncStackFrames(event.asyncStackTrace)

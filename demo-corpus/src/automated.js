@@ -55,6 +55,11 @@ const actions = {
     const responses = await Promise.all([fetch("/api/ok?item=1"), fetch("/api/ok?item=2")]);
     status.textContent = `${responses.length} requests complete`;
   },
+  "websocket-message": function openSocket() {
+    const socket = new WebSocket(`ws://${location.host}/socket`);
+    socket.addEventListener("open", () => socket.send("ping"));
+    socket.addEventListener("message", () => { status.textContent = "WebSocket message received"; });
+  },
   "console-warning": function logWarning() {
     console.warn("Expected automated corpus warning");
     status.textContent = "Warning logged";

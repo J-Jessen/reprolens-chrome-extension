@@ -7,6 +7,8 @@ Behaviour Tracer is local-first. Trace collection, source-map resolution, qualit
 - Selected element metadata, capped text, and capped outer HTML.
 - JavaScript function names and source locations exposed by Chrome DevTools Protocol.
 - Request URL, method, resource type, status, timing, and initiator locations.
+- WebSocket URL, lifecycle, direction, opcode, and payload length; message contents are not retained.
+- WebSocket URL, lifecycle, direction, opcode, and payload length; message contents are not retained.
 - DOM mutation summaries, navigation URLs, console warnings, and runtime exceptions.
 
 Request and response bodies, HTTP headers, cookies, storage values, form values, debugger scopes, and remote runtime objects are not intentionally captured.

@@ -126,7 +126,8 @@
     }));
     copy.network = (copy.network || []).map((item) => ({
       ...item,
-      initiatorCallFrames: (item.initiatorCallFrames || []).map(compactFrame).filter(Boolean)
+      initiatorCallFrames: (item.initiatorCallFrames || []).map(compactFrame).filter(Boolean),
+      initiatorAsyncStack: compactAsyncStack(item.initiatorAsyncStack)
     }));
     copy.asyncEvents = (copy.asyncEvents || []).map((event) => ({
       ...event,
@@ -317,7 +318,10 @@
     );
 
     function requestEvidence(item) {
-      const allInitiatorFrames = usefulFrames(item.initiatorCallFrames, 50);
+      const allInitiatorFrames = usefulFrames([
+        ...(item.initiatorCallFrames || []),
+        ...flattenAsyncStack(item.initiatorAsyncStack)
+      ], 50);
       const matchesHandler = allInitiatorFrames.some((frame) => handlerFrameKeys.has(frameKey(frame)));
       return {
         allInitiatorFrames,
@@ -377,6 +381,32 @@
     relevantNetwork.forEach((item, index) => {
       if (item.phase === "request") requestById.set(item.requestId, item);
       if (item.phase === "request") requestEventIdById.set(item.requestId, `network-${index}`);
+    });
+
+    const socketById = new Map();
+    (session.webSockets || []).filter(afterInteraction).forEach((item, index) => {
+      if (item.phase === "created") socketById.set(item.requestId, { ...item, eventId: `websocket-${index}` });
+      const created = socketById.get(item.requestId);
+      const socketUrl = created?.url || item.url || "WebSocket";
+      const scope = networkScope(socketUrl.replace(/^ws/, "http"), session.pageUrl);
+      const labels = {
+        created: `WebSocket connect ${socketUrl}`,
+        open: `WebSocket open${item.status ? ` · ${item.status}` : ""}`,
+        sent: "WebSocket frame sent",
+        received: "WebSocket frame received",
+        closed: "WebSocket closed"
+      };
+      events.push({
+        id: `websocket-${index}`,
+        kind: "websocket",
+        atMs: relativeMs(item.at, origin, session.startedAt),
+        title: labels[item.phase] || `WebSocket ${item.phase}`,
+        detail: `${scope}${item.payloadBytes != null ? ` · ${item.payloadBytes} payload bytes (content not captured)` : ""}`,
+        networkScope: scope,
+        parentId: item.phase === "created" ? null : created?.eventId || null,
+        confidence: item.phase === "created" ? 0.88 : 0.82,
+        confidenceLabel: "strong"
+      });
     });
 
     relevantNetwork.forEach((item, index) => {
@@ -559,6 +589,7 @@
     const mutations = timeline.filter((event) => event.kind === "mutation");
     const asyncEvents = timeline.filter((event) => event.kind === "async");
     const navigations = timeline.filter((event) => event.kind === "navigation");
+    const socketEvents = timeline.filter((event) => event.kind === "websocket");
     const errors = timeline.filter((event) => event.kind === "exception");
     const authoredHandlers = timeline.filter((event) => event.kind === "handler" && event.origin === "request-initiator");
 
@@ -575,6 +606,7 @@
     }
     if (mutations.length) sentences.push(`${mutations.length} DOM change group${mutations.length === 1 ? " was" : "s were"} recorded.`);
     if (navigations.length) sentences.push(`${navigations.length} navigation event${navigations.length === 1 ? " was" : "s were"} observed.`);
+    if (socketEvents.length) sentences.push(`${socketEvents.length} WebSocket lifecycle event${socketEvents.length === 1 ? " was" : "s were"} observed without capturing message contents.`);
     if (errors.length) sentences.push(`${errors.length} JavaScript error or warning event${errors.length === 1 ? " was" : "s were"} captured.`);
     if (!handlers.length) sentences.push("No page JavaScript handler frame was captured; native or framework-delegated behaviour may still have occurred.");
     return sentences.join(" ");

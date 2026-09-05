@@ -1,6 +1,6 @@
 # Validation corpus
 
-The corpus contains 22 distinct interaction shapes. A case passes only when every evaluator check succeeds; the product threshold is at least 80% useful traces across 20 or more interactions.
+The corpus contains 23 distinct interaction shapes. A case passes only when every evaluator check succeeds; the product threshold is at least 80% useful traces across 20 or more interactions.
 
 | ID | Scenario | Status |
 |---|---|---|
@@ -22,6 +22,7 @@ The corpus contains 22 distinct interaction shapes. A case passes only when ever
 | `fetch-post` | Successful POST | PASS |
 | `fetch-404` | Handled 404 response | PASS |
 | `parallel-fetch` | Parallel requests | PASS |
+| `websocket-message` | WebSocket lifecycle without message content | PASS |
 | `console-warning` | Console warning | PASS |
 | `sync-error` | Uncaught synchronous exception | PASS |
 | `hash-navigation` | Hash navigation | PASS |
@@ -39,7 +40,7 @@ GitHub Actions runs the same end-to-end corpus on every push and pull request, s
 
 ## Automated result
 
-- Executed: 22 interactions
-- Passed: 22
+- Executed: 23 interactions
+- Passed: 23
 - Useful-trace rate: 100%
 - Decision: the predefined minimum sample and useful-trace threshold are satisfied.

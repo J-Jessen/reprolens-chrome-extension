@@ -1,6 +1,6 @@
 # Behaviour Tracer PoC
 
-Current build: **0.3.1**
+Current build: **0.3.2**
 
 A local-first Chrome Manifest V3 proof-of-concept for the product hypothesis:
 
@@ -25,6 +25,7 @@ This is an instrumentation experiment, not a production extension. It tests whet
 13. Filters the timeline by evidence type, visually emphasizes strong evidence, and nests network responses beneath their requests.
 14. Keeps up to 25 completed traces locally, with history disable, delete, clear, and version-validated JSON import controls.
 15. Provides reviewed, automatically redacted JSON downloads and redacted Markdown reports.
+16. Correlates Promise-parented network initiators and privacy-safe WebSocket lifecycle/frame metadata without storing message content.
 
 All trace processing is local. The current build has no backend, analytics, login, or AI call.
 
@@ -78,7 +79,7 @@ The checked-in `app.js.map` maps the handler, timer schedule, and callback frame
 
 ## Run the validation corpus
 
-The automated corpus starts a fixture server and headless Chrome, loads the unpacked extension, runs all 22 interactions, and evaluates each captured trace:
+The automated corpus starts a fixture server and headless Chrome, loads the unpacked extension, runs all 23 interactions, and evaluates each captured trace:
 
 ```bash
 npm run test:e2e
@@ -114,7 +115,7 @@ Privacy and security details are documented in `PRIVACY.md` and `SECURITY.md`. C
 - Available source maps are fetched and applied locally. Missing, inaccessible, malformed, or unsupported maps fall back to deployed JavaScript locations.
 - Timer capture prefers CDP instrumentation. On Chrome builds without `EventBreakpoints`, the extension temporarily wraps the page's MAIN-world `setTimeout` during the trace and restores it on completion or automatically after 10 seconds.
 - Public state and copied JSON retain function names, deployed locations, source-mapped locations, and async parents, but remove CDP `callFrameId`, scope objects, receiver objects, and return values.
-- Promise continuations are retained through CDP async stacks when Chrome supplies them, but they do not yet appear as standalone timeline events. `setTimeout`, `setInterval`, and `requestAnimationFrame` boundaries are explicit. WebSockets and workers are not yet correlated.
+- Promise continuations are retained through CDP async stacks—including network initiator parents—when Chrome supplies them, but they do not yet appear as standalone timeline events. `setTimeout`, `setInterval`, and `requestAnimationFrame` boundaries are explicit. WebSocket lifecycle and frame direction are captured without message contents; workers are not yet correlated.
 - Same-document History API and fragment navigation are captured through `Page.navigatedWithinDocument` when the connected Chrome build exposes that experimental event.
 - Cross-origin iframes and browser-internal pages are outside this PoC.
 - Opening DevTools on the traced tab detaches `chrome.debugger`.

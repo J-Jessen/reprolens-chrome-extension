@@ -1,4 +1,5 @@
 const http = require("node:http");
+const crypto = require("node:crypto");
 const fs = require("node:fs");
 const path = require("node:path");
 const puppeteer = require("puppeteer");
@@ -27,7 +28,7 @@ function createFixtureServer() {
     ["/demo-corpus/", path.join(PROJECT_ROOT, "demo-corpus")]
   ]);
 
-  return http.createServer((request, response) => {
+  const server = http.createServer((request, response) => {
     const url = new URL(request.url, "http://127.0.0.1");
     if (url.pathname === "/api/ok") {
       response.writeHead(200, { "content-type": "application/json" }).end(JSON.stringify({ message: "GET complete" }));
@@ -80,6 +81,26 @@ function createFixtureServer() {
       response.end(payload);
     });
   });
+  server.on("upgrade", (request, socket) => {
+    if (request.url !== "/socket" || !request.headers["sec-websocket-key"]) {
+      socket.destroy();
+      return;
+    }
+    const accept = crypto.createHash("sha1")
+      .update(`${request.headers["sec-websocket-key"]}258EAFA5-E914-47DA-95CA-C5AB0DC85B11`)
+      .digest("base64");
+    socket.write([
+      "HTTP/1.1 101 Switching Protocols",
+      "Upgrade: websocket",
+      "Connection: Upgrade",
+      `Sec-WebSocket-Accept: ${accept}`,
+      "\r\n"
+    ].join("\r\n"));
+    const payload = Buffer.from("ready");
+    socket.write(Buffer.concat([Buffer.from([0x81, payload.length]), payload]));
+    setTimeout(() => socket.end(), 150);
+  });
+  return server;
 }
 
 async function listen(server) {
@@ -208,7 +229,7 @@ async function main() {
       ["minified-no-map", "/demo-corpus/minified-no-map.html", "#unmapped-action"],
       ...[
         "dom-text", "dom-attribute", "dom-add", "dom-remove", "timer-zero", "timer-delayed", "timer-interval", "animation-frame",
-        "fetch-get", "fetch-post", "fetch-404", "parallel-fetch", "console-warning", "sync-error",
+        "fetch-get", "fetch-post", "fetch-404", "parallel-fetch", "websocket-message", "console-warning", "sync-error",
         "hash-navigation", "history-replace"
       ].map((id) => [id, `/demo-corpus/automated.html?case=${id}`, "#action"])
     ];

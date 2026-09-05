@@ -366,7 +366,11 @@ test("sanitizes public sessions without leaking CDP runtime objects", () => {
   const session = {
     scripts: { "73": { url: "http://localhost/app.js", sourceMapURL: "app.js.map" } },
     handlers: [{ at: 1000, callFrames: [sensitiveFrame] }],
-    network: [{ phase: "request", initiatorCallFrames: [sensitiveFrame] }],
+    network: [{
+      phase: "request",
+      initiatorCallFrames: [sensitiveFrame],
+      initiatorAsyncStack: { description: "Promise.then", callFrames: [sensitiveFrame] }
+    }],
     asyncEvents: [{
       callFrames: [sensitiveFrame],
       asyncStackTrace: { description: "setTimeout", callFrames: [sensitiveFrame] }
@@ -380,5 +384,6 @@ test("sanitizes public sessions without leaking CDP runtime objects", () => {
   assert.doesNotMatch(json, /callFrameId|scopeChain|objectId|returnValue|sensitive-/);
   assert.equal(sanitized.handlers[0].callFrames[0].location.scriptId, "73");
   assert.equal(sanitized.handlers[0].callFrames[0].originalLocation.source, "src/main.jsx");
+  assert.equal(sanitized.network[0].initiatorAsyncStack.callFrames[0].location.scriptId, "73");
   assert.equal(session.handlers[0].callFrames[0].scopeChain[0].object.objectId, "sensitive-scope-id");
 });

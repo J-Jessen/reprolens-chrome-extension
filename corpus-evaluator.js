@@ -73,6 +73,16 @@
         ["mutation", "Parallel completion state is captured", (trace) => hasTitle(trace, "2 requests complete", "mutation")]
       ]
     },
+    "websocket-message": {
+      label: "WebSocket lifecycle without payload capture",
+      checks: [
+        ["connect", "WebSocket connection is captured", (trace) => hasTitle(trace, "WebSocket connect", "websocket")],
+        ["open", "WebSocket handshake is captured", (trace) => hasTitle(trace, "WebSocket open", "websocket")],
+        ["frame", "WebSocket frame direction is captured", (trace) => hasTitle(trace, "frame received", "websocket")],
+        ["privacy", "WebSocket payload content is absent", (trace) => !JSON.stringify(trace.webSockets || []).includes("ready")],
+        ["mutation", "Message-driven DOM change is captured", (trace) => hasTitle(trace, "WebSocket message received", "mutation")]
+      ]
+    },
     "console-warning": {
       label: "Console warning",
       checks: [
