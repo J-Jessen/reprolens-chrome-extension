@@ -20,7 +20,7 @@ jobs:
       - run: npm run check
       - run: npm run build
       - name: Verify tag matches extension version
-        run: test "$GITHUB_REF_NAME" = "v$(node -p 'require(\"./package.json\").version')"
+        run: node scripts/check-release-tag.js "$GITHUB_REF_NAME"
       - name: Create installable archive
         run: cd dist && zip -r "../behaviour-tracer-${GITHUB_REF_NAME}.zip" .
       - name: Publish GitHub release

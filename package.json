@@ -1,6 +1,6 @@
 {
   "name": "behavior-trace-chrome-extension",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "private": true,
   "description": "Local-first Chrome extension for tracing browser behaviour from a selected interaction",
   "scripts": {
@@ -9,7 +9,7 @@
     "build:react": "npm --prefix demo-react run build",
     "check:version": "node scripts/check-version.js",
     "build": "npm run check:version && node scripts/package-extension.js",
-    "check": "node --check background.js && node --check content.js && node --check trace-core.js && node --check corpus-evaluator.js && node --check e2e/runner.js && node --check panel.js && node --check scripts/check-version.js && node --check scripts/package-extension.js && npm run check:version && npm test"
+    "check": "node --check background.js && node --check content.js && node --check trace-core.js && node --check corpus-evaluator.js && node --check e2e/runner.js && node --check panel.js && node --check scripts/check-version.js && node --check scripts/check-release-tag.js && node --check scripts/package-extension.js && npm run check:version && npm test"
   },
   "engines": {
     "node": ">=20"

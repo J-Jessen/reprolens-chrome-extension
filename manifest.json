@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Behaviour Tracer PoC",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Select an element, perform one interaction, and inspect the resulting browser behaviour.",
   "permissions": [
     "activeTab",

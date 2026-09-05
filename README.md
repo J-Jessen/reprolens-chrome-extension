@@ -1,6 +1,6 @@
 # Behaviour Tracer PoC
 
-Current build: **0.3.0**
+Current build: **0.3.1**
 
 A local-first Chrome Manifest V3 proof-of-concept for the product hypothesis:
 
