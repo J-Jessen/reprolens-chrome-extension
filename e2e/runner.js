@@ -6,6 +6,7 @@ const CorpusEvaluator = require("../corpus-evaluator.js");
 
 const ROOT = path.resolve(__dirname, "..");
 const PORT = 0;
+const CASE_TIMEOUT_MS = 30000;
 
 const MIME_TYPES = {
   ".css": "text/css; charset=utf-8",
@@ -98,6 +99,20 @@ async function closeBrowser(browser) {
   if (process?.exitCode == null) process.kill("SIGKILL");
 }
 
+async function withTimeout(promise, timeoutMs, label) {
+  let timeout;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise((_, reject) => {
+        timeout = setTimeout(() => reject(new Error(`${label} timed out after ${timeoutMs}ms`)), timeoutMs);
+      })
+    ]);
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 async function runTrace({ page, worker, controller, baseUrl, pathname, selector, traceWindowMs = 1200 }) {
   await page.goto(`${baseUrl}${pathname}`, { waitUntil: "domcontentloaded" });
   await page.waitForSelector(selector);
@@ -145,6 +160,8 @@ async function runTrace({ page, worker, controller, baseUrl, pathname, selector,
 async function main() {
   const server = createFixtureServer();
   const port = await listen(server);
+  process.stdout.write(`Fixture server listening on ${port}\n`);
+  process.stdout.write(`Launching browser (headless=${process.env.HEADLESS !== "false"})\n`);
   const browser = await puppeteer.launch({
     headless: process.env.HEADLESS !== "false",
     pipe: true,
@@ -156,12 +173,14 @@ async function main() {
     ],
     enableExtensions: [ROOT]
   });
+  process.stdout.write("Browser launched\n");
 
   try {
     const workerTarget = await browser.waitForTarget(
       (target) => target.type() === "service_worker" && target.url().endsWith("/background.js"),
       { timeout: 10000 }
     );
+    process.stdout.write("Extension service worker ready\n");
     const worker = await workerTarget.worker();
     const extensionId = new URL(workerTarget.url()).host;
     const controller = await browser.newPage();
@@ -192,7 +211,8 @@ async function main() {
     }
     const results = [];
     for (const [scenarioId, pathname, selector, traceWindowMs] of selectedCases) {
-      const trace = await runTrace({
+      process.stdout.write(`START ${scenarioId}\n`);
+      const trace = await withTimeout(runTrace({
         page,
         worker,
         controller,
@@ -200,7 +220,7 @@ async function main() {
         pathname,
         selector,
         traceWindowMs
-      });
+      }), CASE_TIMEOUT_MS, scenarioId);
       const result = CorpusEvaluator.evaluateTrace(trace, scenarioId);
       results.push(result);
       const mark = result.passed ? "PASS" : "FAIL";
