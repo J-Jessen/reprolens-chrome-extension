@@ -111,12 +111,21 @@ async function runTrace({ page, worker, controller, baseUrl, pathname, selector,
   await page.click(selector);
   await page.waitForFunction((value) => document.querySelector(value), {}, selector);
 
+  await page.evaluate((value) => {
+    setTimeout(() => document.querySelector(value)?.click(), 2000);
+  }, selector);
   const start = await extensionMessage(controller, { type: "START_TRACE", tabId, traceWindowMs });
   if (!start?.ok) throw new Error(start?.error || "Trace could not start");
-  const interaction = page.click(selector);
+  const interactionDeadline = Date.now() + 7000;
+  while (true) {
+    const current = await extensionMessage(controller, { type: "GET_STATE", tabId });
+    if (current.status === "recording") break;
+    if (current.status === "error") throw new Error(current.error);
+    if (Date.now() >= interactionDeadline) throw new Error(`Timed out waiting for interaction (${current.status})`);
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
   await new Promise((resolve) => setTimeout(resolve, traceWindowMs + 100));
   await extensionMessage(controller, { type: "CANCEL_TRACE", tabId });
-  await interaction;
 
   let state;
   await new Promise((resolve, reject) => {
