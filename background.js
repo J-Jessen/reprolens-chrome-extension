@@ -386,6 +386,7 @@ async function collectTimerHookEvents(tabId, session) {
 }
 
 function breakpointEvents(interactionMode) {
+  if (interactionMode === "multi") return INTERACTION_BREAKPOINTS.filter((eventName) => eventName !== "keydown");
   const eventByMode = {
     click: "click",
     keyboard: "keydown",
@@ -535,6 +536,7 @@ async function startMultiTrace(tabId) {
   const tab = await chrome.tabs.get(tabId);
   const session = blankSession(tabId);
   session.mode = "multi";
+  session.interactionMode = "multi";
   session.status = "attaching";
   session.startedAt = Date.now();
   session.pageUrl = tab.url || "";
@@ -543,7 +545,7 @@ async function startMultiTrace(tabId) {
   publish(session);
 
   try {
-    session.timerCapture = await attach(tabId, "auto", MULTI_TRACE_WINDOW_MS + 10000);
+    session.timerCapture = await attach(tabId, "multi", MULTI_TRACE_WINDOW_MS + 10000);
     session.status = "multi-recording";
     await chrome.tabs.sendMessage(tabId, { type: "START_MULTI_RECORDING", nextStepId: 1 });
     await chrome.alarms.create(`${TRACE_ALARM_PREFIX}${tabId}`, { when: Date.now() + MULTI_TRACE_WINDOW_MS });

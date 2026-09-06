@@ -65,6 +65,7 @@ multi:  idle → attaching → multi-recording → processing → complete
 - `armed`: debugger is attached and the selected interaction listener breakpoint is active.
 - `recording`: the content script observed the next matching interaction; the 3.5-second window is running.
 - `multi-recording`: the content script records up to 30 supported interaction summaries for up to two minutes on the granted website.
+- During a multi-step journey, character keydowns are ignored and the debugger keydown breakpoint is disabled so normal typing cannot repeatedly pause the page. Named control keys remain privacy-safe steps; a dedicated one-step keyboard trace provides handler frames when required.
 - `processing`: debugger detaches and evidence is normalized.
 - `complete`: immutable timeline is ready for display/export.
 

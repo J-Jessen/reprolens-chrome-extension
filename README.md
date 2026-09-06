@@ -153,6 +153,7 @@ The versioned export contract and migration rules are documented in `TRACE_SCHEM
 - Chrome's on-device Prompt API requires Chrome 148+ on a supported desktop device and may require an initial model download. Chromium-based browsers that do not expose `LanguageModel`, including the current Brave beta-test setup, receive an actionable browser-specific explanation instead. The deterministic explanation always remains available; there is no cloud fallback.
 - The extension declares HTTP and HTTPS hosts as optional and requests only the active website from a direct **Select element for one-step trace**, **Record selected interaction**, or **Record a user journey** action. Chrome's extension settings can revoke previously granted sites.
 - Multi-step recording stops when the active tab leaves the website whose origin was granted. Cross-origin journeys must be captured as separate reports.
+- Multi-step recording ignores typed character keydowns and does not arm Chrome's keydown listener breakpoint, preventing normal typing from repeatedly pausing the page. Named control keys still appear as reproduction steps; use a one-step keyboard trace when handler call frames are required.
 - Generated Playwright tests are privacy-safe starting points, not guaranteed final tests. Values and complex drop interactions require explicit non-production fixtures, and TODO comments remain where the trace cannot infer a safe assertion.
 
 ## Go/no-go test
