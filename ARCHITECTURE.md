@@ -1,4 +1,4 @@
-# Behaviour Tracer architecture
+# ReproLens architecture
 
 ## Product boundary
 

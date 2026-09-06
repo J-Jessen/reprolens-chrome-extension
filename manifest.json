@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "Behaviour Tracer Beta",
-  "version": "0.10.0",
+  "name": "ReproLens Beta",
+  "version": "0.11.0",
   "minimum_chrome_version": "118",
   "description": "BETA: Record browser behaviour, create a safe bug report, open a GitHub issue, and generate a Playwright test.",
   "permissions": [
@@ -20,7 +20,7 @@
     "service_worker": "background.js"
   },
   "action": {
-    "default_title": "Open Behaviour Tracer"
+    "default_title": "Open ReproLens"
   },
   "side_panel": {
     "default_path": "panel.html"

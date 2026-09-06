@@ -86,10 +86,10 @@
   function showOverlay(element) {
     const rect = element.getBoundingClientRect();
     const overlay = ensureOverlay();
-    overlay.style.setProperty("--behaviour-tracer-left", `${rect.left}px`);
-    overlay.style.setProperty("--behaviour-tracer-top", `${rect.top}px`);
-    overlay.style.setProperty("--behaviour-tracer-width", `${rect.width}px`);
-    overlay.style.setProperty("--behaviour-tracer-height", `${rect.height}px`);
+    overlay.style.setProperty("--reprolens-left", `${rect.left}px`);
+    overlay.style.setProperty("--reprolens-top", `${rect.top}px`);
+    overlay.style.setProperty("--reprolens-width", `${rect.width}px`);
+    overlay.style.setProperty("--reprolens-height", `${rect.height}px`);
     overlay.classList.add("__behaviour_tracer_visible");
   }
 

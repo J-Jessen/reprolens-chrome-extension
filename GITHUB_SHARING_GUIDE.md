@@ -4,8 +4,8 @@ The repository is private and owned by the personal account `J-Jessen`. The sele
 
 ## Selected Round 1 method
 
-1. Open the private [v0.10.0-beta.1 release](https://github.com/J-Jessen/behavior-trace-chrome-extension/releases/tag/v0.10.0-beta.1).
-2. Download `behaviour-tracer-v0.10.0-beta.1.zip` from **Assets**. Do not download GitHub's automatic source archive.
+1. Open the private [v0.11.0-beta.1 release](https://github.com/J-Jessen/reprolens-chrome-extension/releases/tag/v0.11.0-beta.1).
+2. Download `reprolens-v0.11.0-beta.1.zip` from **Assets**. Do not download GitHub's automatic source archive.
 3. Send the ZIP through an access-controlled channel already associated with the tester, such as a restricted cloud share, direct email, or encrypted messenger.
 4. Send the acceptance message from `TESTER_RECRUITMENT.md`.
 5. Ask the tester to return completed bug and feedback forms through the same channel.
@@ -31,7 +31,7 @@ Never ask for their password, personal access token, recovery codes, or SSH priv
 
 ## Invite a future contributor
 
-1. Sign in to GitHub and open `https://github.com/J-Jessen/behavior-trace-chrome-extension`.
+1. Sign in to GitHub and open `https://github.com/J-Jessen/reprolens-chrome-extension`.
 2. Select **Settings** under the repository name.
 3. In the left sidebar under **Access**, select **Collaborators**.
 4. Select **Add people**.
@@ -42,9 +42,9 @@ Never ask for their password, personal access token, recovery codes, or SSH priv
 
 ## Message to send to a future contributor
 
-> Du har nu adgang til det private Behaviour Tracer-repository.
+> Du har nu adgang til det private ReproLens-repository.
 >
-> Start her: [CONTRIBUTING.md](https://github.com/J-Jessen/behavior-trace-chrome-extension/blob/main/CONTRIBUTING.md)
+> Start her: [CONTRIBUTING.md](https://github.com/J-Jessen/reprolens-chrome-extension/blob/main/CONTRIBUTING.md)
 >
 > Brug en separat branch og pull request til foreslåede ændringer. Undlad at pushe direkte til `main` eller ændre repository-indstillinger.
 >

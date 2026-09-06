@@ -2,11 +2,11 @@
 
 Status: **not submitted**. The extension is currently distributed as a private beta archive. This file is the source of truth for a future Chrome Web Store submission.
 
-Last updated: 6 September 2026 · Current extension version: `0.10.0`
+Last updated: 6 September 2026 · Current extension version: `0.11.0`
 
 ## Listing
 
-- Product name: `Behaviour Tracer`
+- Product name: `ReproLens`
 - Category: `Developer Tools`
 - Language: `English`
 - Summary: `Record browser behaviour, explain failures, and create a safe bug report, GitHub draft, and Playwright test.`
@@ -14,7 +14,7 @@ Last updated: 6 September 2026 · Current extension version: `0.10.0`
 
 ### Detailed description
 
-Behaviour Tracer lets a developer trace one interaction or record a complete user journey of clicks/taps, named control keys, input changes, form submissions, and drops. It then explains what followed. For failures, it identifies the request method and destination or JavaScript error, explains the HTTP, browser-network, CORS, cancellation, or runtime problem, suggests the first relevant check, and connects the failure to source code and a visible page result when browser evidence supports those links. Complete technical timing and source details remain available when needed.
+ReproLens lets a developer trace one interaction or record a complete user journey of clicks/taps, named control keys, input changes, form submissions, and drops. It then explains what followed. For failures, it identifies the request method and destination or JavaScript error, explains the HTTP, browser-network, CORS, cancellation, or runtime problem, suggests the first relevant check, and connects the failure to source code and a visible page result when browser evidence supports those links. Complete technical timing and source details remain available when needed.
 
 React traces can show the owning component path plus capped prop names/types and state shape without capturing values. Supported Chrome versions can also attach related Worker and cross-origin iframe contexts to observe request/error/handler metadata without reading messages or frame content. Local history supports naming, search, quality/problem filters, and comparison of two traces.
 
@@ -91,6 +91,7 @@ Do not submit until each blocker is complete.
 
 ## Version history
 
+- `0.11.0` · 6 September 2026 — Renamed the product to ReproLens and updated extension, export, documentation, tester-package, and release branding.
 - `0.10.0` · 6 September 2026 — Added bounded multi-step journey recording, redacted bug-report generation, review-first GitHub issue drafts without stored tokens, and Playwright regression-test generation with privacy-safe placeholders.
 - `0.9.0` · 6 September 2026 — Added five interaction types, expanded error diagnoses, privacy-safe React shape, deeper Worker/frame metadata, searchable/comparable history, optional on-device AI with browser/model diagnostics, clearer and more accessible local beta feedback controls, and a 31-scenario browser corpus.
 - `0.8.0` · 6 September 2026 — Added diagnostic failed-request explanations, targeted first checks, progressive technical disclosure, explicit uncertainty wording, and narrow-panel usability verification.

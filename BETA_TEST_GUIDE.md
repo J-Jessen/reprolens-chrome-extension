@@ -1,6 +1,6 @@
-# Behaviour Tracer private beta test guide
+# ReproLens private beta test guide
 
-Thank you for testing Behaviour Tracer. Plan for 45–60 minutes. You do not need to change code or investigate failures for us.
+Thank you for testing ReproLens. Plan for 45–60 minutes. You do not need to change code or investigate failures for us.
 
 ## Safety first
 
@@ -14,15 +14,15 @@ Stop testing and contact the owner privately if the browser behaves abnormally o
 
 ## Install the beta
 
-1. Save the `behaviour-tracer-v0.10.0-beta.1.zip` file supplied directly by the owner.
+1. Save the `reprolens-v0.11.0-beta.1.zip` file supplied directly by the owner.
 2. Extract the ZIP into a folder you will keep for the duration of the beta.
 3. Confirm that the folder contains `manifest.json`, `START_HER.md`, and this guide.
 4. Open `chrome://extensions` in Chrome.
 5. Enable **Developer mode**.
 6. Choose **Load unpacked** and select the extracted folder containing `manifest.json`.
-7. Pin **Behaviour Tracer Beta** from Chrome's Extensions menu.
+7. Pin **ReproLens Beta** from Chrome's Extensions menu.
 
-Behaviour Tracer requires desktop Chrome 118 or newer.
+ReproLens requires desktop Chrome 118 or newer.
 
 Chrome shows a debugging banner during a 3.5-second trace. This is expected. The debugger detaches automatically when the trace ends.
 
@@ -31,7 +31,7 @@ When you choose **Select element for one-step trace** or **Record a user journey
 ## Part A: first trace
 
 1. Open a local or staging page with a button or link that has a visible result.
-2. Open Behaviour Tracer from the toolbar.
+2. Open ReproLens from the toolbar.
 3. Choose **Select element for one-step trace** and approve access to this website if Chrome asks.
 4. Move over the page and click the chosen element.
 5. Leave **Detect automatically** selected and choose **Record selected interaction**.

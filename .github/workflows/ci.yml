@@ -69,6 +69,6 @@ jobs:
           CORPUS_CASE: native-success
       - uses: actions/upload-artifact@v7
         with:
-          name: behaviour-tracer-extension
+          name: reprolens-extension
           path: dist/
           if-no-files-found: error

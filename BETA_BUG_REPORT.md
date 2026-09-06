@@ -1,4 +1,4 @@
-# Behaviour Tracer beta bug report
+# ReproLens beta bug report
 
 Make one copy of this file per distinct problem and return it through the private channel used to deliver the beta.
 
@@ -10,7 +10,7 @@ Do not include credentials, tokens, cookies, customer data, private URLs, or a r
 
 ## Environment
 
-- Beta version: v0.10.0-beta.1
+- Beta version: v0.11.0-beta.1
 - Chrome version:
 - Operating system:
 - Framework:

@@ -1,4 +1,4 @@
-# Behaviour Tracer private beta feedback
+# ReproLens private beta feedback
 
 Complete this once after the test guide and return it through the private channel used to deliver the beta. Submit it even if you found no defects.
 
@@ -39,7 +39,7 @@ Rate each area from 1 (not useful) to 5 (very useful), or write “not available
 - Most confusing or frustrating part:
 - A trace you understood differently after opening Technical trace:
 - Missing or misleading evidence:
-- Would you use Behaviour Tracer again? For which debugging task?
+- Would you use ReproLens again? For which debugging task?
 - One improvement you would prioritize:
 - Which feature should receive the most development effort next, and why?
 - Which feature could be removed with the least impact, and why?

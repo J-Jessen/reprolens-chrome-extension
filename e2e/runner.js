@@ -37,7 +37,7 @@ function createTestExtensionRoot() {
     throw new Error("Production manifest must declare optional HTTP and HTTPS host access");
   }
 
-  const destination = fs.mkdtempSync(path.join(os.tmpdir(), "behaviour-tracer-e2e-"));
+  const destination = fs.mkdtempSync(path.join(os.tmpdir(), "reprolens-e2e-"));
   for (const relative of runtimeFiles) {
     const source = path.join(SOURCE_EXTENSION_ROOT, relative);
     const target = path.join(destination, relative);

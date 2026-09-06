@@ -1,8 +1,10 @@
-# Behaviour Tracer
+# ReproLens
 
-Current build: **0.10.0**
+Current build: **0.11.0**
 
-Private beta: **v0.10.0-beta.1**
+Private beta: **v0.11.0-beta.1**
+
+> See what broke. Reproduce it. Fix it.
 
 A local-first Chrome Manifest V3 proof-of-concept for the product hypothesis:
 
@@ -121,7 +123,7 @@ npm test
 ```
 
 GitHub Actions runs the same test suite and rebuilds the checked-in React demo on every push and pull request.
-After the tests pass, CI also creates an installable `behaviour-tracer-extension` artifact containing runtime files only. A matching `v*` tag creates a GitHub release archive automatically.
+After the tests pass, CI also creates an installable `reprolens-extension` artifact containing runtime files only. A matching `v*` tag creates a GitHub release archive automatically.
 
 The private beta plan, recruitment messages, tester instructions, and repository access guide are in `BETA.md`, `TESTER_RECRUITMENT.md`, `BETA_TEST_GUIDE.md`, and `GITHUB_SHARING_GUIDE.md`.
 Privacy and security details are documented in `PRIVACY.md` and `SECURITY.md`. Contribution and verification requirements are in `CONTRIBUTING.md`.

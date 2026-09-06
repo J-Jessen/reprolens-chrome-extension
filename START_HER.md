@@ -1,6 +1,6 @@
-# Start her – Behaviour Tracer privat beta
+# Start her – ReproLens privat beta
 
-Du har modtaget testpakken `v0.10.0-beta.1`. Du behøver ikke GitHub-adgang og skal ikke ændre kode.
+Du har modtaget testpakken `v0.11.0-beta.1`. Du behøver ikke GitHub-adgang og skal ikke ændre kode.
 
 1. Læs sikkerhedsafsnittet i `BETA_TEST_GUIDE.md`.
 2. Følg installationen og testforløbet i samme guide.

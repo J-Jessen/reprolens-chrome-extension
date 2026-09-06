@@ -39,7 +39,7 @@ Qualify testers who answer yes to questions 3–6 and fit at least one role in [
 
 > **Søger 3–5 frontend/QA-testere til privat Chrome-extension-beta**
 >
-> Jeg bygger Behaviour Tracer: optag én interaktion eller et kort brugerforløb, forstå den observerede kæde af JavaScript-handlers, requests, async-grænser, navigation og DOM-ændringer, og lav derefter en sikker bug report samt en Playwright-testskabelon. Alt behandles lokalt; der er ingen automatisk upload eller analytics. GitHub åbnes kun som et uindsendt udkast. Vi vil især lære hvilke dele der faktisk sparer tid.
+> Jeg bygger ReproLens: optag én interaktion eller et kort brugerforløb, forstå den observerede kæde af JavaScript-handlers, requests, async-grænser, navigation og DOM-ændringer, og lav derefter en sikker bug report samt en Playwright-testskabelon. Alt behandles lokalt; der er ingen automatisk upload eller analytics. GitHub åbnes kun som et uindsendt udkast. Vi vil især lære hvilke dele der faktisk sparer tid.
 >
 > Jeg søger især React/JavaScript/frontend/full-stack/QA-profiler med adgang til en lokal eller staging-webapp. Testen tager 45–60 minutter. Du modtager en beta-ZIP direkte, og repositoryet deles ikke. Ingen produktions- eller kundedata må bruges.
 >
@@ -49,13 +49,13 @@ Qualify testers who answer yes to questions 3–6 and fit at least one role in [
 
 > Tak — du passer godt til testen. Jeg sender dig nu beta-ZIP-filen gennem vores private kanal. Pak den ud, og begynd med `START_HER.md`.
 >
-> Brug kun den vedlagte beta-version v0.10.0-beta.1. Repositoryet og udviklingsbranchen skal ikke bruges.
+> Brug kun den vedlagte beta-version v0.11.0-beta.1. Repositoryet og udviklingsbranchen skal ikke bruges.
 >
 > Vigtigt: test kun på lokale eller staging-systemer, du har tilladelse til at inspicere. Del aldrig rå credentials, cookies, tokens, kundedata eller en eksport, du ikke selv har gennemgået.
 
 ## Follow-up after three days
 
-> Hej [navn] — en kort opfølgning på Behaviour Tracer-betaen. Er du kommet i gang, eller er installation blokeret? Hvis noget stopper dig, kan du udfylde `BETA_BUG_REPORT.md` og sende den tilbage gennem samme private kanal. Der er ingen forventning om, at du sender et trace, hvis du er i tvivl om indholdet.
+> Hej [navn] — en kort opfølgning på ReproLens-betaen. Er du kommet i gang, eller er installation blokeret? Hvis noget stopper dig, kan du udfylde `BETA_BUG_REPORT.md` og sende den tilbage gennem samme private kanal. Der er ingen forventning om, at du sender et trace, hvis du er i tvivl om indholdet.
 
 ## Completion message
 

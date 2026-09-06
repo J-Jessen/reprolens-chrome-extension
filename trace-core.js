@@ -1501,7 +1501,7 @@
       "",
       safe(report.actualResult),
       "",
-      "## Behaviour Tracer diagnosis",
+      "## ReproLens diagnosis",
       "",
       safe(report.diagnosis.headline),
       "",

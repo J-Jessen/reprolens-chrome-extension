@@ -1,6 +1,6 @@
 {
-  "name": "behavior-trace-chrome-extension",
-  "version": "0.10.0",
+  "name": "reprolens-chrome-extension",
+  "version": "0.11.0",
   "private": true,
   "description": "Local-first Chrome extension for tracing browser behaviour from a selected interaction",
   "scripts": {

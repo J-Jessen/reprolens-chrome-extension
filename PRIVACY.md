@@ -2,7 +2,7 @@
 
 Last updated: 6 September 2026
 
-Behaviour Tracer is local-first. Trace collection, source-map resolution, quality scoring, history, and export redaction run inside the browser extension. The project has no backend, analytics, account system, or automatic upload.
+ReproLens is local-first. Trace collection, source-map resolution, quality scoring, history, and export redaction run inside the browser extension. The project has no backend, analytics, account system, or automatic upload.
 
 ## Website access
 

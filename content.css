@@ -1,12 +1,12 @@
 #__behaviour_tracer_overlay {
   all: initial !important;
   position: fixed !important;
-  inset-block-start: var(--behaviour-tracer-top, 0) !important;
-  inset-inline-start: var(--behaviour-tracer-left, 0) !important;
+  inset-block-start: var(--reprolens-top, 0) !important;
+  inset-inline-start: var(--reprolens-left, 0) !important;
   z-index: 2147483646 !important;
   display: none !important;
-  inline-size: var(--behaviour-tracer-width, 0) !important;
-  block-size: var(--behaviour-tracer-height, 0) !important;
+  inline-size: var(--reprolens-width, 0) !important;
+  block-size: var(--reprolens-height, 0) !important;
   box-sizing: border-box !important;
   border: 2px solid #6d5efc !important;
   border-radius: 4px !important;

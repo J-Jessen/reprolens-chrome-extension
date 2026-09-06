@@ -15,7 +15,7 @@ test("manifest follows the extension's Chrome 118+ permission policy", () => {
   assert.equal(manifest.host_permissions, undefined);
   assert.equal(manifest.content_scripts, undefined);
   assert.equal(manifest.side_panel.default_path, "panel.html");
-  assert.equal(manifest.action.default_title, "Open Behaviour Tracer");
+  assert.equal(manifest.action.default_title, "Open ReproLens");
 });
 
 test("every manifest and panel runtime reference exists locally", () => {
