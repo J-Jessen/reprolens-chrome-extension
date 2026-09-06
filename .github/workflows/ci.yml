@@ -68,6 +68,7 @@ jobs:
         env:
           EXTENSION_ROOT: dist
           CORPUS_CASE: native-success
+          RUN_MULTI_STEP: "false"
       - uses: actions/upload-artifact@v7
         with:
           name: reprolens-extension
