@@ -329,6 +329,7 @@
   function markdownReport(session) {
     const { trace } = redactForExport(session);
     const clean = (value) => String(value || "").replace(/[\r\n]+/g, " ").trim();
+    const explanation = explain(trace);
     const lines = [
       "# Behaviour trace",
       "",
@@ -336,13 +337,25 @@
       `- Element: ${clean(trace.selectedElement?.text || trace.selectedElement?.selector) || "Unknown"}`,
       `- Quality: ${trace.quality?.score ?? 0}% (${trace.quality?.label || "unknown"})`,
       "",
-      "## Summary",
+      "## What happened",
+      "",
+      clean(explanation.headline),
+      ""
+    ];
+    for (const step of explanation.steps) {
+      lines.push(`- **${clean(step.label)} — ${clean(step.title)}** (${clean(step.relation)}): ${clean(step.detail)}`);
+    }
+    lines.push(
+      "",
+      clean(explanation.evidenceNote),
+      "",
+      "## Technical summary",
       "",
       clean(trace.summary) || "No summary available.",
       "",
-      "## Timeline",
+      "## Technical timeline",
       ""
-    ];
+    );
     for (const event of trace.timeline || []) {
       lines.push(`- **+${event.atMs || 0}ms · ${clean(event.kind)}:** ${clean(event.title)}${event.detail ? ` — ${clean(event.detail)}` : ""}`);
     }
@@ -780,6 +793,169 @@
     return sentences.join(" ");
   }
 
+  function readableSubject(session) {
+    const element = session.interaction?.element || session.selectedElement;
+    const text = String(element?.text || "").trim().replace(/\s+/g, " ");
+    if (text) return `“${text.slice(0, 60)}”`;
+    return element?.selector || "the selected element";
+  }
+
+  function readableUrl(value, pageUrl) {
+    try {
+      const url = new URL(value, pageUrl);
+      const sensitive = /token|key|secret|password|passcode|auth|session|code/i;
+      for (const key of [...url.searchParams.keys()]) {
+        if (sensitive.test(key)) url.searchParams.set(key, "[REDACTED]");
+      }
+      const page = new URL(pageUrl);
+      return url.origin === page.origin
+        ? `${url.pathname}${url.search}${url.hash}`
+        : `${url.hostname}${url.pathname}`;
+    } catch (_) {
+      return String(value || "").slice(0, 100);
+    }
+  }
+
+  function relationLabel(event) {
+    if (event?.kind === "interaction") return "Starting point";
+    return event?.primaryChain && event?.relationshipEvidence === "explicit"
+      ? "Direct link"
+      : "Observed after click";
+  }
+
+  function explain(session) {
+    const timeline = session.timeline?.length ? session.timeline : buildTimeline(session);
+    const subject = readableSubject(session);
+    const interaction = timeline.find((event) => event.kind === "interaction");
+    const handlers = timeline.filter((event) => event.kind === "handler");
+    const asyncEvents = timeline.filter((event) => event.kind === "async");
+    const requests = timeline.filter((event) => event.kind === "request");
+    const responses = timeline.filter((event) => event.kind === "response");
+    const failures = timeline.filter((event) => event.kind === "network-failure");
+    const mutations = timeline.filter((event) => event.kind === "mutation");
+    const navigations = timeline.filter((event) => event.kind === "navigation");
+    const errors = timeline.filter((event) => event.kind === "exception");
+    const steps = [];
+
+    steps.push({
+      kind: "action",
+      label: "Your action",
+      title: `You clicked ${subject}`,
+      detail: "This is the interaction the trace followed.",
+      relation: relationLabel(interaction)
+    });
+
+    if (handlers.length) {
+      const authored = handlers.find((event) => event.origin === "request-initiator") || handlers[0];
+      const functionName = String(authored.title || "").replace(/\(\)$/, "");
+      const generic = !functionName || ["(anonymous)", "anonymous", "n"].includes(functionName);
+      const location = locationLabel(authored.location || authored.frames?.[0]);
+      const framework = session.framework?.owner
+        ? `${session.framework.library || "Framework"} component ${session.framework.owner}`
+        : "";
+      const detailParts = [generic && !authored.location?.originalLocation
+        ? "The browser found the handler boundary, but not a readable function name. This can happen with anonymous, framework-managed, bundled, or minified code."
+        : location ? `Found in ${location}.` : "The original source location was not available."];
+      if (framework) detailParts.push(`The element belongs to ${framework}.`);
+      if (asyncEvents.length) {
+        detailParts.push(`${asyncEvents.length} delayed or asynchronous code step${asyncEvents.length === 1 ? " was" : "s were"} also observed.`);
+      }
+      steps.push({
+        kind: "code",
+        label: "Page code",
+        title: generic ? "Page code handled the click" : `${functionName}() handled the click`,
+        detail: detailParts.join(" "),
+        relation: relationLabel(authored)
+      });
+    } else {
+      steps.push({
+        kind: "code",
+        label: "Page code",
+        title: "No readable JavaScript handler was identified",
+        detail: "The action may use browser behaviour, framework delegation, or minified code without a source map.",
+        relation: "Limited evidence"
+      });
+    }
+
+    if (requests.length || failures.length) {
+      const requestLabels = requests.slice(0, 2).map((event) => {
+        const rawUrl = String(event.title || "").replace(/^\S+\s+/, "");
+        return readableUrl(rawUrl, session.pageUrl);
+      });
+      const successfulResponses = responses.filter((event) => Number.parseInt(event.title, 10) < 400).length;
+      const failedResponses = responses.filter((event) => Number.parseInt(event.title, 10) >= 400).length;
+      const hasNetworkProblem = failures.length > 0 || failedResponses > 0;
+      const requestCount = requests.length;
+      const resultParts = [];
+      if (requestLabels.length) resultParts.push(`Requests: ${requestLabels.join(", ")}.`);
+      if (successfulResponses) resultParts.push(`${successfulResponses} completed successfully.`);
+      if (failures.length + failedResponses) resultParts.push(`${failures.length + failedResponses} failed or returned an error response.`);
+      const anchor = requests.find((event) => event.primaryChain) || requests[0] || failures[0];
+      steps.push({
+        kind: hasNetworkProblem ? "problem" : "network",
+        label: "Data request",
+        title: requestCount === 1
+          ? "The page requested data"
+          : `The page started ${requestCount} data requests`,
+        detail: resultParts.join(" ") || "A request problem was observed.",
+        relation: relationLabel(anchor)
+      });
+    }
+
+    if (mutations.length) {
+      const examples = mutations.slice(0, 2).map((event) => event.title).filter(Boolean);
+      steps.push({
+        kind: "change",
+        label: "Page result",
+        title: mutations.length === 1 ? "The page content changed" : `The page changed in ${mutations.length} places`,
+        detail: examples.length ? `${examples.join("; ")}.` : "The trace observed changes to the page content.",
+        relation: relationLabel(mutations[0])
+      });
+    }
+
+    if (navigations.length) {
+      const destination = String(navigations[0].title || "").replace(/^Navigate to\s+/, "");
+      const sameDocument = ["historyApi", "fragment", "same-document"].some((name) => String(navigations[0].detail || "").includes(name));
+      steps.push({
+        kind: "navigation",
+        label: "Navigation",
+        title: sameDocument ? "The address changed without a full page reload" : "The page navigated to another address",
+        detail: `Destination: ${readableUrl(destination, session.pageUrl)}.`,
+        relation: relationLabel(navigations[0])
+      });
+    }
+
+    if (errors.length) {
+      steps.push({
+        kind: "problem",
+        label: "Problem detected",
+        title: errors.length === 1 ? "A warning or error occurred" : `${errors.length} warnings or errors occurred`,
+        detail: errors.slice(0, 2).map((event) => event.title).join("; "),
+        relation: relationLabel(errors[0])
+      });
+    }
+
+    let headline = "The click ran page code";
+    const hasNetworkProblem = failures.length > 0 || responses.some((event) => Number.parseInt(event.title, 10) >= 400);
+    if (errors.length || hasNetworkProblem) headline = "The trace captured a problem after the click";
+    else if (navigations.length) headline = "The click opened another view";
+    else if (requests.length && mutations.length) headline = "The click requested data and updated the page";
+    else if (mutations.length) headline = "The click updated the page";
+    else if (requests.length) headline = "The click started a data request";
+
+    const hasUnlinkedEvidence = timeline.some((event) => event.kind !== "interaction" && !event.primaryChain);
+    const evidenceNote = hasUnlinkedEvidence
+      ? "Direct links are supported by browser evidence. Items marked “Observed after click” happened in the same short trace window, but the trace could not prove that the click caused them."
+      : "The main steps are connected by direct browser evidence.";
+
+    return {
+      headline,
+      overview: `${steps.length} step${steps.length === 1 ? " was" : "s were"} observed from your action to the result.`,
+      steps,
+      evidenceNote
+    };
+  }
+
   function assessQuality(session) {
     const timeline = session.timeline?.length ? session.timeline : buildTimeline(session);
     const observed = timeline.filter((event) => event.kind !== "interaction");
@@ -822,6 +998,7 @@
     confidenceFor,
     confidenceLabel,
     eventCategory,
+    explain,
     filterTimeline,
     limitHistory,
     markdownReport,

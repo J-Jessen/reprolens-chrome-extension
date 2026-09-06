@@ -13,6 +13,7 @@ const downloadButton = document.getElementById("download");
 const exportPreview = document.getElementById("export-preview-code");
 const redactionReport = document.getElementById("redaction-report");
 const historyEnabled = document.getElementById("history-enabled");
+const historyCount = document.getElementById("history-count");
 const historyList = document.getElementById("history-list");
 const historyUsage = document.getElementById("history-usage");
 const clearHistoryButton = document.getElementById("clear-history");
@@ -22,6 +23,12 @@ const selection = document.getElementById("selection");
 const status = document.getElementById("status");
 const result = document.getElementById("result");
 const empty = document.getElementById("empty");
+const explanationHeadline = document.getElementById("explanation-headline");
+const explanationOverview = document.getElementById("explanation-overview");
+const explanationSteps = document.getElementById("explanation-steps");
+const evidenceNote = document.getElementById("evidence-note");
+const technicalDetails = document.getElementById("technical-details");
+const technicalCount = document.getElementById("technical-count");
 const summary = document.getElementById("summary");
 const timeline = document.getElementById("timeline");
 const qualityLabel = document.getElementById("quality-label");
@@ -31,6 +38,7 @@ const qualityMetrics = document.getElementById("quality-metrics");
 const qualityDiagnostics = document.getElementById("quality-diagnostics");
 const filters = document.getElementById("filters");
 let activeFilter = "all";
+let lastExplainedTraceId = null;
 
 function setStatus(text, recording) {
   status.textContent = text;
@@ -62,7 +70,7 @@ function statusText(state) {
     armed: "Armed — click the selected element on the page",
     recording: "Recording for 3.5 seconds…",
     processing: "Building trace…",
-    complete: "Trace complete",
+    complete: "Trace complete — explanation ready",
     error: state.error || "Trace failed"
   };
   return labels[state.status] || state.status;
@@ -95,15 +103,39 @@ function renderTimeline(events) {
   timeline.replaceChildren(fragment);
 }
 
+function renderExplanation(state) {
+  const explanation = TraceCore.explain(state);
+  explanationHeadline.textContent = explanation.headline;
+  explanationOverview.textContent = explanation.overview;
+  evidenceNote.textContent = explanation.evidenceNote;
+  const items = explanation.steps.map((step) => {
+    const safeKind = String(step.kind || "step").replace(/[^a-z0-9_-]/gi, "-");
+    const item = element("li", { className: `explanation-step ${safeKind}` });
+    const content = element("div", { className: "explanation-step-content" });
+    const heading = element("div", { className: "explanation-step-heading" });
+    heading.append(element("p", { className: "explanation-step-label", text: step.label }));
+    const relationClass = step.relation === "Direct link" || step.relation === "Starting point"
+      ? "linked"
+      : step.relation === "Limited evidence" ? "limited" : "observed";
+    heading.append(element("span", { className: `relation ${relationClass}`, text: step.relation }));
+    content.append(heading);
+    content.append(element("strong", { text: step.title }));
+    if (step.detail) content.append(element("p", { className: "explanation-step-detail", text: step.detail }));
+    item.append(content);
+    return item;
+  });
+  explanationSteps.replaceChildren(...items);
+}
+
 function render(state, force = false) {
   if (!state || (!force && state.tabId !== activeTabId)) return;
   currentState = state;
-  const element = state.selectedElement;
-  selection.textContent = element
-    ? `${element.selector}${element.text ? ` · ${element.text.slice(0, 70)}` : ""}`
+  const selectedElement = state.selectedElement;
+  selection.textContent = selectedElement
+    ? `${selectedElement.selector}${selectedElement.text ? ` · ${selectedElement.text.slice(0, 70)}` : ""}`
     : "No element selected";
-  selection.classList.toggle("muted", !element);
-  recordButton.disabled = !element || ["attaching", "armed", "recording", "processing"].includes(state.status);
+  selection.classList.toggle("muted", !selectedElement);
+  recordButton.disabled = !selectedElement || ["attaching", "armed", "recording", "processing"].includes(state.status);
   pickButton.disabled = ["attaching", "armed", "recording", "processing"].includes(state.status);
   setStatus(statusText(state), ["armed", "recording"].includes(state.status));
 
@@ -116,6 +148,13 @@ function render(state, force = false) {
 
   empty.hidden = true;
   result.classList.remove("hidden");
+  renderExplanation(state);
+  technicalCount.textContent = `${events.length} event${events.length === 1 ? "" : "s"}`;
+  const traceIdentity = state.traceId || `${state.tabId}:${state.startedAt}`;
+  if (traceIdentity !== lastExplainedTraceId) {
+    technicalDetails.open = false;
+    lastExplainedTraceId = traceIdentity;
+  }
   summary.textContent = state.summary;
   const quality = state.quality || { score: 0, label: "limited", observedEvents: 0, highConfidenceEvents: 0, diagnostics: [] };
   const qualityName = String(quality.label || "limited");
@@ -135,6 +174,7 @@ async function refreshHistory() {
   const history = await chrome.runtime.sendMessage({ type: "GET_HISTORY" });
   if (!history || history.ok === false) throw new Error(history?.error || "Could not load local history.");
   historyEnabled.checked = history.historyEnabled;
+  historyCount.textContent = `${history.traces.length} saved`;
   clearHistoryButton.disabled = !history.traces.length;
   const usedMb = ((history.historyBytes || 0) / 1_000_000).toFixed(2);
   const limitMb = ((history.historyByteLimit || 0) / 1_000_000).toFixed(0);

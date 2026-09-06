@@ -40,7 +40,9 @@ background.js (MV3 service worker)
             │ state updates
             ▼
 panel.html / panel.js
-  └─ controls, live state, trace presentation, JSON export
+  ├─ plain-language explanation (default)
+  ├─ progressively disclosed technical trace
+  └─ reviewed JSON and Markdown export
 ```
 
 ## Session state machine
@@ -113,6 +115,13 @@ Any future network or AI feature requires a new explicit, reviewed data boundary
 - Static picker and badge styles in an injected stylesheet, with only geometry passed through CSS custom properties.
 - Chrome 118 minimum and privacy-sanitized session-state recovery for Manifest V3 lifecycle resilience.
 - Automated policy, markup, CSP, accessibility, keyboard-focus, packaging, and 26-scenario trace checks.
+
+## Version 0.8 foundations
+
+- A deterministic explanation model that groups evidence as user action, page code, data request, page result, navigation, and detected problems.
+- Plain-language relationship labels: `Starting point`, `Direct link`, `Observed after click`, and `Limited evidence`.
+- A usability-first side-panel hierarchy with the explanation visible by default and technical evidence plus export tools behind native disclosure controls.
+- Narrow-panel, keyboard, light/dark, overflow, and accessibility verification against completed real traces.
 
 ## Product roadmap
 

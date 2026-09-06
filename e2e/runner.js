@@ -6,6 +6,7 @@ const path = require("node:path");
 const puppeteer = require("puppeteer");
 const { AxePuppeteer } = require("@axe-core/puppeteer");
 const CorpusEvaluator = require("../corpus-evaluator.js");
+const TraceCore = require("../trace-core.js");
 
 const PROJECT_ROOT = path.resolve(__dirname, "..");
 const SOURCE_EXTENSION_ROOT = process.env.EXTENSION_ROOT
@@ -291,6 +292,7 @@ async function main() {
       throw new Error(`Unknown or duplicate corpus case in: ${requestedIds.join(", ")}`);
     }
     const results = [];
+    let lastTrace = null;
     for (const [scenarioId, pathname, selector, traceWindowMs] of selectedCases) {
       process.stdout.write(`START ${scenarioId}\n`);
       const trace = await withTimeout(runTrace({
@@ -302,12 +304,20 @@ async function main() {
         selector,
         traceWindowMs
       }), CASE_TIMEOUT_MS, scenarioId);
+      lastTrace = trace;
       const result = CorpusEvaluator.evaluateTrace(trace, scenarioId);
       if (trace.timeline.some((event) => typeof event.primaryChain !== "boolean")) {
         throw new Error(`${scenarioId} produced timeline events without primary-chain classification`);
       }
       if (!trace.timeline.find((event) => event.kind === "interaction")?.primaryChain) {
         throw new Error(`${scenarioId} did not anchor the primary chain at the interaction`);
+      }
+      const plainExplanation = TraceCore.explain(trace);
+      if (!plainExplanation.headline || plainExplanation.steps.length < 2) {
+        throw new Error(`${scenarioId} did not produce a usable plain-language explanation`);
+      }
+      if (/callFrames|main-world-hook|confidence/i.test(JSON.stringify(plainExplanation))) {
+        throw new Error(`${scenarioId} exposed internal terminology in the plain-language explanation`);
       }
       results.push(result);
       const mark = result.passed ? "PASS" : "FAIL";
@@ -335,6 +345,40 @@ async function main() {
     if (!(history.historyBytes > 0) || history.historyBytes > history.historyByteLimit) {
       throw new Error("Local history size budget was not enforced");
     }
+    await controller.setViewport({ width: 360, height: 800 });
+    await controller.evaluate((trace) => render(trace, true), lastTrace);
+    const explanation = await controller.$eval(".explanation", (node) => ({
+      text: node.innerText,
+      steps: node.querySelectorAll(".explanation-step").length
+    }));
+    if (explanation.steps < 2) throw new Error("Plain-language explanation did not show an action and result");
+    if (/callFrames|main-world-hook|confidence/i.test(explanation.text)) {
+      throw new Error("Plain-language explanation exposed internal tracing terminology");
+    }
+    const technicalOpenByDefault = await controller.$eval("#technical-details", (node) => node.open);
+    if (technicalOpenByDefault) throw new Error("Technical trace must use progressive disclosure by default");
+    const hasHorizontalOverflow = await controller.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
+    if (hasHorizontalOverflow) throw new Error("Panel overflows horizontally at a narrow side-panel width");
+    await controller.evaluate(() => { document.documentElement.style.fontSize = "200%"; });
+    const zoomOverflow = await controller.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
+    if (zoomOverflow) throw new Error("Panel overflows horizontally at 200% text size");
+    await controller.evaluate(() => { document.documentElement.style.fontSize = ""; });
+    for (const colorScheme of ["light", "dark"]) {
+      await controller.emulateMediaFeatures([{ name: "prefers-color-scheme", value: colorScheme }]);
+      const resultAccessibility = await new AxePuppeteer(controller).include("#result").analyze();
+      const resultViolations = resultAccessibility.violations.filter((violation) => ["serious", "critical"].includes(violation.impact));
+      if (resultViolations.length) {
+        const details = resultViolations.flatMap((violation) => violation.nodes.map((node) => `${violation.id} ${node.target.join(" ")}: ${node.failureSummary}`));
+        throw new Error(`Completed ${colorScheme}-mode result accessibility violations: ${details.join(" | ")}`);
+      }
+    }
+    if (process.env.PANEL_SCREENSHOT) {
+      await controller.screenshot({ path: path.resolve(PROJECT_ROOT, process.env.PANEL_SCREENSHOT), fullPage: true });
+    }
+    await controller.$eval("#technical-details > summary", (node) => node.focus());
+    await controller.keyboard.press("Enter");
+    const technicalOpenedFromKeyboard = await controller.$eval("#technical-details", (node) => node.open);
+    if (!technicalOpenedFromKeyboard) throw new Error("Technical trace could not be opened with the keyboard");
     process.stdout.write(`\n${passed}/${results.length} useful traces (${rate}%)\n`);
     if (passed !== results.length) process.exitCode = 1;
   } finally {

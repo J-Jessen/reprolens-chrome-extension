@@ -38,6 +38,10 @@ test("side panel uses semantic, keyboard-accessible, CSP-safe markup", () => {
   assert.match(panel, /role="status"[^>]*aria-atomic="true"/);
   assert.match(panel, /role="progressbar"[^>]*aria-valuenow="0"/);
   assert.match(panel, /<dialog\b[^>]*aria-labelledby=/);
+  assert.match(panel, /<section\s+class="explanation card"/);
+  assert.match(panel, /<details\s+id="technical-details"/);
+  assert.match(panel, /<details\s+class="history disclosure card"/);
+  assert.match(panel, /<ol\s+id="explanation-steps"[^>]*role="list"/);
   assert.match(panel, /<pre\b[^>]*tabindex="0"><code\b/);
   assert.doesNotMatch(panel, /<script\b(?![^>]*\bsrc=)/);
   assert.doesNotMatch(panel, /\son[a-z]+\s*=/i);

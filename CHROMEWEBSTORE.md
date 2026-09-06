@@ -2,17 +2,19 @@
 
 Status: **not submitted**. The extension is currently distributed as a private beta archive. This file is the source of truth for a future Chrome Web Store submission.
 
+Last updated: 6 September 2026 · Current extension version: `0.8.0`
+
 ## Listing
 
 - Product name: `Behaviour Tracer`
 - Category: `Developer Tools`
 - Language: `English`
-- Summary: `Select an element, perform one interaction, and inspect the resulting browser behaviour in a local trace.`
+- Summary: `Select an element, perform one interaction, and see a plain-language explanation with an optional technical trace.`
 - Single purpose: Help a developer understand the observable browser behaviour caused by one user-started interaction.
 
 ### Detailed description
 
-Behaviour Tracer lets a developer select an element on a website, perform one click, and inspect a chronological trace of the browser behaviour that follows. The trace can include event-listener call frames, asynchronous boundaries, request metadata, DOM mutation summaries, navigation, source-map locations, warnings, and errors.
+Behaviour Tracer lets a developer select an element on a website, perform one click, and see a plain-language explanation of what followed. It organizes the result as the user's action, page code, data requests, page changes, navigation, and problems. Complete technical timing and source details remain available when needed.
 
 Tracing begins only after an explicit action in the extension side panel. Processing, source-map resolution, history, and export redaction happen locally in the browser. The extension has no backend, analytics, account system, advertising, or automatic upload.
 
@@ -45,8 +47,10 @@ None of this data is sold, used for advertising, used for credit decisions, or t
 3. Choose **Select element**, approve access to that website, and click a page element.
 4. Choose **Record one click**, then click the selected element again.
 5. Expect Chrome's debugging banner for approximately 3.5 seconds.
-6. Confirm that a local timeline appears and that **Review export** opens a redacted preview.
-7. Confirm under extension site settings that access can be revoked per website.
+6. Confirm that **What happened** gives a step-by-step explanation while **Technical trace** is closed by default.
+7. Open **Technical trace** and confirm that complete timings, source locations, filters, and evidence labels remain available.
+8. Confirm that **Review safe export** opens a redacted preview.
+9. Confirm under extension site settings that access can be revoked per website.
 
 No account, payment, external service, or special hardware is required.
 
@@ -73,3 +77,8 @@ Upload only the ZIP produced from `dist/`. It contains extension runtime files a
 - [ ] Run the reviewer workflow against the exact upload ZIP in a clean Chrome profile.
 
 Do not submit until each blocker is complete.
+
+## Version history
+
+- `0.8.0` · 6 September 2026 — Added the default plain-language explanation, progressive technical disclosure, explicit uncertainty wording, and narrow-panel usability verification.
+- `0.7.1` · 6 September 2026 — Added Modern Web Guidance alignment, accessibility checks, safe DOM rendering, and Manifest V3 session recovery.

@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
   "name": "Behaviour Tracer Beta",
-  "version": "0.7.1",
+  "version": "0.8.0",
   "minimum_chrome_version": "118",
-  "description": "THIS EXTENSION IS FOR BETA TESTING. Select an element, perform one interaction, and inspect the resulting browser behaviour.",
+  "description": "BETA: Select an element, perform one interaction, and see a plain-language explanation with an optional technical trace.",
   "permissions": [
     "debugger",
     "scripting",

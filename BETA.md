@@ -12,6 +12,8 @@ The beta is successful when all of these are true:
 - at least 20 real interactions are tested across 3 or more codebases;
 - at least 80% of submitted traces are rated useful by the tester;
 - median installation and first-trace time is under 10 minutes;
+- at least 80% of default explanations are understood correctly without opening the technical trace;
+- median time to explain the observed behaviour is under 30 seconds after capture completes;
 - at least 70% of completing testers rate the product 4 or 5 out of 5 for usefulness;
 - no unredacted credentials, customer data, or other privacy incidents are shared;
 - every blocking defect is either fixed or explicitly documented before a wider beta.
@@ -64,7 +66,7 @@ Prefer people who can test on a local or staging application they are authorized
 | P2 | Trace is materially wrong, misleading, or misses common evidence | Fix or document before Round 2 ends |
 | P3 | Friction, wording, visual, or uncommon compatibility issue | Add to the prioritized backlog |
 
-Do not ask a tester to post a raw trace publicly. If a trace is required, they must use **Review export**, confirm the preview, and return only the redacted export through the agreed private channel.
+Do not ask a tester to post a raw trace publicly. If a trace is required, they must use **Review safe export**, confirm the preview, and return only the redacted export through the agreed private channel.
 
 ## Privacy response
 
@@ -85,6 +87,8 @@ If sensitive data is shared:
 | Real interactions tested |  |  | 20+ total |
 | Useful traces |  |  | 80%+ |
 | Median time to first trace |  |  | <10 min |
+| Explanations understood without technical trace |  |  | 80%+ |
+| Median time to understand result |  |  | <30 sec |
 | Usefulness ratings of 4–5 |  |  | 70%+ |
 | P0 incidents |  |  | 0 |
 | Open P1 blockers |  |  | 0 |

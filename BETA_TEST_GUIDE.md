@@ -7,14 +7,14 @@ Thank you for testing Behaviour Tracer. Plan for 45–60 minutes. You do not nee
 - Test only on a local or staging website you are authorized to inspect.
 - Do not use real customer records, payment pages, health data, or other sensitive production content.
 - The extension does not automatically upload traces or analytics.
-- Never attach a raw trace. Use **Review export**, inspect the full preview, and share only the redacted export if it is genuinely needed.
+- Never attach a raw trace. Use **Review safe export**, inspect the full preview, and share only the redacted export if it is genuinely needed.
 - Do not paste credentials, cookies, tokens, private keys, or customer data into a feedback file or message.
 
 Stop testing and contact the owner privately if the browser behaves abnormally or an export exposes sensitive information.
 
 ## Install the beta
 
-1. Save the `behaviour-tracer-v0.7.1-beta.1.zip` file supplied directly by the owner.
+1. Save the `behaviour-tracer-v0.8.0-beta.1.zip` file supplied directly by the owner.
 2. Extract the ZIP into a folder you will keep for the duration of the beta.
 3. Confirm that the folder contains `manifest.json`, `START_HER.md`, and this guide.
 4. Open `chrome://extensions` in Chrome.
@@ -37,9 +37,11 @@ When you choose **Select element** on a website for the first time, Chrome asks 
 5. Choose **Record one click**.
 6. Perform the same interaction once.
 7. Wait for the trace to complete.
-8. Record how many minutes elapsed from step 2 until you understood the result.
+8. Read **What happened** without opening **Technical trace**. In one sentence, write what you believe the interaction did.
+9. Record how long it took from step 2 until you understood the result.
+10. Open **Technical trace** and note whether it confirmed or changed your understanding.
 
-Check whether the result shows the correct interaction and whether the summary is understandable without inspecting the source code first.
+Check whether the result shows the correct interaction and whether the default explanation is understandable without inspecting source code or the technical trace first.
 
 ## Part B: real-project scenarios
 
@@ -56,18 +58,20 @@ Test 3–5 safe interactions. Choose as many of these shapes as your application
 For every interaction, answer:
 
 1. Did the trace show the behaviour you expected?
-2. Did **Primary chain** contain only evidence you considered explicitly connected?
-3. Was important evidence missing?
-4. Did any event look unrelated or more certain than the evidence justified?
-5. Were source locations usable and source-mapped when your project supplies maps?
-6. Did this save time compared with your normal DevTools workflow?
+2. Could you explain the result after reading only **What happened**?
+3. Were `Direct link`, `Observed after click`, and `Limited evidence` understandable and trustworthy?
+4. Did **Primary chain** contain only evidence you considered explicitly connected?
+5. Was important evidence missing?
+6. Did any event look unrelated or more certain than the evidence justified?
+7. Were source locations usable and source-mapped when your project supplies maps?
+8. Did this save time compared with your normal DevTools workflow?
 
 ## Part C: product controls
 
 Verify these once:
 
 - filter the trace using **Primary chain**, **Handlers**, **Network**, **App network**, **Async**, and **DOM**;
-- open **Review export** and confirm that private-looking values are masked;
+- open **Review safe export** and confirm that private-looking values are masked;
 - copy a Markdown report, but do not share it if it contains anything sensitive;
 - reopen a trace from local history;
 - delete one history item;
@@ -87,6 +91,9 @@ Complete `BETA_FEEDBACK_FORM.md` and return it through the same private channel.
 
 - number and type of interactions tested;
 - time to first useful trace;
+- median time to understand the default explanation;
+- explanations understood without opening **Technical trace**;
+- explanation clarity;
 - useful traces versus total traces;
 - usefulness and trust ratings;
 - the most valuable part;

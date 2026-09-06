@@ -75,6 +75,59 @@ test("builds an ordered timeline with explicit confidence", () => {
   assert.equal(timeline[4].primaryChain, false);
 });
 
+test("explains a trace in plain language without hiding uncertainty", () => {
+  const explanation = TraceCore.explain({
+    pageUrl: "https://shop.example/cart",
+    interaction: { eventType: "click", element: { selector: "#checkout", text: "Complete order" } },
+    timeline: [
+      { id: "interaction", kind: "interaction", primaryChain: true, relationshipEvidence: "root" },
+      { id: "handler", kind: "handler", title: "submitOrder()", location: { url: "https://shop.example/demo.js", lineNumber: 8 }, primaryChain: true, relationshipEvidence: "explicit" },
+      { id: "request", kind: "request", title: "GET https://shop.example/order.json?cart=1", primaryChain: true, relationshipEvidence: "explicit" },
+      { id: "response", kind: "response", title: "200 https://shop.example/order.json?cart=1", primaryChain: true, relationshipEvidence: "explicit" },
+      { id: "mutation", kind: "mutation", title: "Text changed to “Order complete”", primaryChain: false, relationshipEvidence: "none" }
+    ]
+  });
+
+  assert.equal(explanation.headline, "The click requested data and updated the page");
+  assert.deepEqual(explanation.steps.map((step) => step.label), ["Your action", "Page code", "Data request", "Page result"]);
+  assert.equal(explanation.steps[1].title, "submitOrder() handled the click");
+  assert.match(explanation.steps[2].detail, /\/order\.json\?cart=1/);
+  assert.equal(explanation.steps[3].relation, "Observed after click");
+  assert.match(explanation.evidenceNote, /could not prove/);
+  assert.doesNotMatch(JSON.stringify(explanation), /callFrames|main-world-hook|confidence/i);
+});
+
+test("explains minified handlers and failed responses honestly", () => {
+  const explanation = TraceCore.explain({
+    pageUrl: "https://app.example/",
+    interaction: { eventType: "click", element: { selector: "#save", text: "Save" } },
+    timeline: [
+      { id: "interaction", kind: "interaction", primaryChain: true, relationshipEvidence: "root" },
+      { id: "handler", kind: "handler", title: "n()", location: { url: "https://app.example/app.min.js", lineNumber: 1 }, primaryChain: true, relationshipEvidence: "explicit" },
+      { id: "request", kind: "request", title: "POST https://app.example/api/save", primaryChain: true, relationshipEvidence: "explicit" },
+      { id: "response", kind: "response", title: "500 https://app.example/api/save", primaryChain: true, relationshipEvidence: "explicit" }
+    ]
+  });
+
+  assert.equal(explanation.headline, "The trace captured a problem after the click");
+  assert.equal(explanation.steps[1].title, "Page code handled the click");
+  assert.match(explanation.steps[1].detail, /anonymous, framework-managed, bundled, or minified code/);
+  assert.match(explanation.steps[2].detail, /error response/);
+});
+
+test("redacts sensitive URL parameters in the plain-language explanation", () => {
+  const explanation = TraceCore.explain({
+    pageUrl: "https://app.example/",
+    interaction: { eventType: "click", element: { text: "Load" } },
+    timeline: [
+      { id: "interaction", kind: "interaction", primaryChain: true, relationshipEvidence: "root" },
+      { id: "request", kind: "request", title: "GET https://app.example/api?token=private&view=summary", primaryChain: true, relationshipEvidence: "explicit" }
+    ]
+  });
+  assert.match(explanation.steps[2].detail, /token=%5BREDACTED%5D/);
+  assert.doesNotMatch(explanation.steps[2].detail, /private/);
+});
+
 test("distinguishes same-origin and cross-origin network traffic", () => {
   assert.equal(TraceCore.networkScope("/api/order", "https://shop.example/cart"), "same-origin");
   assert.equal(TraceCore.networkScope("https://analytics.example/event", "https://shop.example/cart"), "cross-origin");
@@ -227,6 +280,11 @@ test("builds a redacted Markdown trace report", () => {
   });
   assert.match(report, /^# Behaviour trace/);
   assert.match(report, /Quality: 100% \(strong\)/);
+  assert.match(report, /## What happened/);
+  assert.match(report, /Your action — You clicked “Buy”/);
+  assert.match(report, /Data request/);
+  assert.match(report, /## Technical summary/);
+  assert.match(report, /## Technical timeline/);
   assert.match(report, /\+5ms · request/);
   assert.doesNotMatch(report, /token=secret/);
 });

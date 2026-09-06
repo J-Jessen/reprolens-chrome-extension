@@ -11,7 +11,7 @@
       <header>
         <p class="eyebrow">BEHAVIOUR TRACER · PRIVATE BETA</p>
         <h1>See what happened.</h1>
-        <p>Select an element, perform one click, and inspect the observed chain.</p>
+        <p>Select an element, perform one click, and start with a plain-language explanation.</p>
       </header>
 
       <section class="controls card">
@@ -33,66 +33,90 @@
       </section>
 
       <section id="result" class="result hidden">
-        <div class="summary card">
-          <h2 class="section-label">Deterministic summary</h2>
-          <p id="summary"></p>
-        </div>
+        <section class="explanation card" aria-labelledby="explanation-title">
+          <p class="section-label">Plain-language explanation</p>
+          <h2 id="explanation-title">What happened</h2>
+          <p id="explanation-headline" class="explanation-headline"></p>
+          <p id="explanation-overview" class="explanation-overview"></p>
+          <ol id="explanation-steps" class="explanation-steps" role="list"></ol>
+          <p id="evidence-note" class="evidence-note"></p>
+        </section>
 
-        <div id="quality" class="quality card">
-          <div class="quality-heading">
-            <div>
-              <h2 class="section-label">Trace quality</h2>
-              <strong id="quality-label"></strong>
+        <details id="technical-details" class="disclosure card">
+          <summary>
+            <span>Technical trace</span>
+            <span id="technical-count" class="disclosure-meta"></span>
+          </summary>
+          <div class="disclosure-body">
+            <section class="summary" aria-labelledby="technical-summary-title">
+              <h3 id="technical-summary-title" class="section-label">Deterministic summary</h3>
+              <p id="summary"></p>
+            </section>
+
+            <section id="quality" class="quality" aria-labelledby="quality-title">
+              <div class="quality-heading">
+                <div>
+                  <h3 id="quality-title" class="section-label">Trace quality</h3>
+                  <strong id="quality-label"></strong>
+                </div>
+                <span id="quality-score"></span>
+              </div>
+              <div class="quality-bar" role="progressbar" aria-label="Trace quality score" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="quality-fill"></span></div>
+              <p id="quality-metrics"></p>
+              <ul id="quality-diagnostics"></ul>
+            </section>
+
+            <div class="timeline-header">
+              <h3>Observed events</h3>
             </div>
-            <span id="quality-score"></span>
+            <fieldset id="filters" class="filters">
+              <legend class="visually-hidden">Filter trace events</legend>
+              <button class="filter active" type="button" data-filter="all" aria-pressed="true">All</button>
+              <button class="filter" type="button" data-filter="primary" aria-pressed="false">Primary chain</button>
+              <button class="filter" type="button" data-filter="handler" aria-pressed="false">Handlers</button>
+              <button class="filter" type="button" data-filter="network" aria-pressed="false">Network</button>
+              <button class="filter" type="button" data-filter="same-origin" aria-pressed="false">App network</button>
+              <button class="filter" type="button" data-filter="websocket" aria-pressed="false">WebSocket</button>
+              <button class="filter" type="button" data-filter="worker" aria-pressed="false">Workers</button>
+              <button class="filter" type="button" data-filter="async" aria-pressed="false">Async</button>
+              <button class="filter" type="button" data-filter="dom" aria-pressed="false">DOM</button>
+              <button class="filter" type="button" data-filter="errors" aria-pressed="false">Errors</button>
+              <button class="filter" type="button" data-filter="navigation" aria-pressed="false">Navigation</button>
+            </fieldset>
+            <ol id="timeline" class="timeline" aria-label="Observed trace events"></ol>
+            <p class="caveat">“Direct” means instrumented causality. Lower confidence means temporal correlation inside the trace window.</p>
           </div>
-          <div class="quality-bar" role="progressbar" aria-label="Trace quality score" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="quality-fill"></span></div>
-          <p id="quality-metrics"></p>
-          <ul id="quality-diagnostics"></ul>
-        </div>
+        </details>
 
-        <div class="timeline-header">
-          <h2>Trace</h2>
-          <div class="export-actions">
-            <button id="preview" class="quiet" type="button">Review export</button>
-            <button id="copy-markdown" class="quiet" type="button">Copy report</button>
-            <button id="copy" class="quiet" type="button">Copy safe JSON</button>
+        <details class="disclosure export-tools card">
+          <summary>Export or share this trace</summary>
+          <div class="disclosure-body export-actions">
+            <button id="preview" type="button">Review safe export</button>
+            <button id="copy-markdown" type="button">Copy readable report</button>
+            <button id="copy" type="button">Copy safe JSON</button>
           </div>
-        </div>
-        <fieldset id="filters" class="filters">
-          <legend class="visually-hidden">Filter trace events</legend>
-          <button class="filter active" type="button" data-filter="all" aria-pressed="true">All</button>
-          <button class="filter" type="button" data-filter="primary" aria-pressed="false">Primary chain</button>
-          <button class="filter" type="button" data-filter="handler" aria-pressed="false">Handlers</button>
-          <button class="filter" type="button" data-filter="network" aria-pressed="false">Network</button>
-          <button class="filter" type="button" data-filter="same-origin" aria-pressed="false">App network</button>
-          <button class="filter" type="button" data-filter="websocket" aria-pressed="false">WebSocket</button>
-          <button class="filter" type="button" data-filter="worker" aria-pressed="false">Workers</button>
-          <button class="filter" type="button" data-filter="async" aria-pressed="false">Async</button>
-          <button class="filter" type="button" data-filter="dom" aria-pressed="false">DOM</button>
-          <button class="filter" type="button" data-filter="errors" aria-pressed="false">Errors</button>
-          <button class="filter" type="button" data-filter="navigation" aria-pressed="false">Navigation</button>
-        </fieldset>
-        <ol id="timeline" class="timeline" aria-label="Observed trace events"></ol>
-        <p class="caveat">“Direct” means instrumented causality. Lower confidence means temporal correlation inside the trace window.</p>
+        </details>
       </section>
 
-      <section class="history card">
-        <div class="history-heading">
-          <div>
-            <p class="section-label">Local history</p>
-            <h2>Recent traces</h2>
+      <details class="history disclosure card">
+        <summary>
+          <span>Recent traces</span>
+          <span id="history-count" class="disclosure-meta"></span>
+        </summary>
+        <div class="history-body">
+          <div class="history-heading">
+            <p class="section-label">Stored only on this device</p>
+            <label class="toggle" for="history-enabled"><input id="history-enabled" type="checkbox" checked> Save new traces</label>
           </div>
-          <label class="toggle" for="history-enabled"><input id="history-enabled" type="checkbox" checked> Save</label>
+          <ul id="history-list" class="history-list"></ul>
+          <p id="history-usage" class="caveat"></p>
+          <div class="history-actions">
+            <button id="import-trace" class="quiet" type="button">Import JSON</button>
+            <button id="clear-history" class="quiet" type="button">Clear history</button>
+            <input id="import-file" type="file" accept="application/json,.json" hidden>
+          </div>
         </div>
-        <ul id="history-list" class="history-list"></ul>
-        <p id="history-usage" class="caveat"></p>
-        <div class="history-actions">
-          <button id="import-trace" class="quiet" type="button">Import JSON</button>
-          <button id="clear-history" class="quiet" type="button">Clear history</button>
-          <input id="import-file" type="file" accept="application/json,.json" hidden>
-        </div>
-      </section>
+      </details>
 
       <dialog id="export-dialog" aria-labelledby="export-dialog-title">
         <div class="dialog-heading">

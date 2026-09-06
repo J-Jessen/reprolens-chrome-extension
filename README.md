@@ -1,8 +1,8 @@
 # Behaviour Tracer
 
-Current build: **0.7.1**
+Current build: **0.8.0**
 
-Private beta: **v0.7.1-beta.1**
+Private beta: **v0.8.0-beta.1**
 
 A local-first Chrome Manifest V3 proof-of-concept for the product hypothesis:
 
@@ -31,6 +31,7 @@ This is a private-beta instrumentation experiment, not yet a production extensio
 17. Uses trace schema version 2 with explicit relationship, capture-method, and privacy metadata plus local migration of version 1 imports.
 18. Uses semantic, keyboard-accessible side-panel controls with light/dark color support and automated accessibility checks.
 19. Restores privacy-sanitized visible trace state from session storage if the extension service worker restarts.
+20. Presents a plain-language, step-by-step explanation by default and keeps raw timing, confidence, and browser evidence behind an expandable technical trace.
 
 All trace processing is local. The current build has no backend, analytics, login, or AI call.
 
@@ -56,6 +57,7 @@ Then open exactly `http://127.0.0.1:4173/`, select **Complete order**, choose **
 
 Expected evidence:
 
+- a plain-language explanation connecting the click, code, data request, and page result;
 - a direct click interaction;
 - one or more click-listener frames, including `submitOrder` when Chrome exposes that frame;
 - `GET /order.json?traceDemo=1` and its `200` response;
@@ -117,6 +119,7 @@ The versioned export contract and migration rules are documented in `TRACE_SCHEM
 
 ## Known limits
 
+- The plain-language explanation is deterministic and intentionally conservative. “Observed after click” means the event happened in the same trace window but was not proven to be caused by the click.
 - A request is “direct” only when its CDP initiator stack matches a captured click-handler frame. The primary chain follows explicit parent relationships; timing-only correlations remain visible but are excluded. Time proximity is not proof of causality.
 - Framework event delegation can expose a framework dispatcher rather than the authored handler.
 - Available source maps are fetched and applied locally. Missing, inaccessible, malformed, or unsupported maps fall back to deployed JavaScript locations.
