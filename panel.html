@@ -187,23 +187,25 @@
         <form id="feedback-form" action="" method="post">
           <fieldset>
             <legend>Usefulness</legend>
-            <div class="rating-scale">
-              <label for="rating-1"><input id="rating-1" type="radio" name="rating" value="1" required> 1</label>
+            <div class="rating-scale" aria-describedby="usefulness-scale-meaning">
+              <label for="rating-1"><input id="rating-1" type="radio" name="rating" value="1" required> 1<span class="visually-hidden"> — Not useful</span></label>
               <label for="rating-2"><input id="rating-2" type="radio" name="rating" value="2"> 2</label>
               <label for="rating-3"><input id="rating-3" type="radio" name="rating" value="3"> 3</label>
               <label for="rating-4"><input id="rating-4" type="radio" name="rating" value="4"> 4</label>
-              <label for="rating-5"><input id="rating-5" type="radio" name="rating" value="5"> 5</label>
+              <label for="rating-5"><input id="rating-5" type="radio" name="rating" value="5"> 5<span class="visually-hidden"> — Very useful</span></label>
             </div>
+            <p id="usefulness-scale-meaning" class="rating-meaning"><span><strong>1</strong> · Not useful</span><span><strong>5</strong> · Very useful</span></p>
           </fieldset>
           <fieldset>
             <legend>Explanation clarity</legend>
-            <div class="rating-scale">
-              <label for="clarity-1"><input id="clarity-1" type="radio" name="clarity" value="1" required> 1</label>
+            <div class="rating-scale" aria-describedby="clarity-scale-meaning">
+              <label for="clarity-1"><input id="clarity-1" type="radio" name="clarity" value="1" required> 1<span class="visually-hidden"> — Very unclear</span></label>
               <label for="clarity-2"><input id="clarity-2" type="radio" name="clarity" value="2"> 2</label>
               <label for="clarity-3"><input id="clarity-3" type="radio" name="clarity" value="3"> 3</label>
               <label for="clarity-4"><input id="clarity-4" type="radio" name="clarity" value="4"> 4</label>
-              <label for="clarity-5"><input id="clarity-5" type="radio" name="clarity" value="5"> 5</label>
+              <label for="clarity-5"><input id="clarity-5" type="radio" name="clarity" value="5"> 5<span class="visually-hidden"> — Very clear</span></label>
             </div>
+            <p id="clarity-scale-meaning" class="rating-meaning"><span><strong>1</strong> · Very unclear</span><span><strong>5</strong> · Very clear</span></p>
           </fieldset>
           <label for="most-useful">Most useful part</label>
           <select id="most-useful" name="most-useful">
@@ -224,8 +226,8 @@
           <button class="primary" type="submit">Save local feedback</button>
         </form>
         <div class="feedback-actions">
-          <button id="download-feedback" class="quiet" type="button">Download feedback</button>
-          <button id="clear-feedback" class="quiet" type="button">Clear feedback</button>
+          <button id="download-feedback" class="primary" type="button">Download feedback</button>
+          <button id="clear-feedback" class="danger-outline" type="button">Clear feedback</button>
         </div>
         <p id="feedback-status" class="status-inline" role="status" aria-atomic="true"></p>
       </section>

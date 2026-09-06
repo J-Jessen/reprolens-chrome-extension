@@ -140,7 +140,7 @@ The versioned export contract and migration rules are documented in `TRACE_SCHEM
 - Cross-origin iframe request/error/handler metadata is captured when Chrome exposes the frame as a related target. Frame DOM and body content, sandbox-blocked internals, browser-internal pages, and closed shadow roots remain outside this beta.
 - Site access is granted to one exact HTTP or HTTPS origin at a time. Cross-origin source maps may remain unavailable until their own host is explicitly supported; tracing does not silently expand access.
 - Opening DevTools on the traced tab detaches `chrome.debugger`.
-- Chrome's on-device Prompt API requires Chrome 148+ on a supported desktop device and may require an initial model download. The deterministic explanation always remains available; there is no cloud fallback.
+- Chrome's on-device Prompt API requires Chrome 148+ on a supported desktop device and may require an initial model download. Chromium-based browsers that do not expose `LanguageModel`, including the current Brave beta-test setup, receive an actionable browser-specific explanation instead. The deterministic explanation always remains available; there is no cloud fallback.
 - The extension declares HTTP and HTTPS hosts as optional and requests only the active website from a direct **Select element** or **Record one interaction** action. Chrome's extension settings can revoke previously granted sites.
 
 ## Go/no-go test

@@ -436,6 +436,14 @@ async function main() {
     }
     const aiControlText = await controller.$eval("#ai-details", (node) => node.innerText);
     if (!/on-device|local model/i.test(aiControlText)) throw new Error("Optional AI controls did not clearly describe local processing");
+    const hasLanguageModel = await controller.evaluate(() => "LanguageModel" in globalThis);
+    if (!hasLanguageModel) {
+      await controller.click("#generate-ai");
+      const unavailableAiText = await controller.$eval("#ai-status", (node) => node.textContent);
+      if (!/Google Chrome 148\+|on-device-internals/.test(unavailableAiText)) {
+        throw new Error(`Unsupported-browser AI guidance was not actionable: ${unavailableAiText}`);
+      }
+    }
     process.stdout.write("On-device AI input audit passed\n");
 
     await controller.$eval(".history", (node) => { node.open = true; });
@@ -483,6 +491,19 @@ async function main() {
     }
     if (/tester@example\.com|private-beta-secret/.test(savedFeedback.comment)) {
       throw new Error("Local beta feedback did not redact common credentials before storage");
+    }
+    const feedbackUsability = await controller.$eval("#feedback-card", (node) => ({
+      text: node.innerText,
+      ratingHeights: [...node.querySelectorAll(".rating-scale label")].map((label) => label.getBoundingClientRect().height),
+      actionHeights: [...node.querySelectorAll(".feedback-actions button")].map((button) => button.getBoundingClientRect().height)
+    }));
+    if (!/1 · Not useful/.test(feedbackUsability.text) || !/5 · Very useful/.test(feedbackUsability.text)
+      || !/1 · Very unclear/.test(feedbackUsability.text) || !/5 · Very clear/.test(feedbackUsability.text)) {
+      throw new Error("Feedback rating endpoints were not explained");
+    }
+    if (feedbackUsability.ratingHeights.some((height) => height < 48)
+      || feedbackUsability.actionHeights.some((height) => height < 44)) {
+      throw new Error(`Feedback controls were too small: ratings ${feedbackUsability.ratingHeights.join(", ")}; actions ${feedbackUsability.actionHeights.join(", ")}`);
     }
     process.stdout.write("Local feedback privacy audit passed\n");
     const hasHorizontalOverflow = await controller.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);

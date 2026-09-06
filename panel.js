@@ -89,6 +89,32 @@ function errorMessage(error, fallback) {
   return error?.message || String(error || fallback);
 }
 
+async function browserName() {
+  try {
+    if (await globalThis.navigator?.brave?.isBrave?.()) return "Brave";
+  } catch {
+    // Browser identification is optional; feature detection remains authoritative.
+  }
+  const brands = globalThis.navigator?.userAgentData?.brands || [];
+  if (brands.some((brand) => brand.brand === "Microsoft Edge")) return "Microsoft Edge";
+  if (brands.some((brand) => brand.brand === "Google Chrome")) return "Google Chrome";
+  return "this browser";
+}
+
+function unavailableAiMessage(name) {
+  if (name === "Brave") {
+    return "On-device AI is not exposed by this Brave version. To test the optional AI explanation, open Behaviour Tracer in Google Chrome 148+ on a supported desktop device. The deterministic explanation above remains fully available.";
+  }
+  if (name === "Google Chrome") {
+    return "On-device AI is not enabled in this Chrome profile. Confirm Chrome 148+ and check chrome://on-device-internals. The deterministic explanation above remains fully available.";
+  }
+  return `On-device AI is not exposed by ${name}. Try Google Chrome 148+ on a supported desktop device, or continue with the deterministic explanation above.`;
+}
+
+function unavailableModelMessage() {
+  return "Chrome exposes on-device AI, but its local model cannot run in this profile. Check chrome://on-device-internals, keep at least 22 GB free on the profile drive, and confirm the device has either more than 4 GB VRAM or at least 16 GB RAM and 4 CPU cores.";
+}
+
 function safeExport() {
   const exported = TraceCore.redactForExport(currentState || {});
   return { ...exported, json: JSON.stringify(exported.trace, null, 2), total: exported.totalRedactions };
@@ -337,7 +363,7 @@ filters.addEventListener("click", (event) => {
 generateAiButton.addEventListener("click", async () => {
   if (!currentState) return;
   if (!("LanguageModel" in globalThis)) {
-    aiStatus.textContent = "On-device AI is unavailable here. The deterministic explanation remains fully available.";
+    aiStatus.textContent = unavailableAiMessage(await browserName());
     return;
   }
   generateAiButton.disabled = true;
@@ -351,8 +377,14 @@ generateAiButton.addEventListener("click", async () => {
       expectedInputs: [{ type: "text", languages: ["en"] }],
       expectedOutputs: [{ type: "text", languages: ["en"] }]
     });
-    if (availability === "unavailable") throw new Error("The local language model is unavailable on this device.");
-    aiStatus.textContent = availability === "downloadable" ? "Preparing the local model…" : "Generating a local second opinion…";
+    if (["unavailable", "no"].includes(availability)) {
+      aiStatus.textContent = unavailableModelMessage();
+      aiOutput.classList.add("hidden");
+      return;
+    }
+    aiStatus.textContent = ["downloadable", "downloading", "after-download"].includes(availability)
+      ? "Chrome is preparing its local model. The initial download can take several minutes…"
+      : "Loading Chrome’s local model…";
     session = await LanguageModel.create({
       expectedInputs: [{ type: "text", languages: ["en"] }],
       expectedOutputs: [{ type: "text", languages: ["en"] }],

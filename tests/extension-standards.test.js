@@ -43,6 +43,10 @@ test("side panel uses semantic, keyboard-accessible, CSP-safe markup", () => {
   assert.match(panel, /<details\s+class="history disclosure card"/);
   assert.match(panel, /<ol\s+id="explanation-steps"[^>]*role="list"/);
   assert.match(panel, /<pre\b[^>]*tabindex="0"><code\b/);
+  assert.match(panel, /1<[^>]*visually-hidden[^>]*> — Not useful/);
+  assert.match(panel, /5<[^>]*visually-hidden[^>]*> — Very useful/);
+  assert.match(panel, /1<[^>]*visually-hidden[^>]*> — Very unclear/);
+  assert.match(panel, /5<[^>]*visually-hidden[^>]*> — Very clear/);
   assert.doesNotMatch(panel, /<script\b(?![^>]*\bsrc=)/);
   assert.doesNotMatch(panel, /\son[a-z]+\s*=/i);
   assert.doesNotMatch(panel, /\sstyle\s*=/i);
@@ -60,6 +64,14 @@ test("runtime rendering avoids HTML string injection and promise chains", () => 
   }
   assert.ok(fs.existsSync(path.join(root, "content.css")));
   assert.doesNotMatch(read("content.js"), /Object\.assign\([^,]+\.style/);
+});
+
+test("optional AI explains unsupported browsers and unavailable local models", () => {
+  const panelRuntime = read("panel.js");
+  assert.match(panelRuntime, /not exposed by this Brave version/);
+  assert.match(panelRuntime, /chrome:\/\/on-device-internals/);
+  assert.match(panelRuntime, /at least 22 GB free/);
+  assert.match(panelRuntime, /deterministic explanation above remains fully available/);
 });
 
 test("Web Store and privacy documentation cover every requested capability", () => {

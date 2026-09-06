@@ -158,6 +158,8 @@ button:disabled { opacity: .45; cursor: default; }
 button.primary { background: var(--primary-bg); border-color: var(--primary-bg); color: white; }
 button.primary:hover:not(:disabled) { background: var(--primary-hover); border-color: var(--primary-hover); }
 button.quiet { min-height: auto; padding: 5px 8px; background: transparent; font-size: .6875rem; color: var(--muted); }
+button.danger-outline { border-color: var(--red); background: var(--problem-bg); color: var(--red); }
+button.danger-outline:hover:not(:disabled) { border-color: var(--red); background: var(--problem-bg); }
 
 :where(input:not([type="checkbox"], [type="radio"]), select, textarea) {
   inline-size: 100%;
@@ -333,7 +335,7 @@ dialog::backdrop { background: rgba(0, 0, 0, .72); }
 #ai-input { max-block-size: 14rem; margin-block-end: 0; overflow: auto; padding: .625rem; border: 1px solid var(--line); border-radius: .5rem; background: var(--code-bg); color: var(--code-text); font: .625rem/1.45 ui-monospace, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
 .ai-actions, .feedback-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
 .ai-actions button { flex: 1 1 9rem; text-align: center; }
-.status-inline { min-block-size: 1.25rem; margin: .625rem 0 0; color: var(--muted); font-size: .75rem; }
+.status-inline { min-block-size: 1.25rem; margin: .625rem 0 0; color: var(--muted); font-size: .75rem; overflow-wrap: anywhere; }
 .ai-output { margin: .75rem 0 0; padding: .75rem; border-inline-start: 3px solid var(--purple); background: var(--purple-soft); white-space: pre-wrap; overflow-wrap: anywhere; }
 .history { margin-top: 18px; }
 .history-body { padding: 14px; }
@@ -365,11 +367,15 @@ dialog::backdrop { background: rgba(0, 0, 0, .72); }
 .feedback form { display: grid; gap: .625rem; }
 .feedback fieldset { margin: 0; padding: 0; border: 0; }
 .rating-scale { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .375rem; margin-block-start: .375rem; }
-.rating-scale label { display: flex; min-inline-size: 0; min-block-size: 2.5rem; flex-direction: column; align-items: center; justify-content: center; gap: 0; border: 1px solid var(--control-line); border-radius: .5rem; background: var(--button-bg); cursor: pointer; }
-.rating-scale input { margin: 0; accent-color: var(--purple); }
+.rating-scale label { display: flex; min-inline-size: 0; min-block-size: 3rem; flex-direction: column; align-items: center; justify-content: center; gap: .125rem; border: 1px solid var(--control-line); border-radius: .5rem; background: var(--button-bg); cursor: pointer; }
+.rating-scale label:hover { border-color: var(--button-hover-line); background: var(--button-hover-bg); }
+.rating-scale label:has(input:checked) { border-color: var(--purple); background: var(--purple-soft); color: var(--text); }
+.rating-scale input { inline-size: 1rem; block-size: 1rem; margin: 0; accent-color: var(--purple); }
+.rating-meaning { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .25rem 1rem; margin: .375rem 0 0; color: var(--muted); font-size: .6875rem; }
+.rating-meaning strong { color: var(--text); }
 .feedback form > button { text-align: center; }
 .feedback-actions { margin-block-start: .625rem; }
-.feedback-actions button { flex: 1 1 8rem; text-align: center; }
+.feedback-actions button { min-block-size: 2.75rem; flex: 1 1 9rem; padding: .75rem 1rem; text-align: center; font-weight: 750; }
 
 #rename-dialog form { display: grid; gap: .625rem; margin-block-start: .75rem; }
 .dialog-actions { display: flex; justify-content: flex-end; gap: .5rem; }

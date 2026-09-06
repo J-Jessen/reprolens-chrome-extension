@@ -79,7 +79,7 @@ Verify these once:
 - reopen a trace from local history;
 - name two traces, find/filter them, and compare them;
 - on React, inspect whether component names and structural context help without exposing values;
-- if **Optional on-device AI explanation** is available, review its exact input, generate once, and compare its value with the deterministic explanation; unavailable AI is an acceptable result;
+- if **Optional on-device AI explanation** is available in Google Chrome 148+, review its exact input, generate once, and compare its value with the deterministic explanation; Brave may not expose Chrome's `LanguageModel` API, and the browser-specific fallback message is an acceptable result;
 - save a usefulness and clarity rating in the in-product feedback card, then download the local feedback file and verify no private input is present;
 - delete one history item;
 - reload the extension and confirm the approved test site still works.

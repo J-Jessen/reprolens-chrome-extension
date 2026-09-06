@@ -18,7 +18,7 @@ Behaviour Tracer lets a developer select an element on a website, perform one cl
 
 React traces can show the owning component path plus capped prop names/types and state shape without capturing values. Supported Chrome versions can also attach related Worker and cross-origin iframe contexts to observe request/error/handler metadata without reading messages or frame content. Local history supports naming, search, quality/problem filters, and comparison of two traces.
 
-An optional second opinion uses Chrome's on-device language model on supported Chrome 148+ desktop devices. The user can review the complete redacted input first. There is no cloud AI fallback. Private-beta usefulness and clarity feedback is stored locally, redacted before storage, and downloaded only on request.
+An optional second opinion uses Chrome's on-device language model on supported Chrome 148+ desktop devices. The user can review the complete redacted input first. Unsupported browsers and Chrome profiles receive a specific local troubleshooting message instead; there is no cloud AI fallback. Private-beta usefulness and clarity feedback is stored locally, redacted before storage, and downloaded only on request.
 
 Tracing begins only after an explicit action in the extension side panel. Processing, source-map resolution, history, and export redaction happen locally in the browser. The extension has no backend, analytics, account system, advertising, or automatic upload.
 
@@ -85,6 +85,6 @@ Do not submit until each blocker is complete.
 
 ## Version history
 
-- `0.9.0` · 6 September 2026 — Added five interaction types, expanded error diagnoses, privacy-safe React shape, deeper Worker/frame metadata, searchable/comparable history, optional on-device AI, local beta feedback, and a 31-scenario browser corpus.
+- `0.9.0` · 6 September 2026 — Added five interaction types, expanded error diagnoses, privacy-safe React shape, deeper Worker/frame metadata, searchable/comparable history, optional on-device AI with browser/model diagnostics, clearer and more accessible local beta feedback controls, and a 31-scenario browser corpus.
 - `0.8.0` · 6 September 2026 — Added diagnostic failed-request explanations, targeted first checks, progressive technical disclosure, explicit uncertainty wording, and narrow-panel usability verification.
 - `0.7.1` · 6 September 2026 — Added Modern Web Guidance alignment, accessibility checks, safe DOM rendering, and Manifest V3 session recovery.

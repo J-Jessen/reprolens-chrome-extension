@@ -9,7 +9,7 @@
 
 html {
   min-block-size: 100%;
-  background-color: #0e1015;
+  background: var(--page-background);
 }
 
 body {
