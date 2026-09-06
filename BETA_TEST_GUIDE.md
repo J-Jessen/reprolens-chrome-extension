@@ -14,7 +14,7 @@ Stop testing and contact the owner privately if the browser behaves abnormally o
 
 ## Install the beta
 
-1. Save the `behaviour-tracer-v0.8.0-beta.2.zip` file supplied directly by the owner.
+1. Save the `behaviour-tracer-v0.8.0-beta.3.zip` file supplied directly by the owner.
 2. Extract the ZIP into a folder you will keep for the duration of the beta.
 3. Confirm that the folder contains `manifest.json`, `START_HER.md`, and this guide.
 4. Open `chrome://extensions` in Chrome.

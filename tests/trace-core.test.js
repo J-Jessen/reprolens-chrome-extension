@@ -88,7 +88,8 @@ test("explains a trace in plain language without hiding uncertainty", () => {
     ]
   });
 
-  assert.equal(explanation.headline, "The click requested data and updated the page");
+  assert.equal(explanation.headline, "After clicking “Complete order”, the page requested /order.json and later showed “Order complete”");
+  assert.equal(explanation.overview, "The data request completed successfully. One page change was observed.");
   assert.deepEqual(explanation.steps.map((step) => step.label), ["Your action", "Page code", "Data request", "Page result"]);
   assert.equal(explanation.steps[1].title, "submitOrder() handled the click");
   assert.match(explanation.steps[2].detail, /\/order\.json\?cart=1/);
@@ -109,10 +110,30 @@ test("explains minified handlers and failed responses honestly", () => {
     ]
   });
 
-  assert.equal(explanation.headline, "The trace captured a problem after the click");
+  assert.equal(explanation.headline, "After clicking “Save”, a problem was observed while requesting /api/save");
   assert.equal(explanation.steps[1].title, "Page code handled the click");
   assert.match(explanation.steps[1].detail, /anonymous, framework-managed, bundled, or minified code/);
   assert.match(explanation.steps[2].detail, /error response/);
+});
+
+test("prefers a meaningful result over the clicked button's final label", () => {
+  const explanation = TraceCore.explain({
+    pageUrl: "https://shop.example/cart",
+    interaction: { eventType: "click", element: { selector: "#checkout", text: "Complete order" } },
+    timeline: [
+      { id: "interaction", kind: "interaction", primaryChain: true, relationshipEvidence: "root" },
+      { id: "request", kind: "request", title: "GET https://shop.example/order.json?traceDemo=1", primaryChain: true, relationshipEvidence: "explicit" },
+      { id: "response", kind: "response", title: "200 https://shop.example/order.json?traceDemo=1", primaryChain: true, relationshipEvidence: "explicit" },
+      { id: "working", kind: "mutation", title: "Text changed to “Processing…”", detail: "#checkout", primaryChain: false },
+      { id: "result", kind: "mutation", title: "Text changed to “Order BT-1042 confirmed”", detail: "#result", primaryChain: false },
+      { id: "done", kind: "mutation", title: "Text changed to “Completed”", detail: "#checkout", primaryChain: false }
+    ]
+  });
+
+  assert.equal(explanation.headline, "After clicking “Complete order”, the page requested /order.json and later showed “Order BT-1042 confirmed”");
+  assert.equal(explanation.steps[2].title, "The page requested /order.json");
+  assert.equal(explanation.steps[3].title, "The page first showed “Processing…” and later “Order BT-1042 confirmed”");
+  assert.equal(explanation.overview, "The data request completed successfully. 3 page changes were observed.");
 });
 
 test("redacts sensitive URL parameters in the plain-language explanation", () => {

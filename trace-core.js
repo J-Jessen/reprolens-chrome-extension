@@ -800,6 +800,12 @@
     return element?.selector || "the selected element";
   }
 
+  function shorten(value, maximum = 56) {
+    const text = String(value || "").trim().replace(/\s+/g, " ");
+    if (text.length <= maximum) return text;
+    return `${text.slice(0, Math.max(1, maximum - 1)).trimEnd()}…`;
+  }
+
   function readableUrl(value, pageUrl) {
     try {
       const url = new URL(value, pageUrl);
@@ -814,6 +820,43 @@
     } catch (_) {
       return String(value || "").slice(0, 100);
     }
+  }
+
+  function conciseUrl(value, pageUrl) {
+    try {
+      const url = new URL(value, pageUrl);
+      const page = new URL(pageUrl);
+      const label = url.origin === page.origin
+        ? url.pathname
+        : `${url.hostname}${url.pathname}`;
+      return shorten(label || "/", 52);
+    } catch (_) {
+      return shorten(String(value || "").split(/[?#]/, 1)[0], 52);
+    }
+  }
+
+  function requestUrl(event) {
+    return String(event?.title || "").replace(/^\S+\s+/, "");
+  }
+
+  function visibleMutation(event) {
+    const title = String(event?.title || "").trim();
+    if (!title.startsWith("Text changed to ")) return "";
+    let value = title.slice("Text changed to ".length).trim();
+    const pairedQuotes = (value.startsWith("“") && value.endsWith("”"))
+      || (value.startsWith('"') && value.endsWith('"'));
+    if (pairedQuotes) value = value.slice(1, -1);
+    return shorten(value, 56);
+  }
+
+  function importantVisibleChange(mutations, session) {
+    const selectedSelector = session.interaction?.element?.selector || session.selectedElement?.selector || "";
+    const visible = mutations
+      .map((event) => ({ event, text: visibleMutation(event) }))
+      .filter((item) => item.text);
+    if (!visible.length) return null;
+    return [...visible].reverse().find((item) => selectedSelector && item.event.detail !== selectedSelector)
+      || visible[visible.length - 1];
   }
 
   function relationLabel(event) {
@@ -835,6 +878,11 @@
     const mutations = timeline.filter((event) => event.kind === "mutation");
     const navigations = timeline.filter((event) => event.kind === "navigation");
     const errors = timeline.filter((event) => event.kind === "exception");
+    const requestDestination = requests.length ? conciseUrl(requestUrl(requests[0]), session.pageUrl) : "";
+    const successfulResponses = responses.filter((event) => Number.parseInt(event.title, 10) < 400).length;
+    const failedResponses = responses.filter((event) => Number.parseInt(event.title, 10) >= 400).length;
+    const hasNetworkProblem = failures.length > 0 || failedResponses > 0;
+    const importantChange = importantVisibleChange(mutations, session);
     const steps = [];
 
     steps.push({
@@ -879,12 +927,8 @@
 
     if (requests.length || failures.length) {
       const requestLabels = requests.slice(0, 2).map((event) => {
-        const rawUrl = String(event.title || "").replace(/^\S+\s+/, "");
-        return readableUrl(rawUrl, session.pageUrl);
+        return readableUrl(requestUrl(event), session.pageUrl);
       });
-      const successfulResponses = responses.filter((event) => Number.parseInt(event.title, 10) < 400).length;
-      const failedResponses = responses.filter((event) => Number.parseInt(event.title, 10) >= 400).length;
-      const hasNetworkProblem = failures.length > 0 || failedResponses > 0;
       const requestCount = requests.length;
       const resultParts = [];
       if (requestLabels.length) resultParts.push(`Requests: ${requestLabels.join(", ")}.`);
@@ -895,7 +939,7 @@
         kind: hasNetworkProblem ? "problem" : "network",
         label: "Data request",
         title: requestCount === 1
-          ? "The page requested data"
+          ? `The page requested ${requestDestination || "data"}`
           : `The page started ${requestCount} data requests`,
         detail: resultParts.join(" ") || "A request problem was observed.",
         relation: relationLabel(anchor)
@@ -903,12 +947,20 @@
     }
 
     if (mutations.length) {
-      const examples = mutations.slice(0, 2).map((event) => event.title).filter(Boolean);
+      const visibleChanges = mutations.map(visibleMutation).filter(Boolean);
+      const firstVisibleChange = visibleChanges[0];
+      let title = mutations.length === 1 ? "The page content changed" : `The page changed in ${mutations.length} places`;
+      if (importantChange?.text && firstVisibleChange && firstVisibleChange !== importantChange.text) {
+        title = `The page first showed “${shorten(firstVisibleChange, 42)}” and later “${shorten(importantChange.text, 48)}”`;
+      } else if (importantChange?.text) {
+        title = `The page showed “${importantChange.text}”`;
+      }
+      const detail = `${mutations.length === 1 ? "One page change was" : `${mutations.length} page changes were`} observed. The detailed trace lists each changed element.`;
       steps.push({
         kind: "change",
         label: "Page result",
-        title: mutations.length === 1 ? "The page content changed" : `The page changed in ${mutations.length} places`,
-        detail: examples.length ? `${examples.join("; ")}.` : "The trace observed changes to the page content.",
+        title,
+        detail,
         relation: relationLabel(mutations[0])
       });
     }
@@ -935,13 +987,43 @@
       });
     }
 
-    let headline = "The click ran page code";
-    const hasNetworkProblem = failures.length > 0 || responses.some((event) => Number.parseInt(event.title, 10) >= 400);
-    if (errors.length || hasNetworkProblem) headline = "The trace captured a problem after the click";
-    else if (navigations.length) headline = "The click opened another view";
-    else if (requests.length && mutations.length) headline = "The click requested data and updated the page";
-    else if (mutations.length) headline = "The click updated the page";
-    else if (requests.length) headline = "The click started a data request";
+    let headline = `After clicking ${subject}, the page ran code`;
+    if (errors.length || hasNetworkProblem) {
+      headline = requestDestination
+        ? `After clicking ${subject}, a problem was observed while requesting ${requestDestination}`
+        : `A problem was observed after clicking ${subject}`;
+    } else if (navigations.length) {
+      const destination = String(navigations[0].title || "").replace(/^Navigate to\s+/, "");
+      headline = `After clicking ${subject}, the browser opened ${conciseUrl(destination, session.pageUrl)}`;
+    } else if (requests.length && importantChange?.text) {
+      headline = `After clicking ${subject}, the page requested ${requestDestination || "data"} and later showed “${importantChange.text}”`;
+    } else if (requests.length && mutations.length) {
+      headline = `After clicking ${subject}, the page requested ${requestDestination || "data"} and then changed`;
+    } else if (importantChange?.text) {
+      headline = `After clicking ${subject}, the page showed “${importantChange.text}”`;
+    } else if (mutations.length) {
+      headline = `After clicking ${subject}, the page changed`;
+    } else if (requests.length) {
+      headline = `After clicking ${subject}, the page requested ${requestDestination || "data"}`;
+    }
+
+    const overviewParts = [];
+    if (hasNetworkProblem) overviewParts.push("At least one data request failed or returned an error.");
+    else if (requests.length && successfulResponses >= requests.length) {
+      overviewParts.push(`${requests.length === 1 ? "The data request" : "All data requests"} completed successfully.`);
+    } else if (successfulResponses) {
+      overviewParts.push(`${successfulResponses} of ${requests.length} data requests completed successfully.`);
+    } else if (requests.length) {
+      overviewParts.push(`${requests.length === 1 ? "One data request was" : `${requests.length} data requests were`} observed.`);
+    }
+    if (mutations.length) {
+      overviewParts.push(`${mutations.length === 1 ? "One page change was" : `${mutations.length} page changes were`} observed.`);
+    }
+    if (navigations.length) overviewParts.push("The browser address also changed.");
+    if (errors.length) overviewParts.push(`${errors.length === 1 ? "One warning or error was" : `${errors.length} warnings or errors were`} captured.`);
+    if (!overviewParts.length) {
+      overviewParts.push(`${steps.length} step${steps.length === 1 ? " was" : "s were"} observed from your action to the result.`);
+    }
 
     const hasUnlinkedEvidence = timeline.some((event) => event.kind !== "interaction" && !event.primaryChain);
     const evidenceNote = hasUnlinkedEvidence
@@ -950,7 +1032,7 @@
 
     return {
       headline,
-      overview: `${steps.length} step${steps.length === 1 ? " was" : "s were"} observed from your action to the result.`,
+      overview: overviewParts.join(" "),
       steps,
       evidenceNote
     };

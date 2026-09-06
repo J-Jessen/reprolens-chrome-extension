@@ -197,8 +197,8 @@ button.quiet { min-height: auto; padding: 5px 8px; background: transparent; font
 .hidden { display: none; }
 .explanation { padding: 1rem; }
 .explanation h2 { margin-block-start: .25rem; font-size: 1.125rem; }
-.explanation-headline { margin: .75rem 0 .25rem; color: var(--event-title); font-size: 1rem; font-weight: 750; line-height: 1.35; }
-.explanation-overview { max-inline-size: 65ch; margin: 0; color: var(--muted); font-size: .8125rem; }
+.explanation-headline { margin: .75rem 0 .25rem; color: var(--event-title); font-size: 1rem; font-weight: 750; line-height: 1.35; overflow-wrap: anywhere; }
+.explanation-overview { max-inline-size: 65ch; margin: 0; color: var(--muted); font-size: .8125rem; overflow-wrap: anywhere; }
 .explanation-steps { display: grid; gap: .5rem; margin: 1rem 0 0; padding: 0; list-style: none; counter-reset: explanation-step; }
 .explanation-step {
   position: relative;
@@ -232,7 +232,7 @@ button.quiet { min-height: auto; padding: 5px 8px; background: transparent; font
 .relation.observed, .relation.limited { background: var(--observed-bg); color: var(--amber); }
 .explanation-step strong { display: block; margin-block-start: .25rem; overflow-wrap: anywhere; }
 .explanation-step-detail { margin: .25rem 0 0; color: var(--muted); font-size: .8125rem; overflow-wrap: anywhere; }
-.evidence-note { margin: .875rem 0 0; padding-block-start: .75rem; border-block-start: 1px solid var(--line); color: var(--subtle-text); font-size: .75rem; }
+.evidence-note { margin: .875rem 0 0; padding-block-start: .75rem; border-block-start: 1px solid var(--line); color: var(--subtle-text); font-size: .75rem; overflow-wrap: anywhere; }
 
 .disclosure > summary {
   min-block-size: 3rem;
@@ -264,7 +264,7 @@ button.filter.active { border-color: var(--purple); background: var(--purple-sof
 .event {
   position: relative;
   display: grid;
-  grid-template-columns: 45px 11px 1fr;
+  grid-template-columns: minmax(0, 45px) 11px minmax(0, 1fr);
   gap: 9px;
   min-height: 67px;
 }
@@ -277,7 +277,7 @@ button.filter.active { border-color: var(--purple); background: var(--purple-sof
   width: 1px;
   background: var(--line);
 }
-.time { color: var(--time-text); font: .625rem/1 ui-monospace, monospace; padding-top: 8px; text-align: end; }
+.time { color: var(--time-text); font: .625rem/1 ui-monospace, monospace; padding-top: 8px; text-align: end; overflow-wrap: anywhere; }
 .dot { z-index: 1; width: 9px; height: 9px; margin-top: 8px; border-radius: 50%; background: var(--purple); box-shadow: 0 0 0 4px var(--bg); }
 .event:not(.primary-chain) .dot { opacity: .45; }
 .event.child-event .event-body { margin-inline-start: 9px; padding-inline-start: 10px; border-inline-start: 1px solid var(--line); }
@@ -307,7 +307,7 @@ dialog::backdrop { background: rgba(0, 0, 0, .72); }
 .export-tools button { text-align: center; }
 .history { margin-top: 18px; }
 .history-body { padding: 14px; }
-.history-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.history-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
 .toggle { display: flex; align-items: center; gap: 5px; color: var(--muted); font-size: .6875rem; }
 .history-list { display: grid; gap: 6px; margin: 11px 0 0; padding: 0; list-style: none; }
 .history-item { display: grid; grid-template-columns: 1fr auto; gap: 4px; }
@@ -315,8 +315,8 @@ dialog::backdrop { background: rgba(0, 0, 0, .72); }
 .history-open strong, .history-open span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .history-open span, .history-empty { margin: 3px 0 0; color: var(--muted); font-size: .625rem; }
 .history-delete { align-self: stretch; font-size: 1rem; }
-.history-actions { display: flex; gap: 5px; margin-top: 9px; }
-.history-actions button { align-self: stretch; }
+.history-actions { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 9px; }
+.history-actions button { flex: 1 1 8rem; align-self: stretch; }
 
 @media (prefers-reduced-motion: no-preference) {
   .status.recording::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-right: 7px; border-radius: 50%; background: var(--red); animation: blink 1s infinite; }

@@ -361,7 +361,13 @@ async function main() {
     if (hasHorizontalOverflow) throw new Error("Panel overflows horizontally at a narrow side-panel width");
     await controller.evaluate(() => { document.documentElement.style.fontSize = "200%"; });
     const zoomOverflow = await controller.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
-    if (zoomOverflow) throw new Error("Panel overflows horizontally at 200% text size");
+    if (zoomOverflow) {
+      const overflowSources = await controller.evaluate(() => [...document.querySelectorAll("body *")].reverse()
+        .filter((node) => node.scrollWidth > node.clientWidth + 0.5)
+        .slice(0, 8)
+        .map((node) => `${node.tagName.toLowerCase()}${node.id ? `#${node.id}` : ""}${node.className ? `.${String(node.className).trim().replace(/\s+/g, ".")}` : ""} (${node.clientWidth}/${node.scrollWidth})`));
+      throw new Error(`Panel overflows horizontally at 200% text size: ${overflowSources.join(", ")}`);
+    }
     await controller.evaluate(() => { document.documentElement.style.fontSize = ""; });
     for (const colorScheme of ["light", "dark"]) {
       await controller.emulateMediaFeatures([{ name: "prefers-color-scheme", value: colorScheme }]);
