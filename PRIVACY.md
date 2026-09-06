@@ -6,7 +6,7 @@ Behaviour Tracer is local-first. Trace collection, source-map resolution, qualit
 
 ## Website access
 
-The extension has no required website host permissions and no always-on content script. When the user chooses **Select element** or **Record one click**, Chrome requests optional access to that exact HTTP or HTTPS origin and the extension injects its picker on demand. A grant persists for that website until the user revokes it in Chrome's extension settings. Access is never expanded automatically to unrelated hosts.
+The extension has no required website host permissions and no always-on content script. When the user chooses **Select element** or **Record one interaction**, Chrome requests optional access to that exact HTTP or HTTPS origin and the extension injects its picker on demand. A grant persists for that website until the user revokes it in Chrome's extension settings. Access is never expanded automatically to unrelated hosts.
 
 ## Data collected during a trace
 
@@ -15,6 +15,9 @@ The extension has no required website host permissions and no always-on content 
 - Request URL, method, resource type, status, timing, and initiator locations.
 - WebSocket URL, lifecycle, direction, opcode, and payload length; message contents are not retained.
 - DOM mutation summaries, navigation URLs, console warnings, and runtime exceptions.
+- Interaction type and a named control key such as Enter or Escape. Typed characters, input values, submitted form values, and dropped data are not captured.
+- React component names, prop names/types, and state-slot shapes. Prop and state values are not captured.
+- Worker and cross-origin iframe execution metadata plus internal request/error/handler evidence when Chrome exposes a related target. Worker messages and iframe body content are not captured.
 
 Request and response bodies, HTTP headers, cookies, storage values, form values, debugger scopes, and remote runtime objects are not intentionally captured.
 
@@ -29,3 +32,11 @@ The extension also keeps a privacy-sanitized snapshot of the current trace in `c
 JSON and Markdown exports are explicit user actions. The export layer masks sensitive URL parameters, email addresses, bearer/JWT-like credentials, common provider-key formats, PEM private keys, named credentials embedded in text, known secret fields, and DOM value attributes. A full JSON preview is shown before download. Pattern-based redaction cannot guarantee that every form of private data is detected, so users must review an export before sharing it.
 
 No trace is sent anywhere by the extension.
+
+## Optional on-device AI
+
+The deterministic explanation works without AI. On supported Chrome 148+ desktop devices, the user may explicitly request an additional explanation from Chrome's on-device language model. The complete redacted input is shown for review before use. It contains a compact deterministic explanation, privacy-safe framework shape, and at most 40 normalized events. Model output is kept only in side-panel session storage for the current browser session. The extension has no cloud AI fallback and sends no AI prompt to the developer.
+
+## Private-beta feedback
+
+Usefulness rating, clarity rating, selected useful area, an optional capped comment, trace ID, and timestamp are stored only in `chrome.storage.local`. Common email and credential patterns are redacted before storage. Feedback is not uploaded; downloading it is a separate user action, and all feedback can be cleared from the side panel.

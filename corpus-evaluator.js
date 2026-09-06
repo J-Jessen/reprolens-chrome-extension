@@ -4,6 +4,8 @@
       label: "React delegated handler + timer",
       checks: [
         ["component", "React owner is CheckoutCard", (trace) => trace.framework?.owner === "CheckoutCard"],
+        ["component-context", "React prop and state shape is captured", (trace) => trace.framework?.context?.valuesCaptured === false && trace.framework.context.state.length >= 2],
+        ["component-privacy", "Raw React fiber values are absent", (trace) => !JSON.stringify(trace.framework || {}).includes("memoizedState")],
         ["handler", "Authored React handler is visible", (trace) => hasTitle(trace, "handleReactCheckout")],
         ["request", "React order request is captured", (trace) => hasTitle(trace, "order.json?reactTrace=1", "request")],
         ["timer", "Timer schedule and callback are captured", (trace) => events(trace, "async").length >= 2],
@@ -54,6 +56,20 @@
         ["mutation", "Unmapped action DOM change is captured", (trace) => events(trace, "mutation").some((event) => event.title.includes("Unmapped"))]
       ]
     },
+    "keyboard-interaction": interactionScenario("Keyboard interaction", "keydown", "Keyboard action complete"),
+    "change-interaction": interactionScenario("Input change", "change", "Input change complete"),
+    "submit-interaction": interactionScenario("Form submission", "submit", "Form submission complete"),
+    "drop-interaction": interactionScenario("Drag and drop", "drop", "Drop action complete"),
+    "cross-origin-iframe": {
+      label: "Cross-origin iframe internals",
+      checks: [
+        ["context", "Cross-origin iframe context is attached", (trace) => (trace.executionContexts || []).some((context) => context.type === "iframe")],
+        ["frame", "The attached frame appears in the timeline", (trace) => events(trace, "frame").length > 0],
+        ["request", "A request made inside the frame is captured", (trace) => events(trace, "request").some((event) => event.contextType === "iframe" && event.url.includes("iframe-internal"))],
+        ["warning", "A warning emitted inside the frame is captured", (trace) => events(trace, "exception").some((event) => event.contextType === "iframe" && event.title.includes("Expected iframe warning"))],
+        ["privacy", "Frame body content is not captured", (trace) => !JSON.stringify(trace).includes("private iframe content")]
+      ]
+    },
     "dom-text": mutationScenario("Text content mutation", "Text mutation complete"),
     "dom-attribute": mutationScenario("Attribute mutation", "data-state"),
     "dom-add": mutationScenario("Node insertion", "node(s) added"),
@@ -68,6 +84,9 @@
       label: "Worker lifecycle without message content",
       checks: [
         ["created", "Worker creation is captured", (trace) => hasTitle(trace, "Worker created", "worker")],
+        ["context", "Worker execution context is attached when Chrome supports it", (trace) => (trace.executionContexts || []).some((context) => context.type === "worker")],
+        ["internal-request", "A request made inside the Worker is captured", (trace) => events(trace, "request").some((event) => event.contextType === "worker" && event.url.includes("worker-internal"))],
+        ["internal-warning", "A warning emitted inside the Worker is captured", (trace) => events(trace, "exception").some((event) => event.contextType === "worker" && event.title.includes("Expected worker warning"))],
         ["sent", "Worker outbound message is captured", (trace) => hasTitle(trace, "message sent", "worker")],
         ["received", "Worker inbound message is captured", (trace) => hasTitle(trace, "message received", "worker")],
         ["privacy", "Worker message contents are absent", (trace) => !JSON.stringify(trace.workerEvents || []).includes("private worker")],
@@ -119,6 +138,18 @@
       checks: [
         ["handler", "Authored click handler is captured", (trace) => events(trace, "handler").length > 0],
         ["mutation", "Expected DOM mutation is captured", (trace) => hasTitle(trace, expected, "mutation")]
+      ]
+    };
+  }
+
+  function interactionScenario(label, eventType, expectedMutation) {
+    return {
+      label,
+      checks: [
+        ["type", `${eventType} is the captured interaction boundary`, (trace) => trace.interaction?.eventType === eventType],
+        ["handler", "The interaction handler is captured", (trace) => events(trace, "handler").length > 0],
+        ["mutation", "The interaction result is captured", (trace) => hasTitle(trace, expectedMutation, "mutation")],
+        ["privacy", "Field and drop payload values are absent", (trace) => !JSON.stringify(trace).includes("privacy-safe test value")]
       ]
     };
   }

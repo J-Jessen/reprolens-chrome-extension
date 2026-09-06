@@ -47,7 +47,7 @@ test("side panel uses semantic, keyboard-accessible, CSP-safe markup", () => {
   assert.doesNotMatch(panel, /\son[a-z]+\s*=/i);
   assert.doesNotMatch(panel, /\sstyle\s*=/i);
   for (const match of panel.matchAll(/<button\b([^>]*)>/g)) {
-    assert.match(match[1], /\btype="button"/, `Button is missing type=button: ${match[0]}`);
+    assert.match(match[1], /\btype="(?:button|submit)"/, `Button is missing an explicit type: ${match[0]}`);
   }
 });
 

@@ -22,7 +22,12 @@ test("passes a complete React timer trace", () => {
     { kind: "request", title: "GET /order.json?reactTrace=1" },
     { id: "async-0", kind: "async", title: "setTimeout scheduled" },
     { id: "async-1", parentId: "async-0", kind: "async", title: "setTimeout callback" }
-  ], { framework: { owner: "CheckoutCard" } });
+  ], {
+    framework: {
+      owner: "CheckoutCard",
+      context: { valuesCaptured: false, props: [], state: [{ slot: 1, type: "string" }, { slot: 2, type: "null" }] }
+    }
+  });
   const result = CorpusEvaluator.evaluateTrace(trace, "react-timer");
   assert.equal(result.passed, true);
   assert.equal(result.score, 100);

@@ -6,6 +6,9 @@ const TIMER_STORE_KEY = "__behaviourTracerAsyncStore_v020";
 const HISTORY_LIMIT = 25;
 const HISTORY_BYTE_LIMIT = 5_000_000;
 const SESSION_KEY_PREFIX = "traceState:";
+const FEEDBACK_LIMIT = 100;
+const FEEDBACK_KEY = "productFeedback";
+const INTERACTION_BREAKPOINTS = ["click", "keydown", "change", "submit", "drop"];
 
 async function configureSidePanel() {
   try {
@@ -32,6 +35,9 @@ function blankSession(tabId) {
     handlers: [],
     asyncEvents: [],
     workerEvents: [],
+    frameEvents: [],
+    executionContexts: [],
+    debuggerContexts: {},
     timerCapture: null,
     network: [],
     webSockets: [],
@@ -113,8 +119,9 @@ async function saveTraceToHistory(session) {
   await chrome.storage.local.set({ traceHistory });
 }
 
-function command(tabId, method, params = {}) {
-  return chrome.debugger.sendCommand({ tabId }, method, params);
+function command(target, method, params = {}) {
+  const debuggee = typeof target === "number" ? { tabId: target } : target;
+  return chrome.debugger.sendCommand(debuggee, method, params);
 }
 
 function installTimerHookExpression(captureTimers = true) {
@@ -373,7 +380,36 @@ async function collectTimerHookEvents(tabId, session) {
   }
 }
 
-async function attach(tabId) {
+function breakpointEvents(interactionMode) {
+  const eventByMode = {
+    click: "click",
+    keyboard: "keydown",
+    change: "change",
+    submit: "submit",
+    drop: "drop"
+  };
+  return eventByMode[interactionMode] ? [eventByMode[interactionMode]] : INTERACTION_BREAKPOINTS;
+}
+
+async function enableRelatedTargets(tabId) {
+  try {
+    await command(tabId, "Target.setAutoAttach", {
+      autoAttach: true,
+      waitForDebuggerOnStart: false,
+      flatten: true,
+      filter: [
+        { type: "iframe", exclude: false },
+        { type: "worker", exclude: false },
+        { type: "shared_worker", exclude: false }
+      ]
+    });
+    return { available: true, minimumChromeVersion: 125 };
+  } catch (error) {
+    return { available: false, minimumChromeVersion: 125, error: error.message || String(error) };
+  }
+}
+
+async function attach(tabId, interactionMode = "auto") {
   await chrome.debugger.attach({ tabId }, "1.3");
   await Promise.all([
     command(tabId, "Debugger.enable"),
@@ -387,10 +423,16 @@ async function attach(tabId) {
   } catch (_) {
     // Async stack depth is an enhancement and is not supported by every target.
   }
-  await command(tabId, "DOMDebugger.setEventListenerBreakpoint", {
-    eventName: "click"
-  });
-  return configureTimerCapture(tabId);
+  await Promise.all(breakpointEvents(interactionMode).map((eventName) => command(
+    tabId,
+    "DOMDebugger.setEventListenerBreakpoint",
+    { eventName }
+  )));
+  const [timerCapture, relatedTargetCapture] = await Promise.all([
+    configureTimerCapture(tabId),
+    enableRelatedTargets(tabId)
+  ]);
+  return { ...timerCapture, relatedTargetCapture };
 }
 
 async function inspectFramework(tabId, selector) {
@@ -412,7 +454,7 @@ async function detach(tabId) {
   }
 }
 
-async function startTrace(tabId, traceWindowMs = TRACE_WINDOW_MS) {
+async function startTrace(tabId, traceWindowMs = TRACE_WINDOW_MS, interactionMode = "auto") {
   const previous = sessions.get(tabId) || (await storedSession(tabId)) || blankSession(tabId);
   if (previous.status === "recording" || previous.status === "armed") {
     throw new Error("A trace is already running in this tab.");
@@ -420,6 +462,9 @@ async function startTrace(tabId, traceWindowMs = TRACE_WINDOW_MS) {
 
   const session = blankSession(tabId);
   session.traceWindowMs = Math.max(500, Math.min(Number(traceWindowMs) || TRACE_WINDOW_MS, TRACE_WINDOW_MS));
+  session.interactionMode = ["auto", "click", "keyboard", "change", "submit", "drop"].includes(interactionMode)
+    ? interactionMode
+    : "auto";
   session.selectedElement = previous.selectedElement;
   session.status = "attaching";
   session.startedAt = Date.now();
@@ -428,7 +473,7 @@ async function startTrace(tabId, traceWindowMs = TRACE_WINDOW_MS) {
   publish(session);
 
   try {
-    session.timerCapture = await attach(tabId);
+    session.timerCapture = await attach(tabId, session.interactionMode);
     try {
       session.framework = await inspectFramework(tabId, session.selectedElement?.selector);
     } catch (_) {
@@ -437,7 +482,8 @@ async function startTrace(tabId, traceWindowMs = TRACE_WINDOW_MS) {
     session.status = "armed";
     await chrome.tabs.sendMessage(tabId, {
       type: "ARM_INTERACTION",
-      captureMs: Math.max(300, session.traceWindowMs - 200)
+      captureMs: Math.max(300, session.traceWindowMs - 200),
+      interactionMode: session.interactionMode
     });
     publish(session);
     return publicSession(session);
@@ -508,7 +554,7 @@ async function handleMessage(message, sender) {
   }
 
   if (message.type === "START_TRACE") {
-    return { ok: true, state: await startTrace(tabId, message.traceWindowMs) };
+    return { ok: true, state: await startTrace(tabId, message.traceWindowMs, message.interactionMode) };
   }
 
   if (message.type === "CANCEL_TRACE") {
@@ -545,6 +591,17 @@ async function handleMessage(message, sender) {
     return { ok: true };
   }
 
+  if (message.type === "RENAME_HISTORY_TRACE") {
+    const name = String(message.name || "").trim().replace(/\s+/g, " ").slice(0, 80);
+    if (!name) return { ok: false, error: "Enter a name for this trace." };
+    const { traceHistory } = await chrome.storage.local.get({ traceHistory: [] });
+    const trace = traceHistory.find((item) => item.historyId === message.historyId);
+    if (!trace) return { ok: false, error: "The saved trace could not be found." };
+    trace.displayName = name;
+    await chrome.storage.local.set({ traceHistory });
+    return { ok: true };
+  }
+
   if (message.type === "CLEAR_HISTORY") {
     await chrome.storage.local.set({ traceHistory: [] });
     return { ok: true };
@@ -565,6 +622,47 @@ async function handleMessage(message, sender) {
     return { ok: true };
   }
 
+  if (message.type === "GET_FEEDBACK") {
+    const stored = await chrome.storage.local.get({ [FEEDBACK_KEY]: [] });
+    return { ok: true, feedback: stored[FEEDBACK_KEY].slice(0, FEEDBACK_LIMIT) };
+  }
+
+  if (message.type === "SAVE_FEEDBACK") {
+    const input = message.feedback || {};
+    const rating = Math.round(Number(input.rating));
+    const clarity = Math.round(Number(input.clarity));
+    if (rating < 1 || rating > 5 || clarity < 1 || clarity > 5) {
+      return { ok: false, error: "Choose both a usefulness and clarity rating." };
+    }
+    const redacted = TraceCore.redactForExport({
+      traceId: String(input.traceId || "").slice(0, 100),
+      rating,
+      clarity,
+      mostUseful: ["explanation", "interactions", "technical", "network", "source", "framework", "contexts", "history", "ai"].includes(input.mostUseful)
+        ? input.mostUseful
+        : "",
+      comment: String(input.comment || "").trim().slice(0, 600),
+      createdAt: Date.now()
+    }).trace;
+    const safe = {
+      traceId: redacted.traceId,
+      rating: redacted.rating,
+      clarity: redacted.clarity,
+      mostUseful: redacted.mostUseful,
+      comment: redacted.comment,
+      createdAt: redacted.createdAt
+    };
+    const stored = await chrome.storage.local.get({ [FEEDBACK_KEY]: [] });
+    const withoutDuplicate = stored[FEEDBACK_KEY].filter((item) => item.traceId !== safe.traceId);
+    await chrome.storage.local.set({ [FEEDBACK_KEY]: [safe, ...withoutDuplicate].slice(0, FEEDBACK_LIMIT) });
+    return { ok: true };
+  }
+
+  if (message.type === "CLEAR_FEEDBACK") {
+    await chrome.storage.local.set({ [FEEDBACK_KEY]: [] });
+    return { ok: true };
+  }
+
   if (message.type === "INTERACTION_START") {
     const session = getSession(tabId);
     if (!["armed", "recording"].includes(session.status)) {
@@ -574,7 +672,8 @@ async function handleMessage(message, sender) {
     session.interactionAt = message.at || Date.now();
     session.interaction = {
       eventType: message.eventType,
-      element: message.element
+      element: message.element,
+      metadata: message.metadata || null
     };
     publish(session);
     setTimeout(() => { void finishTraceSafely(tabId); }, session.traceWindowMs || TRACE_WINDOW_MS);
@@ -605,13 +704,85 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   return true;
 });
 
+function eventContext(session, source) {
+  if (!source?.sessionId) return null;
+  const contextId = session.debuggerContexts?.[source.sessionId];
+  return session.executionContexts.find((context) => context.contextId === contextId) || null;
+}
+
+async function initializeRelatedTarget(source, params, session) {
+  const info = params.targetInfo || {};
+  const contextId = `context-${session.executionContexts.length + 1}`;
+  const context = {
+    contextId,
+    type: info.type || "related",
+    url: info.url || "",
+    attachedAt: Date.now(),
+    captureStatus: "active"
+  };
+  session.debuggerContexts[params.sessionId] = contextId;
+  session.executionContexts.push(context);
+  const relatedSession = { ...source, sessionId: params.sessionId };
+  const commands = ["Runtime.enable", "Debugger.enable", "Network.enable", "Log.enable"];
+  if (context.type === "iframe") commands.push("Page.enable");
+  for (const domainCommand of commands) {
+    try {
+      await command(relatedSession, domainCommand);
+    } catch (error) {
+      context.captureStatus = "partial";
+      context.captureError = error.message || String(error);
+    }
+  }
+  if (context.type === "iframe") {
+    for (const eventName of breakpointEvents(session.interactionMode)) {
+      try {
+        await command(relatedSession, "DOMDebugger.setEventListenerBreakpoint", { eventName });
+      } catch (_) {
+        context.captureStatus = "partial";
+      }
+    }
+    try {
+      await command(relatedSession, "Target.setAutoAttach", {
+        autoAttach: true,
+        waitForDebuggerOnStart: false,
+        flatten: true,
+        filter: [
+          { type: "iframe", exclude: false },
+          { type: "worker", exclude: false },
+          { type: "shared_worker", exclude: false }
+        ]
+      });
+    } catch (_) {
+      // Nested related targets are an enhancement on Chrome versions that support flat sessions.
+    }
+    session.frameEvents.push({
+      at: context.attachedAt,
+      phase: "attached",
+      frameId: contextId,
+      url: context.url,
+      contextType: "cross-origin iframe",
+      captureStatus: context.captureStatus
+    });
+  } else if (["worker", "shared_worker"].includes(context.type)) {
+    session.workerEvents.push({
+      at: context.attachedAt,
+      phase: "attached",
+      workerId: contextId,
+      url: context.url,
+      contextType: context.type,
+      captureStatus: context.captureStatus,
+      callFrames: []
+    });
+  }
+}
+
 chrome.debugger.onEvent.addListener(async (source, method, params) => {
   const tabId = source.tabId;
   const session = sessions.get(tabId);
   if (!session || !["attaching", "armed", "recording", "processing"].includes(session.status)) {
     if (method === "Debugger.paused") {
       try {
-        await command(tabId, "Debugger.resume");
+        await command(source, "Debugger.resume");
       } catch (_) {
         // The target may detach between the pause event and this resume request.
       }
@@ -620,11 +791,19 @@ chrome.debugger.onEvent.addListener(async (source, method, params) => {
   }
 
   const at = Date.now();
+  if (method === "Target.attachedToTarget") {
+    await initializeRelatedTarget(source, params, session);
+    publish(session);
+    return;
+  }
+  const context = eventContext(session, source);
 
   if (method === "Debugger.scriptParsed") {
-    session.scripts[params.scriptId] = {
+    const scriptKey = source.sessionId ? `${source.sessionId}:${params.scriptId}` : params.scriptId;
+    session.scripts[scriptKey] = {
       url: params.url || "",
-      sourceMapURL: params.sourceMapURL || ""
+      sourceMapURL: params.sourceMapURL || "",
+      contextId: context?.contextId || null
     };
     return;
   }
@@ -643,19 +822,21 @@ chrome.debugger.onEvent.addListener(async (source, method, params) => {
         session.asyncEvents.push(asyncEvent);
         publish(session);
       }
-    } else if (params.reason === "EventListener" || eventName.includes("click")) {
+    } else if (params.reason === "EventListener" || INTERACTION_BREAKPOINTS.some((name) => eventName.includes(name))) {
       const frames = TraceCore.usefulFrames(params.callFrames || [], 5);
       if (frames.length) {
         session.handlers.push({
           at,
           eventName: eventName || "click",
-          callFrames: params.callFrames || []
+          callFrames: params.callFrames || [],
+          contextId: context?.contextId || null,
+          contextType: context?.type || "page"
         });
         publish(session);
       }
     }
     try {
-      await command(tabId, "Debugger.resume");
+      await command(source, "Debugger.resume");
     } catch (_) {
       // The target may detach between the pause event and this resume request.
     }
@@ -672,7 +853,9 @@ chrome.debugger.onEvent.addListener(async (source, method, params) => {
       type: params.type,
       initiator: params.initiator?.type,
       initiatorCallFrames: params.initiator?.stack?.callFrames || [],
-      initiatorAsyncStack: params.initiator?.stack?.parent || null
+      initiatorAsyncStack: params.initiator?.stack?.parent || null,
+      contextId: context?.contextId || null,
+      contextType: context?.type || "page"
     });
   } else if (method === "Network.responseReceived") {
     session.network.push({
@@ -682,7 +865,9 @@ chrome.debugger.onEvent.addListener(async (source, method, params) => {
       status: params.response?.status,
       statusText: params.response?.statusText,
       url: params.response?.url,
-      type: params.type
+      type: params.type,
+      contextId: context?.contextId || null,
+      contextType: context?.type || "page"
     });
   } else if (method === "Network.loadingFailed") {
     session.network.push({
@@ -691,7 +876,9 @@ chrome.debugger.onEvent.addListener(async (source, method, params) => {
       requestId: params.requestId,
       errorText: params.errorText || "Request failed",
       canceled: Boolean(params.canceled),
-      type: params.type
+      type: params.type,
+      contextId: context?.contextId || null,
+      contextType: context?.type || "page"
     });
   } else if (method === "Network.webSocketCreated") {
     session.webSockets.push({ phase: "created", at, requestId: params.requestId, url: params.url });
@@ -713,33 +900,46 @@ chrome.debugger.onEvent.addListener(async (source, method, params) => {
       at,
       text: params.exceptionDetails?.text,
       url: params.exceptionDetails?.url,
-      lineNumber: params.exceptionDetails?.lineNumber
+      lineNumber: params.exceptionDetails?.lineNumber,
+      exceptionDescription: params.exceptionDetails?.exception?.description || "",
+      contextId: context?.contextId || null,
+      contextType: context?.type || "page"
     });
   } else if (method === "Runtime.consoleAPICalled" && ["error", "warning"].includes(params.type)) {
     session.logs.push({
       at,
       level: params.type,
       text: (params.args || []).map((arg) => arg.value ?? arg.description ?? arg.type).join(" "),
-      url: params.stackTrace?.callFrames?.[0]?.url || ""
+      url: params.stackTrace?.callFrames?.[0]?.url || "",
+      contextId: context?.contextId || null,
+      contextType: context?.type || "page"
     });
   } else if (method === "Log.entryAdded" && ["error", "warning"].includes(params.entry?.level)) {
     session.logs.push({
       at,
       level: params.entry.level,
       text: params.entry.text,
-      url: params.entry.url || ""
+      url: params.entry.url || "",
+      contextId: context?.contextId || null,
+      contextType: context?.type || "page"
     });
-  } else if (method === "Page.frameNavigated" && !params.frame?.parentId) {
+  } else if (method === "Page.frameNavigated") {
     session.navigations.push({
       at,
       url: params.frame?.url,
-      name: params.frame?.name
+      name: params.frame?.name,
+      frameId: params.frame?.id,
+      parentFrameId: params.frame?.parentId || null,
+      contextId: context?.contextId || null,
+      contextType: context?.type || "page"
     });
   } else if (method === "Page.navigatedWithinDocument") {
     session.navigations.push({
       at,
       url: params.url,
-      name: params.navigationType || "same-document"
+      name: params.navigationType || "same-document",
+      contextId: context?.contextId || null,
+      contextType: context?.type || "page"
     });
   }
 

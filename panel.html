@@ -11,7 +11,7 @@
       <header>
         <p class="eyebrow">BEHAVIOUR TRACER · PRIVATE BETA</p>
         <h1>See what happened.</h1>
-        <p>Select an element, perform one click, and start with a plain-language explanation.</p>
+        <p>Select an element, perform one interaction, and start with a plain-language explanation.</p>
       </header>
 
       <section class="controls card">
@@ -21,9 +21,20 @@
           <button id="pick" type="button">Select element</button>
         </div>
         <div id="selection" class="selection muted">No element selected</div>
+        <div class="interaction-option">
+          <label for="interaction-type">Interaction to record</label>
+          <select id="interaction-type" name="interaction-type">
+            <option value="auto">Detect automatically</option>
+            <option value="click">Click or tap</option>
+            <option value="keyboard">Keyboard</option>
+            <option value="change">Input change</option>
+            <option value="submit">Form submit</option>
+            <option value="drop">Drag and drop</option>
+          </select>
+        </div>
         <div class="step">
           <span aria-hidden="true">2</span>
-          <button id="record" class="primary" type="button" disabled>Record one click</button>
+          <button id="record" class="primary" type="button" disabled>Record one interaction</button>
         </div>
         <p id="status" class="status" role="status" aria-atomic="true">Ready</p>
         <details class="permission-note">
@@ -41,6 +52,31 @@
           <ol id="explanation-steps" class="explanation-steps" role="list"></ol>
           <p id="evidence-note" class="evidence-note"></p>
         </section>
+
+        <section id="framework-context" class="framework-context card hidden" aria-labelledby="framework-context-title">
+          <p class="section-label">Framework context</p>
+          <h2 id="framework-context-title">Component shape</h2>
+          <p id="framework-context-summary"></p>
+          <dl id="framework-context-details"></dl>
+          <p class="caveat">Only component names, prop names, value types, and state shape are shown. Prop and state values are never captured.</p>
+        </section>
+
+        <details id="ai-details" class="disclosure card">
+          <summary>Optional on-device AI explanation</summary>
+          <div class="disclosure-body ai-body">
+            <p>Chrome’s local model can offer a second opinion using only the redacted input shown below. Behaviour Tracer does not send it to a server.</p>
+            <details class="nested-disclosure">
+              <summary>Review the exact AI input</summary>
+              <pre id="ai-input" tabindex="0"><code id="ai-input-code"></code></pre>
+            </details>
+            <div class="ai-actions">
+              <button id="generate-ai" class="primary" type="button">Generate local explanation</button>
+              <button id="stop-ai" class="quiet hidden" type="button">Stop</button>
+            </div>
+            <p id="ai-status" class="status-inline" role="status" aria-atomic="true"></p>
+            <p id="ai-output" class="ai-output hidden"></p>
+          </div>
+        </details>
 
         <details id="technical-details" class="disclosure card">
           <summary>
@@ -78,6 +114,7 @@
               <button class="filter" type="button" data-filter="same-origin" aria-pressed="false">App network</button>
               <button class="filter" type="button" data-filter="websocket" aria-pressed="false">WebSocket</button>
               <button class="filter" type="button" data-filter="worker" aria-pressed="false">Workers</button>
+              <button class="filter" type="button" data-filter="contexts" aria-pressed="false">Frames</button>
               <button class="filter" type="button" data-filter="async" aria-pressed="false">Async</button>
               <button class="filter" type="button" data-filter="dom" aria-pressed="false">DOM</button>
               <button class="filter" type="button" data-filter="errors" aria-pressed="false">Errors</button>
@@ -108,7 +145,33 @@
             <p class="section-label">Stored only on this device</p>
             <label class="toggle" for="history-enabled"><input id="history-enabled" type="checkbox" checked> Save new traces</label>
           </div>
+          <search class="history-tools">
+            <form id="history-search" action="" method="get">
+              <label for="history-query">Find a trace</label>
+              <input id="history-query" name="q" type="search" placeholder="Name, element, or page">
+            </form>
+          </search>
+          <div class="history-filter-row">
+            <label for="history-filter">Show</label>
+            <select id="history-filter" name="history-filter">
+              <option value="all">All traces</option>
+              <option value="problems">With problems</option>
+              <option value="strong">Strong coverage</option>
+              <option value="partial">Partial coverage</option>
+              <option value="limited">Limited coverage</option>
+            </select>
+          </div>
           <ul id="history-list" class="history-list"></ul>
+          <div class="compare-actions">
+            <button id="compare-traces" type="button" disabled>Compare selected traces</button>
+            <span id="compare-selection" class="caveat">Select two traces</span>
+          </div>
+          <section id="comparison" class="comparison hidden" aria-labelledby="comparison-title">
+            <h2 id="comparison-title">Trace comparison</h2>
+            <p id="comparison-headline"></p>
+            <dl id="comparison-metrics"></dl>
+            <ul id="comparison-details"></ul>
+          </section>
           <p id="history-usage" class="caveat"></p>
           <div class="history-actions">
             <button id="import-trace" class="quiet" type="button">Import JSON</button>
@@ -117,6 +180,55 @@
           </div>
         </div>
       </details>
+
+      <section id="feedback-card" class="feedback card hidden" aria-labelledby="feedback-title">
+        <p class="section-label">Private beta feedback</p>
+        <h2 id="feedback-title">Was this trace useful?</h2>
+        <form id="feedback-form" action="" method="post">
+          <fieldset>
+            <legend>Usefulness</legend>
+            <div class="rating-scale">
+              <label for="rating-1"><input id="rating-1" type="radio" name="rating" value="1" required> 1</label>
+              <label for="rating-2"><input id="rating-2" type="radio" name="rating" value="2"> 2</label>
+              <label for="rating-3"><input id="rating-3" type="radio" name="rating" value="3"> 3</label>
+              <label for="rating-4"><input id="rating-4" type="radio" name="rating" value="4"> 4</label>
+              <label for="rating-5"><input id="rating-5" type="radio" name="rating" value="5"> 5</label>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>Explanation clarity</legend>
+            <div class="rating-scale">
+              <label for="clarity-1"><input id="clarity-1" type="radio" name="clarity" value="1" required> 1</label>
+              <label for="clarity-2"><input id="clarity-2" type="radio" name="clarity" value="2"> 2</label>
+              <label for="clarity-3"><input id="clarity-3" type="radio" name="clarity" value="3"> 3</label>
+              <label for="clarity-4"><input id="clarity-4" type="radio" name="clarity" value="4"> 4</label>
+              <label for="clarity-5"><input id="clarity-5" type="radio" name="clarity" value="5"> 5</label>
+            </div>
+          </fieldset>
+          <label for="most-useful">Most useful part</label>
+          <select id="most-useful" name="most-useful">
+            <option value="">Choose one</option>
+            <option value="explanation">Plain-language explanation</option>
+            <option value="interactions">Interaction recording</option>
+            <option value="technical">Technical trace</option>
+            <option value="network">Network diagnosis</option>
+            <option value="source">Source locations</option>
+            <option value="framework">Framework context</option>
+            <option value="contexts">Worker and frame context</option>
+            <option value="history">History and comparison</option>
+            <option value="ai">On-device AI explanation</option>
+          </select>
+          <label for="feedback-comment">Optional note</label>
+          <textarea id="feedback-comment" name="comment" maxlength="600" rows="3" aria-describedby="feedback-privacy"></textarea>
+          <p id="feedback-privacy" class="caveat">Saved only on this device. Common credential patterns are redacted before storage.</p>
+          <button class="primary" type="submit">Save local feedback</button>
+        </form>
+        <div class="feedback-actions">
+          <button id="download-feedback" class="quiet" type="button">Download feedback</button>
+          <button id="clear-feedback" class="quiet" type="button">Clear feedback</button>
+        </div>
+        <p id="feedback-status" class="status-inline" role="status" aria-atomic="true"></p>
+      </section>
 
       <dialog id="export-dialog" aria-labelledby="export-dialog-title">
         <div class="dialog-heading">
@@ -129,6 +241,18 @@
         <p id="redaction-report"></p>
         <pre id="export-preview" tabindex="0"><code id="export-preview-code"></code></pre>
         <button id="download" class="primary" type="button">Download safe JSON</button>
+      </dialog>
+
+      <dialog id="rename-dialog" aria-labelledby="rename-dialog-title">
+        <h2 id="rename-dialog-title">Name this trace</h2>
+        <form id="rename-form" action="" method="post">
+          <label for="rename-input">Trace name</label>
+          <input id="rename-input" name="trace-name" required maxlength="80">
+          <div class="dialog-actions">
+            <button id="cancel-rename" class="quiet" type="button">Cancel</button>
+            <button class="primary" type="submit">Save name</button>
+          </div>
+        </form>
       </dialog>
 
       <div id="empty" class="empty">

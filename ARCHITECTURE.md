@@ -4,9 +4,9 @@
 
 The proof of concept is organized around one claim:
 
-> For one user click, can the browser automatically assemble a useful, honest behavioural trace?
+> For one user-started interaction, can the browser automatically assemble a useful, honest behavioural trace?
 
-It deliberately excludes authentication, teams, cloud storage, AI explanations, integrations, screenshot editing, responsive tools, and general-purpose DevTools features. It retains only bounded, user-controlled local trace history.
+It deliberately excludes authentication, teams, cloud storage, remote AI, integrations, screenshot editing, responsive tools, and general-purpose DevTools features. It retains bounded, user-controlled local trace history, local beta feedback, and an optional on-device AI second opinion.
 
 ## Runtime components
 
@@ -14,25 +14,26 @@ It deliberately excludes authentication, teams, cloud storage, AI explanations, 
 Website
   └─ content.js + content.css (injected on demand after an optional per-origin grant)
      ├─ element picker
-     ├─ interaction marker
+     ├─ click, keyboard, change, submit, and drop interaction marker
      └─ MutationObserver
             │ runtime messages
             ▼
 background.js (MV3 service worker)
   ├─ trace session state machine
   ├─ chrome.debugger / CDP
-  │  ├─ DOMDebugger: click listener breakpoint
+  │  ├─ DOMDebugger: selected interaction-listener breakpoint
   │  ├─ EventBreakpoints/DOMDebugger: timer instrumentation when available
   │  ├─ Runtime: trace-scoped MAIN-world timer fallback
   │  ├─ Debugger: paused call frames
   │  ├─ Debugger: asynchronous call stacks
   │  ├─ Network: requests, responses, and initiator stacks
   │  ├─ Runtime/Log: exceptions and console warnings/errors
-  │  └─ Page: top-frame and same-document navigation
+  │  ├─ Target: flat Worker and cross-origin iframe sessions where supported
+  │  └─ Page: page, frame, and same-document navigation
   └─ trace-core.js
      ├─ normalization
      ├─ local source-map resolution
-     ├─ privacy-safe React component detection
+     ├─ privacy-safe React component and structural prop/state detection
      ├─ confidence scoring
      ├─ explicit relationship graph and deterministic primary chain
      ├─ chronological timeline
@@ -41,8 +42,11 @@ background.js (MV3 service worker)
             ▼
 panel.html / panel.js
   ├─ plain-language explanation (default)
-  ├─ progressively disclosed technical trace
-  └─ reviewed JSON and Markdown export
+  ├─ progressively disclosed technical trace and framework shape
+  ├─ searchable, comparable local history
+  ├─ reviewed JSON and Markdown export
+  ├─ optional reviewed-input on-device AI explanation
+  └─ local, exportable beta feedback
 ```
 
 ## Session state machine
@@ -53,12 +57,12 @@ idle → selected → attaching → armed → recording → processing → compl
 ```
 
 - `selected`: picker has returned stable element metadata.
-- `armed`: debugger is attached and click listener breakpoint is active.
-- `recording`: the content script observed the next click; the 3.5-second window is running.
+- `armed`: debugger is attached and the selected interaction listener breakpoint is active.
+- `recording`: the content script observed the next matching interaction; the 3.5-second window is running.
 - `processing`: debugger detaches and evidence is normalized.
 - `complete`: immutable timeline is ready for display/export.
 
-The raw active session remains in service-worker memory because it contains short-lived CDP metadata. Chrome 118+ keeps the worker alive while `chrome.debugger` is attached. A privacy-sanitized snapshot of visible selected, completed, or error state is stored in `chrome.storage.session` so the panel can recover after a later worker restart; raw debugger objects and script inventory are never persisted there.
+The raw active session remains in service-worker memory because it contains short-lived CDP metadata. Chrome 118+ keeps the worker alive while `chrome.debugger` is attached. A privacy-sanitized snapshot of visible selected, completed, or error state is stored in `chrome.storage.session` so the panel can recover after a later worker restart; raw debugger-session IDs, debugger objects, and script inventory are never persisted there.
 
 ## Evidence model
 
@@ -102,10 +106,11 @@ The interaction happens on the normal page, while the result remains visible bes
 - Captured HTML is capped at 2,000 characters.
 - Text is capped at 160 characters.
 - Request bodies, response bodies, cookies, headers, storage values, and form values are not captured.
+- Keyboard characters, dropped payloads, Worker messages, iframe body content, and React prop/state values are not captured.
 - Public trace serialization removes debugger scope chains, remote object IDs, receiver objects, return values, and internal script inventory while retaining source locations and async-parent evidence.
 - The debugger detaches automatically after the short trace window.
 
-Any future network or AI feature requires a new explicit, reviewed data boundary; the current extension has neither.
+The optional Prompt API path is capability-detected, user-started, and local. It receives only the exact redacted input shown in the panel, stores its result only in session storage, destroys its model session after generation, and has no network fallback.
 
 ## Version 0.7 foundations
 
@@ -114,12 +119,12 @@ Any future network or AI feature requires a new explicit, reviewed data boundary
 - Safe DOM construction for imported and captured trace content; no dynamic `innerHTML` rendering.
 - Static picker and badge styles in an injected stylesheet, with only geometry passed through CSS custom properties.
 - Chrome 118 minimum and privacy-sanitized session-state recovery for Manifest V3 lifecycle resilience.
-- Automated policy, markup, CSP, accessibility, keyboard-focus, packaging, and 26-scenario trace checks.
+- Automated policy, markup, CSP, accessibility, keyboard-focus, packaging, and browser-corpus trace checks.
 
 ## Version 0.8 foundations
 
 - A deterministic explanation model that groups evidence as user action, page code, data request, page result, navigation, and detected problems.
-- Plain-language relationship labels: `Starting point`, `Direct link`, `Observed after click`, and `Limited evidence`.
+- Plain-language relationship labels: `Starting point`, `Direct link`, `Observed after interaction`, and `Limited evidence`.
 - A usability-first side-panel hierarchy with the explanation visible by default and technical evidence plus export tools behind native disclosure controls.
 - Narrow-panel, keyboard, light/dark, overflow, and accessibility verification against completed real traces.
 
@@ -127,10 +132,21 @@ Any future network or AI feature requires a new explicit, reviewed data boundary
 
 0. ✅ Add timeline filters, strong-evidence emphasis, and request/response grouping.
 1. ✅ Extend async lineage beyond the original `setTimeout` path with intervals, animation frames, Promise continuations, queued microtasks, and privacy-safe Worker/WebSocket lifecycles.
-2. Extend the React adapter beyond component ownership only after defining safe state/props redaction.
+2. ✅ Extend the React adapter beyond component ownership with structural state/props metadata and no values.
 3. ✅ Distinguish same-origin application requests from cross-origin page traffic.
 4. ✅ Add trace quality diagnostics and coverage metrics.
-5. Add optional AI explanation over a user-reviewed, redacted trace.
+5. ✅ Add optional on-device AI explanation over a user-reviewed, redacted trace without a cloud fallback.
+
+## Version 0.9 foundations
+
+- Explicit or automatic recording for click/tap, keyboard, input change, form submit, and drop interactions.
+- Concrete HTTP, browser-network, CORS, cancellation, and JavaScript error diagnoses with a suggested first check.
+- React component paths with capped prop names/types and state-slot shapes; values are never captured.
+- Flat debugger sessions for Worker and cross-origin iframe request/error/handler metadata, with graceful partial-coverage reporting.
+- Local trace names, search, problem/quality filters, and two-trace comparison.
+- Optional Chrome on-device AI explanation using only a visible redacted input and untrusted-output-safe text rendering.
+- Per-trace usefulness/clarity feedback stored locally with pre-storage credential redaction and explicit download/clear controls.
+- A 31-scenario automated browser corpus plus narrow-panel, 200% text, light/dark, keyboard, and accessibility checks.
 
 ## Completed 0.2 foundations
 

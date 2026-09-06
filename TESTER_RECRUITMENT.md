@@ -27,7 +27,7 @@ Qualify testers who answer yes to questions 3–6 and fit at least one role in [
 
 ## Copy-ready personal invitation
 
-> Hej [navn] — jeg tester et nyt Chrome-værktøj til frontend-debugging. Man vælger et element, udfører ét klik, og får en lokal tidslinje over handler, netværk, async-kald og DOM-ændringer.
+> Hej [navn] — jeg tester et nyt Chrome-værktøj til frontend-debugging. Man vælger et element, udfører én interaktion, og får en lokal forklaring og tidslinje over handlers, netværk, async-kald og DOM-ændringer.
 >
 > Jeg leder efter få udviklere/QA-profiler, der vil bruge 45–60 minutter på en privat beta på en lokal eller staging-side, de selv må inspicere. Værktøjet uploader ikke traces eller analytics. Hvis du vælger at dele et trace, skal du først gennemgå den redigerede eksport.
 >
@@ -39,7 +39,7 @@ Qualify testers who answer yes to questions 3–6 and fit at least one role in [
 
 > **Søger 3–5 frontend/QA-testere til privat Chrome-extension-beta**
 >
-> Jeg bygger Behaviour Tracer: vælg et element, udfør ét klik, og se den observerede kæde af JavaScript-handlers, requests, async-grænser, navigation og DOM-ændringer. Alt behandles lokalt; der er ingen automatisk upload eller analytics.
+> Jeg bygger Behaviour Tracer: vælg et element, udfør én interaktion, og se den observerede kæde af JavaScript-handlers, requests, async-grænser, navigation og DOM-ændringer. Alt behandles lokalt; der er ingen automatisk upload eller analytics. Betaen inkluderer flere interaktionstyper, spor-sammenligning og valgfri lokal AI, så vi vil især lære hvilke dele der faktisk sparer tid.
 >
 > Jeg søger især React/JavaScript/frontend/full-stack/QA-profiler med adgang til en lokal eller staging-webapp. Testen tager 45–60 minutter. Du modtager en beta-ZIP direkte, og repositoryet deles ikke. Ingen produktions- eller kundedata må bruges.
 >
@@ -49,7 +49,7 @@ Qualify testers who answer yes to questions 3–6 and fit at least one role in [
 
 > Tak — du passer godt til testen. Jeg sender dig nu beta-ZIP-filen gennem vores private kanal. Pak den ud, og begynd med `START_HER.md`.
 >
-> Brug kun den vedlagte beta-version v0.8.0-beta.4. Repositoryet og udviklingsbranchen skal ikke bruges.
+> Brug kun den vedlagte beta-version v0.9.0-beta.1. Repositoryet og udviklingsbranchen skal ikke bruges.
 >
 > Vigtigt: test kun på lokale eller staging-systemer, du har tilladelse til at inspicere. Del aldrig rå credentials, cookies, tokens, kundedata eller en eksport, du ikke selv har gennemgået.
 

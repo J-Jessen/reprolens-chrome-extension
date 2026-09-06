@@ -1,6 +1,6 @@
 # Validation corpus
 
-The corpus contains 26 distinct interaction shapes. A case passes only when every evaluator check succeeds; the product threshold is at least 80% useful traces across 20 or more interactions.
+The corpus contains 31 distinct interaction shapes. A case passes only when every evaluator check succeeds; the product threshold is at least 80% useful traces across 20 or more interactions.
 
 | ID | Scenario | Status |
 |---|---|---|
@@ -10,6 +10,11 @@ The corpus contains 26 distinct interaction shapes. A case passes only when ever
 | `navigation` | History API same-document navigation | PASS |
 | `minified-map` | Minified bundle with source map | PASS |
 | `minified-no-map` | Minified bundle without source map | PASS |
+| `keyboard-interaction` | Keyboard action without typed-character capture | PASS |
+| `change-interaction` | Input change without field-value capture | PASS |
+| `submit-interaction` | Form submission without submitted-value capture | PASS |
+| `drop-interaction` | Drop event without payload capture | PASS |
+| `cross-origin-iframe` | Related iframe requests and errors without frame content | PASS |
 | `dom-text` | Text mutation | PASS |
 | `dom-attribute` | Attribute mutation | PASS |
 | `dom-add` | Node insertion | PASS |
@@ -20,7 +25,7 @@ The corpus contains 26 distinct interaction shapes. A case passes only when ever
 | `animation-frame` | Animation frame callback | PASS |
 | `promise-chain` | Promise continuation chain | PASS |
 | `queue-microtask` | Queued microtask | PASS |
-| `worker-message` | Worker lifecycle without message content | PASS |
+| `worker-message` | Worker lifecycle plus internal request/error metadata without message content | PASS |
 | `fetch-get` | Successful GET | PASS |
 | `fetch-post` | Successful POST | PASS |
 | `fetch-404` | Handled 404 response | PASS |
@@ -43,7 +48,7 @@ GitHub Actions runs the same end-to-end corpus on every push and pull request, s
 
 ## Automated result
 
-- Executed: 26 interactions
-- Passed: 26
+- Executed: 31 interactions
+- Passed: 31
 - Useful-trace rate: 100%
 - Decision: the predefined minimum sample and useful-trace threshold are satisfied.

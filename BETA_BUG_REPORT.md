@@ -10,7 +10,7 @@ Do not include credentials, tokens, cookies, customer data, private URLs, or a r
 
 ## Environment
 
-- Beta version: v0.8.0-beta.4
+- Beta version: v0.9.0-beta.1
 - Chrome version:
 - Operating system:
 - Framework:

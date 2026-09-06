@@ -1,8 +1,8 @@
 # Behaviour Tracer
 
-Current build: **0.8.0**
+Current build: **0.9.0**
 
-Private beta: **v0.8.0-beta.4**
+Private beta: **v0.9.0-beta.1**
 
 A local-first Chrome Manifest V3 proof-of-concept for the product hypothesis:
 
@@ -13,13 +13,13 @@ This is a private-beta instrumentation experiment, not yet a production extensio
 ## What the current build does
 
 1. Requests persistent access only to the current website when the user selects an element, then injects the picker on demand.
-2. Arms a single-click trace from the side panel.
+2. Records one click/tap, keyboard action, input change, form submission, or drop; automatic detection remains the default.
 3. Attaches Chrome DevTools Protocol through `chrome.debugger`.
-4. Pauses and immediately resumes at click event listeners, retaining useful call frames.
-5. Observes requests, responses, console warnings/errors, exceptions, top-frame navigation, and DOM mutations for 3.5 seconds.
+4. Pauses and immediately resumes at the chosen interaction listener, retaining useful call frames.
+5. Observes requests, responses, console warnings/errors, exceptions, page/frame navigation, and DOM mutations for 3.5 seconds.
 6. Builds a chronological timeline with explicit causality confidence.
 7. Resolves available source maps locally and shows authored source locations.
-8. Detects the nearest owning React component without exporting props or state.
+8. Detects the nearest owning React component and shows component path, prop names/types, and state shape without capturing prop or state values.
 9. Instruments `setTimeout` scheduling and callbacks with asynchronous call stacks. If Chrome does not expose the experimental CDP breakpoint domain, a temporary local MAIN-world hook is used automatically.
 10. Produces a deterministic summary and schema-versioned, privacy-sanitized JSON export.
 11. Scores trace coverage and shows concrete diagnostics for missing evidence, incomplete responses, timer fallbacks, and source-map failures.
@@ -31,9 +31,13 @@ This is a private-beta instrumentation experiment, not yet a production extensio
 17. Uses trace schema version 2 with explicit relationship, capture-method, and privacy metadata plus local migration of version 1 imports.
 18. Uses semantic, keyboard-accessible side-panel controls with light/dark color support and automated accessibility checks.
 19. Restores privacy-sanitized visible trace state from session storage if the extension service worker restarts.
-20. Presents a diagnostic plain-language explanation—covering the clicked control, exact failed request, HTTP or browser error, meaning, first check, source function, and visible result—and keeps raw timing, confidence, and browser evidence behind an expandable technical trace.
+20. Presents a diagnostic plain-language explanation—covering the interaction, exact failed request, HTTP/browser/JavaScript error, meaning, first check, source function, and visible result—and keeps raw timing, confidence, and browser evidence behind an expandable technical trace.
+21. Attaches supported Worker and cross-origin iframe execution contexts to capture their request, error, and handler metadata without reading message or frame content.
+22. Adds trace naming, search, quality/problem filters, and two-trace comparison to local history.
+23. Offers an optional second opinion from Chrome's on-device Prompt API after showing the exact redacted input; no cloud fallback is used.
+24. Collects per-trace usefulness and clarity feedback locally, redacts common credentials before storage, and exports it only on request.
 
-All trace processing is local. The current build has no backend, analytics, login, or AI call.
+All trace processing is local. The current build has no backend, analytics, login, or remote AI call. The optional AI feature runs Chrome's local model and remains unavailable when that browser capability or device model is unavailable.
 
 ## Install
 
@@ -53,7 +57,7 @@ Run this command from the project root:
 python3 -m http.server 4173 --bind 127.0.0.1 --directory demo
 ```
 
-Then open exactly `http://127.0.0.1:4173/`, select **Complete order**, choose **Record one click**, and click the button again.
+Then open exactly `http://127.0.0.1:4173/`, select **Complete order**, leave interaction detection on **Detect automatically**, choose **Record one interaction**, and click the button again.
 
 Expected evidence:
 
@@ -65,7 +69,7 @@ Expected evidence:
 
 ### Try an intentional failed request
 
-With the same demo server running, open `http://127.0.0.1:4173/failure.html`. Select **Send failing request**, choose **Record one click**, and click the button again.
+With the same demo server running, open `http://127.0.0.1:4173/failure.html`. Select **Send failing request**, choose **Record one interaction**, and click the button again.
 
 The page deliberately requests a missing JSON file. The expected trace includes `GET /missing-order.json?traceDemo=failure`, a `404` response, the handled error message shown on the page, and a contextual explanation that identifies the failed request. This failure is local and does not affect real data.
 
@@ -77,7 +81,7 @@ The second test target uses React 19 with a delegated `onClick`, an authored asy
 python3 -m http.server 4175 --bind 127.0.0.1 --directory demo-react
 ```
 
-Open `http://127.0.0.1:4175/`, select **Complete React order**, record one click, and click it again.
+Open `http://127.0.0.1:4175/`, select **Complete React order**, record one interaction, and click it again.
 
 Expected evidence:
 
@@ -92,7 +96,7 @@ The checked-in `app.js.map` maps the handler, timer schedule, and callback frame
 
 ## Run the validation corpus
 
-The automated corpus starts a fixture server and headless Chrome, loads the unpacked extension, runs all 26 interactions, and evaluates each captured trace:
+The automated corpus starts a fixture server and headless Chrome, loads the unpacked extension, runs all 31 interactions, and evaluates each captured trace:
 
 ```bash
 npm run test:e2e
@@ -125,18 +129,19 @@ The versioned export contract and migration rules are documented in `TRACE_SCHEM
 
 ## Known limits
 
-- The plain-language explanation is deterministic and intentionally conservative. “Observed after click” means the event happened in the same trace window but was not proven to be caused by the click.
-- A request is “direct” only when its CDP initiator stack matches a captured click-handler frame. The primary chain follows explicit parent relationships; timing-only correlations remain visible but are excluded. Time proximity is not proof of causality.
+- The default plain-language explanation is deterministic and intentionally conservative. “Observed after interaction” means the event happened in the same trace window but was not proven to be caused by the interaction.
+- A request is “direct” only when its CDP initiator stack matches a captured interaction-handler frame. The primary chain follows explicit parent relationships; timing-only correlations remain visible but are excluded. Time proximity is not proof of causality.
 - Framework event delegation can expose a framework dispatcher rather than the authored handler.
 - Available source maps are fetched and applied locally. Missing, inaccessible, malformed, or unsupported maps fall back to deployed JavaScript locations.
 - Timer capture prefers CDP instrumentation. On Chrome builds without `EventBreakpoints`, the extension temporarily wraps the page's MAIN-world `setTimeout` during the trace and restores it on completion or automatically after 10 seconds.
 - Public state and copied JSON retain function names, deployed locations, source-mapped locations, and async parents, but remove CDP `callFrameId`, scope objects, receiver objects, and return values.
-- Promise continuations, queued microtasks, `setTimeout`, `setInterval`, and `requestAnimationFrame` boundaries are explicit when the browser or trace-scoped fallback exposes them. Worker and WebSocket lifecycle/message direction are captured without content; code running inside Workers is not yet inspected.
+- Promise continuations, queued microtasks, `setTimeout`, `setInterval`, and `requestAnimationFrame` boundaries are explicit when the browser or trace-scoped fallback exposes them. Worker and WebSocket lifecycle/message direction are captured without content. Worker and cross-origin iframe internals require Chrome's flat debugger-session support; the trace reports partial coverage when unavailable.
 - Same-document History API and fragment navigation are captured through `Page.navigatedWithinDocument` when the connected Chrome build exposes that experimental event.
-- Cross-origin iframes and browser-internal pages are outside this beta.
+- Cross-origin iframe request/error/handler metadata is captured when Chrome exposes the frame as a related target. Frame DOM and body content, sandbox-blocked internals, browser-internal pages, and closed shadow roots remain outside this beta.
 - Site access is granted to one exact HTTP or HTTPS origin at a time. Cross-origin source maps may remain unavailable until their own host is explicitly supported; tracing does not silently expand access.
 - Opening DevTools on the traced tab detaches `chrome.debugger`.
-- The extension declares HTTP and HTTPS hosts as optional and requests only the active website from a direct **Select element** or **Record one click** action. Chrome's extension settings can revoke previously granted sites.
+- Chrome's on-device Prompt API requires Chrome 148+ on a supported desktop device and may require an initial model download. The deterministic explanation always remains available; there is no cloud fallback.
+- The extension declares HTTP and HTTPS hosts as optional and requests only the active website from a direct **Select element** or **Record one interaction** action. Chrome's extension settings can revoke previously granted sites.
 
 ## Go/no-go test
 

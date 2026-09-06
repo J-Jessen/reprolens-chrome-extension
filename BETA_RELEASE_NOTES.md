@@ -1,10 +1,10 @@
-# Behaviour Tracer v0.8.0-beta.4
+# Behaviour Tracer v0.9.0-beta.1
 
-This private beta tests whether one-click behaviour traces save developers time on real local and staging applications.
+This private beta tests which parts of a more complete, local-first behaviour trace are most useful on real local and staging applications.
 
 ## Install and test
 
-1. The owner downloads `behaviour-tracer-v0.8.0-beta.4.zip` from **Assets** below. Do not use GitHub's source-code archives.
+1. The owner downloads `behaviour-tracer-v0.9.0-beta.1.zip` from **Assets** below. Do not use GitHub's source-code archives.
 2. The owner sends the ZIP directly to each selected tester through a private, access-controlled channel.
 3. The tester begins with `START_HER.md` inside the ZIP and returns completed forms through the same private channel.
 
@@ -12,15 +12,15 @@ Testers do not need or receive GitHub repository access.
 
 ## Changes in this build
 
-- Replaces generic failed-request wording with a diagnosis that names the method and endpoint, explains the HTTP or browser error, suggests the first relevant check, and connects the failure to source code and visible impact when evidence is available.
-- Keeps complete timings, confidence values, filters, and raw browser evidence available under **Technical trace**.
-- Uses explicit `Direct link`, `Observed after click`, and `Limited evidence` labels instead of implying causality from timing alone.
-- Reworks the layout for narrow side panels, progressive disclosure, keyboard navigation, 200% zoom, and reduced visual clutter.
-- Keeps the local-history action buttons at a consistent height.
-- Aligns the side panel with current Modern Web Guidance for semantics, keyboard use, focus, status announcements, color schemes, reduced motion, and safe DOM rendering.
-- Moves injected overlay presentation to a static stylesheet and keeps website access explicitly per origin.
-- Adds Chrome 118+ lifecycle handling and privacy-sanitized session-state recovery.
-- Adds automated extension-policy and Web Store-readiness checks; the full browser corpus still covers 26 scenarios.
+- Records click/tap, keyboard, input-change, form-submit, and drop interactions with automatic detection by default; field, key, and drop payload values are not captured.
+- Explains HTTP errors, browser transport failures, CORS blocks, cancellations, and common JavaScript error types with a concrete first check.
+- Shows a privacy-safe React component path, prop names/types, and state shape without capturing values.
+- Captures request/error/handler metadata inside supported Worker and cross-origin iframe contexts without reading Worker messages or iframe body content.
+- Adds names, search, quality/problem filters, and two-trace comparison to local history.
+- Adds an optional Chrome on-device AI second opinion over the exact redacted input shown to the user; there is no cloud fallback.
+- Adds local per-trace usefulness and clarity feedback with redaction, download, and clear controls.
+- Retains the progressive layout, explicit evidence labels, complete technical trace, safe exports, per-website access, and local-only processing.
+- Expands automated browser validation from 26 to 31 scenarios and verifies the new history, feedback, accessibility, narrow-panel, and 200% text flows.
 
 Chrome asks for access to each website when it is first selected. Approve only a local or staging website you are authorized to inspect.
 

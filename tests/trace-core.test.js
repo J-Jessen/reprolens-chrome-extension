@@ -96,7 +96,7 @@ test("explains a trace in plain language without hiding uncertainty", () => {
   assert.deepEqual(explanation.steps.map((step) => step.label), ["Your action", "Page code", "Data request", "Page result"]);
   assert.equal(explanation.steps[1].title, "submitOrder() handled the click");
   assert.match(explanation.steps[2].detail, /\/order\.json\?cart=1/);
-  assert.equal(explanation.steps[3].relation, "Observed after click");
+  assert.equal(explanation.steps[3].relation, "Observed after interaction");
   assert.match(explanation.evidenceNote, /could not prove/);
   assert.doesNotMatch(JSON.stringify(explanation), /callFrames|main-world-hook|confidence/i);
 });
@@ -593,4 +593,101 @@ test("sanitizes public sessions without leaking CDP runtime objects", () => {
   assert.equal(sanitized.handlers[0].callFrames[0].originalLocation.source, "src/main.jsx");
   assert.equal(sanitized.network[0].initiatorAsyncStack.callFrames[0].location.scriptId, "73");
   assert.equal(session.handlers[0].callFrames[0].scopeChain[0].object.objectId, "sensitive-scope-id");
+});
+
+test("describes keyboard interactions without capturing the typed character", () => {
+  const explanation = TraceCore.explain({
+    pageUrl: "https://app.example/search",
+    interaction: { eventType: "keydown", metadata: { key: "Character key" }, element: { text: "Search" } },
+    timeline: [
+      { id: "interaction", kind: "interaction", primaryChain: true, relationshipEvidence: "root" },
+      { id: "change", kind: "mutation", title: "Text changed to “3 results”", primaryChain: false }
+    ]
+  });
+  assert.equal(explanation.steps[0].title, "You used Character key on “Search”");
+  assert.equal(explanation.steps[1].title, "No readable JavaScript handler was identified");
+  assert.equal(explanation.headline, "After using Character key on “Search”, the page showed “3 results”");
+});
+
+test("diagnoses CORS and aborted requests with concrete first checks", () => {
+  const cors = TraceCore.explain({
+    pageUrl: "https://app.example/",
+    interaction: { eventType: "submit", element: { text: "Save form" } },
+    timeline: [
+      { id: "interaction", kind: "interaction", primaryChain: true, relationshipEvidence: "root" },
+      { id: "request", kind: "request", method: "POST", url: "https://api.example/save", title: "POST https://api.example/save", primaryChain: true },
+      { id: "failure", kind: "network-failure", errorText: "net::ERR_FAILED", title: "FAILED https://api.example/save", parentId: "request", primaryChain: true },
+      { id: "message", kind: "exception", title: "Access to fetch has been blocked by CORS policy", primaryChain: false }
+    ]
+  });
+  assert.match(cors.headline, /cross-origin policy/);
+  assert.match(cors.steps.find((step) => step.label === "Data request").detail, /Access-Control-Allow-Origin/);
+
+  const aborted = TraceCore.explain({
+    pageUrl: "https://app.example/",
+    interaction: { eventType: "change", element: { text: "Search" } },
+    timeline: [
+      { id: "interaction", kind: "interaction", primaryChain: true, relationshipEvidence: "root" },
+      { id: "request", kind: "request", method: "GET", url: "https://app.example/search", title: "GET https://app.example/search", primaryChain: true },
+      { id: "failure", kind: "network-failure", errorText: "net::ERR_ABORTED", canceled: true, title: "FAILED https://app.example/search", parentId: "request", primaryChain: true }
+    ]
+  });
+  assert.match(aborted.headline, /cancelled before a response arrived/);
+  assert.match(aborted.steps.find((step) => step.label === "Data request").detail, /AbortController/);
+});
+
+test("turns a TypeError into a concrete JavaScript diagnosis", () => {
+  const explanation = TraceCore.explain({
+    pageUrl: "https://app.example/",
+    interaction: { eventType: "click", element: { text: "Save" } },
+    timeline: [
+      { id: "interaction", kind: "interaction", primaryChain: true, relationshipEvidence: "root" },
+      { id: "error", kind: "exception", title: "TypeError: Cannot read properties of undefined", detail: "https://app.example/save.js:18", primaryChain: false }
+    ]
+  });
+  const problemStep = explanation.steps.find((step) => step.kind === "problem");
+  assert.match(explanation.headline, /runtime type does not support/);
+  assert.match(problemStep.detail, /null, undefined, or an unexpected object shape/);
+  assert.match(problemStep.detail, /save\.js:18/);
+});
+
+test("compares saved traces by quality, problems, event kinds, and requests", () => {
+  const base = {
+    schemaVersion: 2,
+    status: "complete",
+    pageUrl: "https://app.example/",
+    timeline: [
+      { id: "interaction", kind: "interaction" },
+      { id: "request", kind: "request", method: "GET", url: "https://app.example/api/old" }
+    ],
+    quality: { score: 80 }
+  };
+  const compared = TraceCore.compareTraces(base, {
+    ...base,
+    timeline: [
+      { id: "interaction", kind: "interaction" },
+      { id: "request", kind: "request", method: "POST", url: "https://app.example/api/new" },
+      { id: "failure", kind: "network-failure" }
+    ],
+    quality: { score: 60 }
+  });
+  assert.equal(compared.quality.delta, -20);
+  assert.equal(compared.problems.delta, 1);
+  assert.deepEqual(compared.addedRequests, ["POST /api/new"]);
+  assert.deepEqual(compared.removedRequests, ["GET /api/old"]);
+});
+
+test("builds a compact redacted input for optional on-device AI", () => {
+  const input = TraceCore.buildAiInput({
+    schemaVersion: 2,
+    status: "complete",
+    traceId: "trace-1",
+    pageUrl: "https://app.example/?token=private",
+    selectedElement: { text: "Load user@example.com", html: "<button data-token='private'>Load</button>" },
+    interaction: { eventType: "click", element: { text: "Load user@example.com" } },
+    timeline: [{ id: "interaction", kind: "interaction", title: "click #load", primaryChain: true }]
+  });
+  assert.match(input, /deterministicExplanation/);
+  assert.doesNotMatch(input, /private|user@example\.com/);
+  assert.doesNotMatch(input, /outerHTML|<button/);
 });

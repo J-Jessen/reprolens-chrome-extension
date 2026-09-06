@@ -14,7 +14,7 @@ Stop testing and contact the owner privately if the browser behaves abnormally o
 
 ## Install the beta
 
-1. Save the `behaviour-tracer-v0.8.0-beta.4.zip` file supplied directly by the owner.
+1. Save the `behaviour-tracer-v0.9.0-beta.1.zip` file supplied directly by the owner.
 2. Extract the ZIP into a folder you will keep for the duration of the beta.
 3. Confirm that the folder contains `manifest.json`, `START_HER.md`, and this guide.
 4. Open `chrome://extensions` in Chrome.
@@ -34,7 +34,7 @@ When you choose **Select element** on a website for the first time, Chrome asks 
 2. Open Behaviour Tracer from the toolbar.
 3. Choose **Select element** and approve access to this website if Chrome asks.
 4. Move over the page and click the chosen element.
-5. Choose **Record one click**.
+5. Leave **Detect automatically** selected and choose **Record one interaction**.
 6. Perform the same interaction once.
 7. Wait for the trace to complete.
 8. Read **What happened** without opening **Technical trace**. In one sentence, write what you believe the interaction did.
@@ -54,12 +54,15 @@ Test 3–5 safe interactions. Choose as many of these shapes as your application
 | Async update | Debounce, timer, Promise, or animation | Schedule/callback ordering and delayed DOM result |
 | Client navigation | Router link, hash, or History API | Navigation event and preceding handler |
 | Handled failure | Safe test endpoint returning an error | Failed/non-2xx request and visible error state |
+| Keyboard | Enter/Escape/arrow-controlled UI | Correct interaction without a typed key value |
+| Field change or form submit | Safe dummy input | Correct event without submitted field values |
+| Drag and drop | Dummy local item | Drop handler without dropped payload content |
 
 For every interaction, answer:
 
 1. Did the trace show the behaviour you expected?
 2. Could you explain the result after reading only **What happened**?
-3. Were `Direct link`, `Observed after click`, and `Limited evidence` understandable and trustworthy?
+3. Were `Direct link`, `Observed after interaction`, and `Limited evidence` understandable and trustworthy?
 4. Did **Primary chain** contain only evidence you considered explicitly connected?
 5. Was important evidence missing?
 6. Did any event look unrelated or more certain than the evidence justified?
@@ -74,6 +77,10 @@ Verify these once:
 - open **Review safe export** and confirm that private-looking values are masked;
 - copy a Markdown report, but do not share it if it contains anything sensitive;
 - reopen a trace from local history;
+- name two traces, find/filter them, and compare them;
+- on React, inspect whether component names and structural context help without exposing values;
+- if **Optional on-device AI explanation** is available, review its exact input, generate once, and compare its value with the deterministic explanation; unavailable AI is an acceptable result;
+- save a usefulness and clarity rating in the in-product feedback card, then download the local feedback file and verify no private input is present;
 - delete one history item;
 - reload the extension and confirm the approved test site still works.
 

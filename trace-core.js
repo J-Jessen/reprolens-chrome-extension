@@ -76,6 +76,7 @@
     if (["request", "response", "network-failure"].includes(event?.kind)) return "network";
     if (event?.kind === "mutation") return "dom";
     if (event?.kind === "exception") return "errors";
+    if (event?.kind === "frame") return "contexts";
     return event?.kind || "unknown";
   }
 
@@ -95,16 +96,16 @@
       interaction: "content-script", handler: "chrome-debugger", request: "chrome-devtools-protocol",
       response: "chrome-devtools-protocol", "network-failure": "chrome-devtools-protocol",
       websocket: "chrome-devtools-protocol", worker: "main-world-hook", mutation: "content-script",
-      exception: "chrome-devtools-protocol", navigation: "chrome-devtools-protocol"
+      frame: "chrome-devtools-protocol", exception: "chrome-devtools-protocol", navigation: "chrome-devtools-protocol"
     };
     const privacyClasses = {
       request: "url-metadata", response: "url-metadata", "network-failure": "url-metadata",
-      websocket: "metadata-only", worker: "metadata-only", mutation: "dom-summary"
+      websocket: "metadata-only", worker: "metadata-only", frame: "metadata-only", mutation: "dom-summary"
     };
     const relationTypes = {
       handler: "handles-interaction", request: "request-from-handler",
       response: "response-to", "network-failure": "failure-of", websocket: "socket-lifecycle-of",
-      worker: "worker-lifecycle-of", async: "async-callback-of", mutation: "dom-effect-of"
+      worker: "worker-lifecycle-of", frame: "frame-lifecycle-of", async: "async-callback-of", mutation: "dom-effect-of"
     };
     const hasExplicitRelationship = Boolean(event.parentId) && event.kind !== "mutation";
     return {
@@ -198,6 +199,7 @@
   function sanitizePublicSession(session) {
     const copy = JSON.parse(JSON.stringify(session));
     delete copy.scripts;
+    delete copy.debuggerContexts;
     copy.handlers = (copy.handlers || []).map((handler) => ({
       ...handler,
       callFrames: (handler.callFrames || []).map(compactFrame).filter(Boolean)
@@ -497,7 +499,9 @@
         kind: "handler",
         atMs: relativeMs(handler.at, origin, session.startedAt),
         title: top ? `${top.functionName}()` : "JavaScript event listener",
-        detail: locationLabel(top) || handler.eventName || "click listener",
+        detail: [locationLabel(top) || handler.eventName || "event listener", handler.contextType && handler.contextType !== "page" ? `${handler.contextType} context` : ""].filter(Boolean).join(" · "),
+        contextId: handler.contextId || null,
+        contextType: handler.contextType || "page",
         location: top || null,
         frames,
         parentId: session.interaction ? "interaction" : null,
@@ -507,11 +511,12 @@
     });
 
     const relevantNetwork = (session.network || []).filter(afterInteraction);
+    const networkKey = (item) => `${item.contextId || "page"}:${item.requestId}`;
     const requestById = new Map();
     const requestEventIdById = new Map();
     relevantNetwork.forEach((item, index) => {
-      if (item.phase === "request") requestById.set(item.requestId, item);
-      if (item.phase === "request") requestEventIdById.set(item.requestId, `network-${index}`);
+      if (item.phase === "request") requestById.set(networkKey(item), item);
+      if (item.phase === "request") requestEventIdById.set(networkKey(item), `network-${index}`);
     });
 
     const socketById = new Map();
@@ -543,7 +548,7 @@
     relevantNetwork.forEach((item, index) => {
       const delta = relativeMs(item.at, origin, session.startedAt);
       const kind = item.phase === "response" ? "response" : item.phase === "failure" ? "network-failure" : "request";
-      const request = item.phase === "request" ? item : requestById.get(item.requestId);
+      const request = item.phase === "request" ? item : requestById.get(networkKey(item));
       const scope = networkScope(request?.url || item.url, session.pageUrl);
       const evidence = request ? requestEvidence(request) : { allInitiatorFrames: [], displayFrames: [], matchesHandler: false };
       const initiatorFrames = evidence.displayFrames;
@@ -587,16 +592,18 @@
           : item.phase === "failure"
             ? `FAILED ${request?.url || item.url || "request"}`
           : `${item.method || "GET"} ${item.url}`,
-        detail: `${scope} · ${item.type || "Network"}${item.errorText ? ` · ${item.errorText}` : ""}${durationMs != null && item.phase !== "request" ? ` · ${durationMs}ms` : ""}${initiatorFrames[0] ? ` · from ${initiatorFrames[0].functionName}()` : ""}${locationLabel(initiatorFrames[0]) ? ` · ${locationLabel(initiatorFrames[0])}` : ""}`,
+        detail: `${scope} · ${item.type || "Network"}${item.contextType && item.contextType !== "page" ? ` · ${item.contextType} context` : ""}${item.errorText ? ` · ${item.errorText}` : ""}${durationMs != null && item.phase !== "request" ? ` · ${durationMs}ms` : ""}${initiatorFrames[0] ? ` · from ${initiatorFrames[0].functionName}()` : ""}${locationLabel(initiatorFrames[0]) ? ` · ${locationLabel(initiatorFrames[0])}` : ""}`,
         method: request?.method || item.method || "GET",
         url: request?.url || item.url || "",
         status: item.phase === "response" ? Number(item.status) || 0 : null,
         statusText: item.phase === "response" ? item.statusText || "" : "",
         errorText: item.phase === "failure" ? item.errorText || "Request failed" : "",
         canceled: item.phase === "failure" ? Boolean(item.canceled) : false,
+        contextId: item.contextId || request?.contextId || null,
+        contextType: item.contextType || request?.contextType || "page",
         networkScope: scope,
         durationMs: item.phase === "request" ? null : durationMs,
-        parentId: item.phase !== "request" ? requestEventIdById.get(item.requestId) || null : requestParentId,
+        parentId: item.phase !== "request" ? requestEventIdById.get(networkKey(item)) || null : requestParentId,
         location: initiatorFrames[0] || null,
         frames: initiatorFrames,
         confidence: normalizeConfidence(score),
@@ -667,6 +674,7 @@
       const frames = usefulFrames(event.callFrames, 5);
       const labels = {
         created: `Worker created${event.url ? ` · ${event.url}` : ""}`,
+        attached: `${event.contextType === "shared_worker" ? "Shared Worker" : "Worker"} execution context attached${event.url ? ` · ${event.url}` : ""}`,
         sent: "Worker message sent",
         received: "Worker message received",
         error: "Worker error"
@@ -676,11 +684,26 @@
         kind: "worker",
         atMs: relativeMs(event.at, origin, session.startedAt),
         title: labels[event.phase] || `Worker ${event.phase}`,
-        detail: `${event.phase === "created" ? "creation metadata" : "message content not captured"}${locationLabel(frames[0]) ? ` · ${locationLabel(frames[0])}` : ""}`,
+        detail: `${["created", "attached"].includes(event.phase) ? "execution metadata and internal errors/requests enabled" : "message content not captured"}${event.captureStatus === "partial" ? " · partial child-target coverage" : ""}${locationLabel(frames[0]) ? ` · ${locationLabel(frames[0])}` : ""}`,
         parentId: event.phase === "created" ? null : workerCreatedById.get(event.workerId) || null,
         location: frames[0] || null,
         frames,
         confidence: 0.95,
+        confidenceLabel: "direct"
+      });
+    });
+
+    (session.frameEvents || []).filter(afterInteraction).forEach((event, index) => {
+      events.push({
+        id: `frame-${index}`,
+        kind: "frame",
+        atMs: relativeMs(event.at, origin, session.startedAt),
+        title: `Cross-origin frame context attached${event.url ? ` · ${event.url}` : ""}`,
+        detail: event.captureStatus === "partial"
+          ? "Frame metadata is visible, but some internal evidence could not be enabled."
+          : "Frame requests, errors, and readable handlers can now be observed without reading frame content.",
+        contextId: event.frameId || null,
+        confidence: 1,
         confidenceLabel: "direct"
       });
     });
@@ -722,8 +745,10 @@
         id: `exception-${index}`,
         kind: "exception",
         atMs: delta,
-        title: exception.text || "JavaScript exception",
-        detail: exception.url || "",
+        title: String(exception.exceptionDescription || exception.text || "JavaScript exception").split("\n")[0],
+        detail: [exception.url || "", exception.contextType && exception.contextType !== "page" ? `${exception.contextType} context` : ""].filter(Boolean).join(" · "),
+        contextId: exception.contextId || null,
+        contextType: exception.contextType || "page",
         confidence: score,
         confidenceLabel: confidenceLabel(score)
       });
@@ -737,7 +762,9 @@
         kind: "exception",
         atMs: delta,
         title: `${entry.level || "console"}: ${entry.text || "Console message"}`,
-        detail: entry.url || "",
+        detail: [entry.url || "", entry.contextType && entry.contextType !== "page" ? `${entry.contextType} context` : ""].filter(Boolean).join(" · "),
+        contextId: entry.contextId || null,
+        contextType: entry.contextType || "page",
         confidence: score,
         confidenceLabel: confidenceLabel(score)
       });
@@ -750,14 +777,16 @@
         id: `navigation-${index}`,
         kind: "navigation",
         atMs: delta,
-        title: `Navigate to ${navigation.url}`,
-        detail: navigation.name || "",
+        title: `${navigation.parentFrameId || navigation.contextType === "iframe" ? "Frame navigated to" : "Navigate to"} ${navigation.url}`,
+        detail: [navigation.name || "", navigation.contextType === "iframe" ? "cross-origin iframe" : ""].filter(Boolean).join(" · "),
+        contextId: navigation.contextId || null,
+        contextType: navigation.contextType || "page",
         confidence: score,
         confidenceLabel: confidenceLabel(score)
       });
     });
 
-    const order = { interaction: 0, handler: 1, request: 2, response: 3, "network-failure": 3, async: 4, worker: 4, websocket: 4, mutation: 5, exception: 6, navigation: 7 };
+    const order = { interaction: 0, handler: 1, frame: 2, request: 3, response: 4, "network-failure": 4, async: 5, worker: 5, websocket: 5, mutation: 6, exception: 7, navigation: 8 };
     return markPrimaryChain(events
       .sort((a, b) => a.atMs - b.atMs || (order[a.kind] ?? 99) - (order[b.kind] ?? 99) || a.id.localeCompare(b.id))
       .map(eventMetadata));
@@ -776,10 +805,11 @@
     const navigations = timeline.filter((event) => event.kind === "navigation");
     const socketEvents = timeline.filter((event) => event.kind === "websocket");
     const workerEvents = timeline.filter((event) => event.kind === "worker");
+    const frameEvents = timeline.filter((event) => event.kind === "frame");
     const errors = timeline.filter((event) => event.kind === "exception");
     const authoredHandlers = timeline.filter((event) => event.kind === "handler" && event.origin === "request-initiator");
 
-    const sentences = [`Clicking ${subject} produced ${timeline.length - 1} observed trace events.`];
+    const sentences = [`${interactionGerund(session, true)} produced ${timeline.length - 1} observed trace events.`];
     if (session.framework?.owner) sentences.push(`The element is owned by ${session.framework.library} component ${session.framework.owner}.`);
     if (handlers.length) sentences.push(`Chrome paused in ${handlers[0].title}.`);
     if (authoredHandlers.length) sentences.push(`The authored request initiator was ${authoredHandlers[0].title}.`);
@@ -794,6 +824,7 @@
     if (navigations.length) sentences.push(`${navigations.length} navigation event${navigations.length === 1 ? " was" : "s were"} observed.`);
     if (socketEvents.length) sentences.push(`${socketEvents.length} WebSocket lifecycle event${socketEvents.length === 1 ? " was" : "s were"} observed without capturing message contents.`);
     if (workerEvents.length) sentences.push(`${workerEvents.length} Worker lifecycle event${workerEvents.length === 1 ? " was" : "s were"} observed without capturing message contents.`);
+    if (frameEvents.length) sentences.push(`${frameEvents.length} cross-origin frame context${frameEvents.length === 1 ? " was" : "s were"} attached without reading frame content.`);
     if (errors.length) sentences.push(`${errors.length} JavaScript error or warning event${errors.length === 1 ? " was" : "s were"} captured.`);
     if (!handlers.length) sentences.push("No page JavaScript handler frame was captured; native or framework-delegated behaviour may still have occurred.");
     return sentences.join(" ");
@@ -863,6 +894,9 @@
       404: "Not Found",
       408: "Request Timeout",
       409: "Conflict",
+      410: "Gone",
+      412: "Precondition Failed",
+      415: "Unsupported Media Type",
       422: "Unprocessable Content",
       429: "Too Many Requests",
       500: "Internal Server Error",
@@ -877,7 +911,7 @@
     return text ? `${text[0].toLowerCase()}${text.slice(1)}` : text;
   }
 
-  function networkProblemDiagnosis({ request, outcome, pageUrl }) {
+  function networkProblemDiagnosis({ request, outcome, pageUrl, relatedMessages = [] }) {
     const method = requestMethod(request);
     const destination = conciseUrl(requestUrl(request), pageUrl) || "the requested address";
     const status = outcome?.kind === "response" ? responseStatus(outcome) : 0;
@@ -890,6 +924,9 @@
       404: ["The server could not find a resource at that address.", "Check that the request URL is correct and that the backend route or file is available in this environment."],
       408: ["The server stopped waiting before the request completed.", "Check for a slow request body, network delay, or a server timeout that is set too low."],
       409: ["The request conflicts with the resource's current state.", "Check for stale data, duplicate operations, or a required version value."],
+      410: ["The requested resource was deliberately removed and is no longer available.", "Check whether the client is using an obsolete endpoint or identifier."],
+      412: ["A condition attached to the request was not met.", "Check version, ETag, and other precondition headers for stale values."],
+      415: ["The server does not accept the request's content format.", "Check the Content-Type header and encode the request body in a supported format."],
       422: ["The server understood the request but could not accept its submitted values.", "Check the submitted fields and show the server's validation message if one is available."],
       429: ["The server rejected the request because too many requests were sent.", "Check the rate limit and add retry or backoff handling where appropriate."],
       500: ["Server-side code failed while processing the request.", "Check the server logs for this endpoint and reproduce the request with the same input."],
@@ -912,16 +949,31 @@
 
     const errorText = String(outcome?.errorText || outcome?.detail || "Request failed");
     const code = errorText.match(/(?:net::)?(ERR_[A-Z_]+)/)?.[1] || "";
+    const relatedText = relatedMessages.map((event) => event.title || event.detail || "").join(" ");
+    if (/cors|cross-origin request blocked|access-control-allow-origin/i.test(relatedText)) {
+      return {
+        title: `${method} ${destination} was blocked by the browser's cross-origin policy`,
+        meaning: "The destination did not grant this page permission to read the response.",
+        check: "Check the response's Access-Control-Allow-Origin headers, preflight response, credentials mode, and the exact requesting origin."
+      };
+    }
     const transportDiagnoses = {
       ERR_ABORTED: ["The request was cancelled before a response arrived.", "Check whether navigation, an AbortController, or page code cancelled the request."],
+      ERR_ADDRESS_UNREACHABLE: ["The browser could not reach the destination network address.", "Check the host, route, VPN, container network, and local firewall."],
       ERR_BLOCKED_BY_CLIENT: ["The browser or an installed extension blocked the request.", "Check content blockers, privacy tools, and browser request-blocking rules."],
       ERR_CERT_AUTHORITY_INVALID: ["The browser did not trust the server's security certificate.", "Check the certificate issuer, hostname, and local development certificate setup."],
       ERR_CERT_COMMON_NAME_INVALID: ["The server certificate does not match the requested hostname.", "Check the certificate's hostnames and the request URL."],
       ERR_CONNECTION_REFUSED: ["No server accepted the connection at that address.", "Check that the backend is running and that the host and port are correct."],
       ERR_CONNECTION_TIMED_OUT: ["The browser could not establish a connection before timing out.", "Check network access, firewall rules, the host, and the port."],
+      ERR_EMPTY_RESPONSE: ["The connection closed without returning response data.", "Check whether the server process crashed, reset the connection, or returned an invalid empty response."],
+      ERR_HTTP2_PROTOCOL_ERROR: ["The HTTP/2 connection ended with a protocol error.", "Check the reverse proxy, server HTTP/2 configuration, and intermediary logs."],
       ERR_INTERNET_DISCONNECTED: ["The browser had no network connection.", "Restore the network connection and retry the request."],
       ERR_NAME_NOT_RESOLVED: ["The browser could not resolve the server's hostname.", "Check the hostname, DNS configuration, and local hosts file."],
+      ERR_NETWORK_CHANGED: ["The active network changed while the request was running.", "Retry after the connection stabilizes and check VPN or interface switching."],
+      ERR_PROXY_CONNECTION_FAILED: ["The configured proxy could not be reached.", "Check browser or system proxy settings and proxy availability."],
+      ERR_SSL_PROTOCOL_ERROR: ["The browser and server could not establish a valid secure connection.", "Check TLS versions, certificates, reverse-proxy configuration, and whether HTTPS is expected on this port."],
       ERR_TIMED_OUT: ["The request did not complete before the browser timed out.", "Check network latency and whether the server is responding."],
+      ERR_TOO_MANY_REDIRECTS: ["The request entered a redirect loop.", "Inspect the redirect chain and check URL, authentication, and HTTP-to-HTTPS rewrite rules."],
       ERR_FAILED: ["The browser could not complete the request.", "Check the related console message for CORS, certificate, network, or browser-blocking details."]
     };
     const [meaning, check] = transportDiagnoses[code]
@@ -931,6 +983,24 @@
       meaning: outcome?.canceled && code !== "ERR_ABORTED" ? "The request was cancelled before a response arrived." : meaning,
       check
     };
+  }
+
+  function exceptionProblemDiagnosis(event) {
+    const raw = String(event?.title || "JavaScript error").replace(/^(?:error|warning):\s*/i, "").trim();
+    const source = String(event?.detail || "").split(" · ")[0];
+    const location = source ? ` The first captured source was ${shorten(source, 80)}.` : "";
+    const rules = [
+      [/TypeError/i, "Code used a value in a way its runtime type does not support.", "Check the named value for null, undefined, or an unexpected object shape at the first application frame."],
+      [/ReferenceError|is not defined/i, "Code referred to a variable or function that was not available in this scope.", "Check spelling, imports, script loading order, and conditional declarations."],
+      [/SyntaxError/i, "The browser could not parse or interpret part of the JavaScript.", "Open the first application source location and check the syntax or parsed data mentioned in the message."],
+      [/RangeError|Maximum call stack/i, "Code exceeded an allowed numeric, recursion, or stack limit.", "Check for unbounded recursion, repeated state updates, or an invalid size or numeric range."],
+      [/SecurityError|permission|denied/i, "The browser blocked an operation because the page lacked permission or crossed a security boundary.", "Check the exact browser policy, origin, iframe, and permission involved."],
+      [/AbortError/i, "An asynchronous operation was deliberately aborted before completion.", "Check the AbortController, navigation, cleanup, or replacement request that triggered the cancellation."],
+      [/QuotaExceededError/i, "The browser refused a storage operation because its available quota was exceeded.", "Check local storage usage, cleanup behaviour, and the size of the value being stored."]
+    ];
+    const matched = rules.find(([pattern]) => pattern.test(raw));
+    const [, meaning, check] = matched || [null, "JavaScript reported a runtime problem during the trace.", "Open the first application source location, reproduce the interaction, and inspect the values used on that line."];
+    return { title: shorten(raw, 110), meaning, check: `${check}${location}` };
   }
 
   function visibleMutation(event) {
@@ -957,7 +1027,46 @@
     if (event?.kind === "interaction") return "Starting point";
     return event?.primaryChain && event?.relationshipEvidence === "explicit"
       ? "Direct link"
-      : "Observed after click";
+      : "Observed after interaction";
+  }
+
+  function interactionPhrase(session) {
+    const subject = readableSubject(session);
+    const eventType = session.interaction?.eventType || "click";
+    const key = session.interaction?.metadata?.key;
+    const phrases = {
+      click: `clicked ${subject}`,
+      keydown: `used ${key ? `${key} on ` : "the keyboard on "}${subject}`,
+      change: `changed ${subject}`,
+      submit: `submitted ${subject}`,
+      drop: `dropped content on ${subject}`
+    };
+    return phrases[eventType] || `used ${subject}`;
+  }
+
+  function interactionGerund(session, capitalized = false) {
+    const subject = readableSubject(session);
+    const eventType = session.interaction?.eventType || "click";
+    const key = session.interaction?.metadata?.key;
+    const phrases = {
+      click: `clicking ${subject}`,
+      keydown: `using ${key ? `${key} on ` : "the keyboard on "}${subject}`,
+      change: `changing ${subject}`,
+      submit: `submitting ${subject}`,
+      drop: `dropping content on ${subject}`
+    };
+    const phrase = phrases[eventType] || `using ${subject}`;
+    return capitalized ? `${phrase[0].toUpperCase()}${phrase.slice(1)}` : phrase;
+  }
+
+  function interactionObject(session) {
+    return ({
+      click: "click",
+      keydown: "keyboard action",
+      change: "input change",
+      submit: "form submission",
+      drop: "drop"
+    })[session.interaction?.eventType || "click"] || "interaction";
   }
 
   function explain(session) {
@@ -972,6 +1081,7 @@
     const mutations = timeline.filter((event) => event.kind === "mutation");
     const navigations = timeline.filter((event) => event.kind === "navigation");
     const errors = timeline.filter((event) => event.kind === "exception");
+    const frames = timeline.filter((event) => event.kind === "frame");
     const requestDestination = requests.length ? conciseUrl(requestUrl(requests[0]), session.pageUrl) : "";
     const successfulResponses = responses.filter((event) => {
       const status = responseStatus(event);
@@ -985,15 +1095,16 @@
       ? requests.find((event) => event.id === failedOutcome.parentId) || requests[0] || null
       : null;
     const diagnosis = failedOutcome
-      ? networkProblemDiagnosis({ request: failedRequest, outcome: failedOutcome, pageUrl: session.pageUrl })
+      ? networkProblemDiagnosis({ request: failedRequest, outcome: failedOutcome, pageUrl: session.pageUrl, relatedMessages: errors })
       : null;
+    const exceptionDiagnosis = !diagnosis && errors.length ? exceptionProblemDiagnosis(errors[0]) : null;
     const importantChange = importantVisibleChange(mutations, session);
     const steps = [];
 
     steps.push({
       kind: "action",
       label: "Your action",
-      title: `You clicked ${subject}`,
+      title: `You ${interactionPhrase(session)}`,
       detail: "This is the interaction the trace followed.",
       relation: relationLabel(interaction)
     });
@@ -1012,13 +1123,22 @@
         ? "The browser found the handler boundary, but not a readable function name. This can happen with anonymous, framework-managed, bundled, or minified code."
         : location ? `Found in ${location}.` : "The original source location was not available."];
       if (framework) detailParts.push(`The element belongs to ${framework}.`);
+      const frameworkContext = session.framework?.context;
+      if (frameworkContext) {
+        const propNames = (frameworkContext.props || []).map((prop) => prop.name).slice(0, 6);
+        const stateCount = frameworkContext.state?.length || 0;
+        const contextParts = [];
+        if (propNames.length) contextParts.push(`prop names: ${propNames.join(", ")}`);
+        if (stateCount) contextParts.push(`${stateCount} state slot${stateCount === 1 ? "" : "s"}`);
+        if (contextParts.length) detailParts.push(`Privacy-safe component shape: ${contextParts.join("; ")}. Values were not captured.`);
+      }
       if (asyncEvents.length) {
         detailParts.push(`${asyncEvents.length} delayed or asynchronous code step${asyncEvents.length === 1 ? " was" : "s were"} also observed.`);
       }
       steps.push({
         kind: "code",
         label: "Page code",
-        title: generic ? "Page code handled the click" : `${functionName}() handled the click`,
+        title: generic ? `Page code handled the ${interactionObject(session)}` : `${functionName}() handled the ${interactionObject(session)}`,
         detail: detailParts.join(" "),
         relation: relationLabel(authored)
       });
@@ -1073,7 +1193,7 @@
     }
 
     if (navigations.length) {
-      const destination = String(navigations[0].title || "").replace(/^Navigate to\s+/, "");
+      const destination = String(navigations[0].title || "").replace(/^(?:Navigate to|Frame navigated to)\s+/, "");
       const sameDocument = ["historyApi", "fragment", "same-document"].some((name) => String(navigations[0].detail || "").includes(name));
       steps.push({
         kind: "navigation",
@@ -1081,6 +1201,16 @@
         title: sameDocument ? "The address changed without a full page reload" : "The page navigated to another address",
         detail: `Destination: ${readableUrl(destination, session.pageUrl)}.`,
         relation: relationLabel(navigations[0])
+      });
+    }
+
+    if (frames.length) {
+      steps.push({
+        kind: "context",
+        label: "Embedded context",
+        title: `${frames.length} cross-origin frame context${frames.length === 1 ? " was" : "s were"} observed`,
+        detail: "The trace can inspect frame request, error, and handler metadata when Chrome exposes a related target, without reading frame content.",
+        relation: relationLabel(frames[0])
       });
     }
 
@@ -1093,30 +1223,31 @@
         title: hasNetworkProblem
           ? `The browser or page also logged ${errors.length === 1 ? "one related message" : `${errors.length} related messages`}`
           : `JavaScript reported “${shorten(firstMessage, 72)}”`,
-        detail: messages.map((message) => `“${message}”`).join("; "),
+        detail: hasNetworkProblem
+          ? messages.map((message) => `“${message}”`).join("; ")
+          : `${exceptionDiagnosis?.meaning || "JavaScript reported a runtime problem."} ${exceptionDiagnosis?.check || "Open the first application source location and inspect the values used there."}`,
         relation: relationLabel(errors[0])
       });
     }
 
-    let headline = `After clicking ${subject}, the page ran code`;
+    let headline = `After ${interactionGerund(session)}, the page ran code`;
     if (diagnosis) {
       headline = `${diagnosis.title} — ${lowerInitial(diagnosis.meaning.replace(/\.$/, ""))}`;
-    } else if (errors.length) {
-      const firstMessage = shorten(String(errors[0].title || "JavaScript error").replace(/^(?:error|warning):\s*/i, ""), 88);
-      headline = `After clicking ${subject}, JavaScript reported “${firstMessage}”`;
+    } else if (exceptionDiagnosis) {
+      headline = `JavaScript reported “${shorten(exceptionDiagnosis.title, 88)}” — ${lowerInitial(exceptionDiagnosis.meaning.replace(/\.$/, ""))}`;
     } else if (navigations.length) {
-      const destination = String(navigations[0].title || "").replace(/^Navigate to\s+/, "");
-      headline = `After clicking ${subject}, the browser opened ${conciseUrl(destination, session.pageUrl)}`;
+      const destination = String(navigations[0].title || "").replace(/^(?:Navigate to|Frame navigated to)\s+/, "");
+      headline = `After ${interactionGerund(session)}, the browser opened ${conciseUrl(destination, session.pageUrl)}`;
     } else if (requests.length && importantChange?.text) {
-      headline = `After clicking ${subject}, the page requested ${requestDestination || "data"} and later showed “${importantChange.text}”`;
+      headline = `After ${interactionGerund(session)}, the page requested ${requestDestination || "data"} and later showed “${importantChange.text}”`;
     } else if (requests.length && mutations.length) {
-      headline = `After clicking ${subject}, the page requested ${requestDestination || "data"} and then changed`;
+      headline = `After ${interactionGerund(session)}, the page requested ${requestDestination || "data"} and then changed`;
     } else if (importantChange?.text) {
-      headline = `After clicking ${subject}, the page showed “${importantChange.text}”`;
+      headline = `After ${interactionGerund(session)}, the page showed “${importantChange.text}”`;
     } else if (mutations.length) {
-      headline = `After clicking ${subject}, the page changed`;
+      headline = `After ${interactionGerund(session)}, the page changed`;
     } else if (requests.length) {
-      headline = `After clicking ${subject}, the page requested ${requestDestination || "data"}`;
+      headline = `After ${interactionGerund(session)}, the page requested ${requestDestination || "data"}`;
     }
 
     const overviewParts = [];
@@ -1129,7 +1260,7 @@
       if (sourceIsReadable) {
         overviewParts.push(`${sourceName}() started this request${sourceLocation ? ` from ${sourceLocation}` : ""}.`);
       } else {
-        overviewParts.push(`This request followed clicking ${subject}.`);
+        overviewParts.push(`This request followed ${interactionGerund(session)}.`);
       }
       if (importantChange?.text) {
         overviewParts.push(`The trace later observed the page showing “${importantChange.text}”${/[.!?]$/.test(importantChange.text) ? "" : "."}`);
@@ -1154,7 +1285,7 @@
 
     const hasUnlinkedEvidence = timeline.some((event) => event.kind !== "interaction" && !event.primaryChain);
     const evidenceNote = hasUnlinkedEvidence
-      ? "Direct links are supported by browser evidence. Items marked “Observed after click” happened in the same short trace window, but the trace could not prove that the click caused them."
+      ? "Direct links are supported by browser evidence. Items marked “Observed after interaction” happened in the same short trace window, but the trace could not prove that the interaction caused them."
       : "The main steps are connected by direct browser evidence.";
 
     return {
@@ -1163,6 +1294,72 @@
       steps,
       evidenceNote
     };
+  }
+
+  function compareTraces(before, after) {
+    const left = migrateTrace(before);
+    const right = migrateTrace(after);
+    const countKinds = (trace) => (trace.timeline || []).reduce((counts, event) => {
+      counts[event.kind] = (counts[event.kind] || 0) + 1;
+      return counts;
+    }, {});
+    const leftCounts = countKinds(left);
+    const rightCounts = countKinds(right);
+    const kinds = [...new Set([...Object.keys(leftCounts), ...Object.keys(rightCounts)])].sort();
+    const eventChanges = kinds
+      .map((kind) => ({ kind, before: leftCounts[kind] || 0, after: rightCounts[kind] || 0 }))
+      .filter((item) => item.before !== item.after);
+    const requestKeys = (trace) => new Set((trace.timeline || [])
+      .filter((event) => event.kind === "request")
+      .map((event) => `${requestMethod(event)} ${conciseUrl(requestUrl(event), trace.pageUrl)}`));
+    const leftRequests = requestKeys(left);
+    const rightRequests = requestKeys(right);
+    const addedRequests = [...rightRequests].filter((item) => !leftRequests.has(item));
+    const removedRequests = [...leftRequests].filter((item) => !rightRequests.has(item));
+    const leftProblems = (left.timeline || []).filter((event) => ["exception", "network-failure"].includes(event.kind) || (event.kind === "response" && responseStatus(event) >= 400)).length;
+    const rightProblems = (right.timeline || []).filter((event) => ["exception", "network-failure"].includes(event.kind) || (event.kind === "response" && responseStatus(event) >= 400)).length;
+    const qualityBefore = Number(left.quality?.score) || 0;
+    const qualityAfter = Number(right.quality?.score) || 0;
+    const componentChange = left.framework?.owner === right.framework?.owner
+      ? null
+      : { before: left.framework?.owner || "Unknown", after: right.framework?.owner || "Unknown" };
+    const changed = eventChanges.length + addedRequests.length + removedRequests.length + (componentChange ? 1 : 0);
+    return {
+      headline: changed
+        ? `${changed} comparison signal${changed === 1 ? "" : "s"} changed between the traces`
+        : "No meaningful structural differences were found",
+      quality: { before: qualityBefore, after: qualityAfter, delta: qualityAfter - qualityBefore },
+      problems: { before: leftProblems, after: rightProblems, delta: rightProblems - leftProblems },
+      eventChanges,
+      addedRequests,
+      removedRequests,
+      componentChange
+    };
+  }
+
+  function buildAiInput(session) {
+    const { trace } = redactForExport(session);
+    const explanation = explain(trace);
+    const input = {
+      purpose: "Explain this browser interaction to a frontend developer. Separate proven links from observations and suggest at most three concrete checks.",
+      page: readableUrl(trace.pageUrl || "", trace.pageUrl || ""),
+      interaction: interactionGerund(trace, true),
+      deterministicExplanation: explanation,
+      framework: trace.framework ? {
+        library: trace.framework.library,
+        owner: trace.framework.owner,
+        context: trace.framework.context
+      } : null,
+      events: (trace.timeline || []).slice(0, 40).map((event) => ({
+        atMs: event.atMs,
+        kind: event.kind,
+        title: shorten(event.title, 160),
+        detail: shorten(event.detail, 180),
+        relation: event.primaryChain ? "direct-chain" : "observed"
+      })),
+      instruction: "Do not invent values, source code, causes, or fixes that are not supported by this input."
+    };
+    return JSON.stringify(input, null, 2);
   }
 
   function assessQuality(session) {
@@ -1187,6 +1384,9 @@
     const score = Math.round((passed / checks.length) * 100);
     const diagnostics = checks.filter((check) => !check.passed).map((check) => check.label);
     if (session.timerCapture?.fallbackReason) diagnostics.push("Timer tracing used the compatibility fallback");
+    if (session.timerCapture?.relatedTargetCapture?.available === false) {
+      diagnostics.push("Deeper Worker and cross-origin frame tracing requires Chrome 125 or newer");
+    }
     for (const error of session.sourceMaps?.errors || []) diagnostics.push(`Source map: ${error.message || error}`);
 
     return {
@@ -1203,9 +1403,11 @@
     asyncEventFrames,
     assessQuality,
     buildTimeline,
+    buildAiInput,
     compactFrame,
     confidenceFor,
     confidenceLabel,
+    compareTraces,
     eventCategory,
     explain,
     filterTimeline,

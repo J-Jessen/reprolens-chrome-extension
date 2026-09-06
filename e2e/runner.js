@@ -166,7 +166,29 @@ async function withTimeout(promise, timeoutMs, label) {
   }
 }
 
-async function runTrace({ page, worker, controller, baseUrl, pathname, selector, traceWindowMs = 1200 }) {
+async function performInteraction(page, selector, action) {
+  if (action === "keyboard") {
+    await page.focus(selector);
+    await page.keyboard.press("Enter");
+    return;
+  }
+  if (action === "change") {
+    await page.$eval(selector, (element) => {
+      element.value = "privacy-safe test value";
+      element.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    return;
+  }
+  if (action === "drop") {
+    await page.$eval(selector, (element) => {
+      element.dispatchEvent(new DragEvent("drop", { bubbles: true, cancelable: true }));
+    });
+    return;
+  }
+  await page.click(selector);
+}
+
+async function runTrace({ page, worker, controller, baseUrl, pathname, selector, traceWindowMs = 1200, interactionMode = "auto", action = "click" }) {
   await page.goto(`${baseUrl}${pathname}`, { waitUntil: "domcontentloaded" });
   await page.waitForSelector(selector);
   const tabId = await worker.evaluate(async (url) => {
@@ -183,11 +205,17 @@ async function runTrace({ page, worker, controller, baseUrl, pathname, selector,
   await page.click(selector);
   await page.waitForFunction((value) => document.querySelector(value), {}, selector);
 
-  await page.evaluate((value) => {
-    setTimeout(() => document.querySelector(value)?.click(), 2000);
-  }, selector);
-  const start = await extensionMessage(controller, { type: "START_TRACE", tabId, traceWindowMs });
+  const start = await extensionMessage(controller, { type: "START_TRACE", tabId, traceWindowMs, interactionMode });
   if (!start?.ok) throw new Error(start?.error || "Trace could not start");
+  const armedDeadline = Date.now() + 7000;
+  while (true) {
+    const current = await extensionMessage(controller, { type: "GET_STATE", tabId });
+    if (current.status === "armed") break;
+    if (current.status === "error") throw new Error(current.error);
+    if (Date.now() >= armedDeadline) throw new Error(`Timed out waiting for armed trace (${current.status})`);
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  await performInteraction(page, selector, action);
   const interactionDeadline = Date.now() + 7000;
   while (true) {
     const current = await extensionMessage(controller, { type: "GET_STATE", tabId });
@@ -301,6 +329,11 @@ async function main() {
       ["navigation", "/demo-corpus/navigation.html", "#navigate"],
       ["minified-map", "/demo-corpus/minified-map.html", "#mapped-action", 3500],
       ["minified-no-map", "/demo-corpus/minified-no-map.html", "#unmapped-action"],
+      ["keyboard-interaction", "/demo-corpus/interactions.html?case=keyboard", "#keyboard-action", undefined, "keyboard", "keyboard"],
+      ["change-interaction", "/demo-corpus/interactions.html?case=change", "#change-action", undefined, "change", "change"],
+      ["submit-interaction", "/demo-corpus/interactions.html?case=submit", "#submit-action", undefined, "submit", "click"],
+      ["drop-interaction", "/demo-corpus/interactions.html?case=drop", "#drop-action", undefined, "drop", "drop"],
+      ["cross-origin-iframe", "/demo-corpus/iframe.html", "#open-frame"],
       ...[
         "dom-text", "dom-attribute", "dom-add", "dom-remove", "timer-zero", "timer-delayed", "timer-interval", "animation-frame", "promise-chain", "queue-microtask", "worker-message",
         "fetch-get", "fetch-post", "fetch-404", "parallel-fetch", "websocket-message", "console-warning", "sync-error",
@@ -319,7 +352,7 @@ async function main() {
     }
     const results = [];
     let lastTrace = null;
-    for (const [scenarioId, pathname, selector, traceWindowMs] of selectedCases) {
+    for (const [scenarioId, pathname, selector, traceWindowMs, interactionMode, action] of selectedCases) {
       process.stdout.write(`START ${scenarioId}\n`);
       const trace = await withTimeout(runTrace({
         page,
@@ -328,7 +361,9 @@ async function main() {
         baseUrl: `http://127.0.0.1:${port}`,
         pathname,
         selector,
-        traceWindowMs
+        traceWindowMs,
+        interactionMode,
+        action
       }), CASE_TIMEOUT_MS, scenarioId);
       lastTrace = trace;
       const result = CorpusEvaluator.evaluateTrace(trace, scenarioId);
@@ -371,6 +406,18 @@ async function main() {
     if (!(history.historyBytes > 0) || history.historyBytes > history.historyByteLimit) {
       throw new Error("Local history size budget was not enforced");
     }
+    const renameTarget = history.traces[0];
+    const renameResponse = await extensionMessage(controller, {
+      type: "RENAME_HISTORY_TRACE",
+      historyId: renameTarget.historyId,
+      name: "Regression comparison baseline"
+    });
+    if (!renameResponse?.ok) throw new Error(renameResponse?.error || "Trace rename failed");
+    const renamedHistory = await extensionMessage(controller, { type: "GET_HISTORY" });
+    if (renamedHistory.traces.find((trace) => trace.historyId === renameTarget.historyId)?.displayName !== "Regression comparison baseline") {
+      throw new Error("Renamed trace was not retained in local history");
+    }
+    process.stdout.write("History rename audit passed\n");
     await controller.setViewport({ width: 360, height: 800 });
     await controller.evaluate((trace) => render(trace, true), lastTrace);
     const explanation = await controller.$eval(".explanation", (node) => ({
@@ -383,6 +430,59 @@ async function main() {
     }
     const technicalOpenByDefault = await controller.$eval("#technical-details", (node) => node.open);
     if (technicalOpenByDefault) throw new Error("Technical trace must use progressive disclosure by default");
+    const aiInput = await controller.$eval("#ai-input-code", (node) => node.textContent);
+    if (!aiInput || /private worker|privacy-safe test value/i.test(aiInput)) {
+      throw new Error("Optional AI input was missing or exposed a private fixture value");
+    }
+    const aiControlText = await controller.$eval("#ai-details", (node) => node.innerText);
+    if (!/on-device|local model/i.test(aiControlText)) throw new Error("Optional AI controls did not clearly describe local processing");
+    process.stdout.write("On-device AI input audit passed\n");
+
+    await controller.$eval(".history", (node) => { node.open = true; });
+    await controller.evaluate(() => refreshHistory());
+    const historyUiCount = await controller.$$eval(".history-item", (items) => items.length);
+    if (historyUiCount >= 2) {
+      await controller.evaluate(() => {
+        const checkboxes = [...document.querySelectorAll(".history-item .history-compare")].slice(0, 2);
+        for (const checkbox of checkboxes) checkbox.click();
+        document.getElementById("compare-traces").click();
+      });
+      const comparisonText = await controller.$eval("#comparison", (node) => ({ hidden: node.classList.contains("hidden"), text: node.innerText }));
+      if (comparisonText.hidden || !/Trace quality|Detected problems/.test(comparisonText.text)) {
+        throw new Error("Trace comparison did not render its core metrics");
+      }
+    } else if (selectedCases.length > 1) {
+      throw new Error("History UI did not render enough traces for comparison");
+    }
+    await controller.$eval("#history-query", (input) => {
+      input.value = "no trace can match this phrase";
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    const filteredEmpty = await controller.$eval("#history-list", (node) => node.textContent.includes("No traces match"));
+    if (!filteredEmpty) throw new Error("History search did not filter saved traces");
+    await controller.$eval("#history-query", (input) => {
+      input.value = "";
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    process.stdout.write(`History search${historyUiCount >= 2 ? " and comparison" : " controls"} audit passed\n`);
+
+    await controller.evaluate(() => {
+      document.getElementById("rating-5").checked = true;
+      document.getElementById("clarity-4").checked = true;
+      document.getElementById("most-useful").value = "explanation";
+      document.getElementById("feedback-comment").value = "Contact tester@example.com with Bearer private-beta-secret";
+      document.getElementById("feedback-form").requestSubmit();
+    });
+    await controller.waitForFunction(() => document.getElementById("feedback-status").textContent.includes("saved locally"));
+    const feedbackResponse = await extensionMessage(controller, { type: "GET_FEEDBACK" });
+    const savedFeedback = feedbackResponse.feedback.find((item) => item.traceId === lastTrace.traceId);
+    if (!savedFeedback || savedFeedback.rating !== 5 || savedFeedback.clarity !== 4) {
+      throw new Error("Local beta feedback was not saved with its ratings");
+    }
+    if (/tester@example\.com|private-beta-secret/.test(savedFeedback.comment)) {
+      throw new Error("Local beta feedback did not redact common credentials before storage");
+    }
+    process.stdout.write("Local feedback privacy audit passed\n");
     const hasHorizontalOverflow = await controller.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
     if (hasHorizontalOverflow) throw new Error("Panel overflows horizontally at a narrow side-panel width");
     await controller.evaluate(() => { document.documentElement.style.fontSize = "200%"; });

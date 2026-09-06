@@ -6,6 +6,8 @@ This plan turns Behaviour Tracer into a small, controlled product test. The exte
 
 Determine whether Behaviour Tracer reliably saves developers time when they need to understand what one browser interaction caused.
 
+The expanded `0.9.0` beta also compares feature-level usefulness. Testers rate the deterministic explanation, technical evidence, React context, Worker/frame context, history comparison, optional local AI, and feedback flow separately so the next roadmap is based on observed value rather than feature count.
+
 The beta is successful when all of these are true:
 
 - at least 6 testers are recruited and at least 4 complete the test;
@@ -16,7 +18,9 @@ The beta is successful when all of these are true:
 - median time to explain the observed behaviour is under 30 seconds after capture completes;
 - at least 70% of completing testers rate the product 4 or 5 out of 5 for usefulness;
 - no unredacted credentials, customer data, or other privacy incidents are shared;
-- every blocking defect is either fixed or explicitly documented before a wider beta.
+- every blocking defect is either fixed or explicitly documented before a wider beta;
+- every tested feature has a recorded usefulness rating or an explicit “not available/tested” result;
+- the final decision names the top two features to invest in and at least one area to simplify, defer, or remove.
 
 ## Tester profile
 

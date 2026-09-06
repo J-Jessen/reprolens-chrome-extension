@@ -2,19 +2,23 @@
 
 Status: **not submitted**. The extension is currently distributed as a private beta archive. This file is the source of truth for a future Chrome Web Store submission.
 
-Last updated: 6 September 2026 · Current extension version: `0.8.0`
+Last updated: 6 September 2026 · Current extension version: `0.9.0`
 
 ## Listing
 
 - Product name: `Behaviour Tracer`
 - Category: `Developer Tools`
 - Language: `English`
-- Summary: `Trace one interaction and get a diagnostic explanation of failed requests, page code, and visible results.`
+- Summary: `Trace one page interaction and get a diagnostic explanation of requests, errors, code, and visible results.`
 - Single purpose: Help a developer understand the observable browser behaviour caused by one user-started interaction.
 
 ### Detailed description
 
-Behaviour Tracer lets a developer select an element on a website, perform one click, and see a plain-language explanation of what followed. For failed requests, it identifies the request method and destination, explains the HTTP or browser error, suggests the first relevant check, and connects the failure to the originating function and visible page result when browser evidence supports those links. Complete technical timing and source details remain available when needed.
+Behaviour Tracer lets a developer select an element on a website, perform one click/tap, keyboard action, input change, form submission, or drop, and see a plain-language explanation of what followed. For failures, it identifies the request method and destination or JavaScript error, explains the HTTP, browser-network, CORS, cancellation, or runtime problem, suggests the first relevant check, and connects the failure to source code and a visible page result when browser evidence supports those links. Complete technical timing and source details remain available when needed.
+
+React traces can show the owning component path plus capped prop names/types and state shape without capturing values. Supported Chrome versions can also attach related Worker and cross-origin iframe contexts to observe request/error/handler metadata without reading messages or frame content. Local history supports naming, search, quality/problem filters, and comparison of two traces.
+
+An optional second opinion uses Chrome's on-device language model on supported Chrome 148+ desktop devices. The user can review the complete redacted input first. There is no cloud AI fallback. Private-beta usefulness and clarity feedback is stored locally, redacted before storage, and downloaded only on request.
 
 Tracing begins only after an explicit action in the extension side panel. Processing, source-map resolution, history, and export redaction happen locally in the browser. The extension has no backend, analytics, account system, advertising, or automatic upload.
 
@@ -22,19 +26,19 @@ Chrome displays its standard debugging banner during the short trace because dee
 
 ## Permission justifications
 
-- `debugger`: Observes call frames, asynchronous events, request metadata, runtime errors, and navigation during a short user-started trace. It detaches automatically.
+- `debugger`: Observes call frames, asynchronous events, request metadata, runtime errors, navigation, and supported related Worker/frame contexts during a short user-started trace. It detaches automatically.
 - `scripting`: Injects the element picker and its static stylesheet after the user grants access to the active website.
 - `sidePanel`: Hosts the extension controls and trace results in Chrome's side panel.
-- `storage`: Stores user preferences, a bounded local history, and a safe public snapshot of the current tab's trace state.
+- `storage`: Stores user preferences, a bounded local history, optional local beta feedback, and a safe public snapshot of the current tab's trace state.
 - `tabs`: Reads the active tab ID and URL so the extension can request access to exactly that website and associate a trace with the correct tab.
-- Optional `http://*/*` and `https://*/*`: Allows Chrome to offer per-website access. The extension requests only the active page's exact origin after the user chooses **Select element** or **Record one click**; it has no required host access and no always-on content script.
+- Optional `http://*/*` and `https://*/*`: Allows Chrome to offer per-website access. The extension requests only the active page's exact origin after the user chooses **Select element** or **Record one interaction**; it has no required host access and no always-on content script.
 
 ## Data-use disclosure
 
 The Web Store privacy questionnaire must disclose local handling of:
 
 - website content: selected-element text and capped HTML plus DOM mutation summaries;
-- user activity: the one interaction the user explicitly asks the extension to trace;
+- user activity: the one interaction type the user explicitly asks the extension to trace, excluding typed characters, input values, submitted values, and dropped data;
 - web history: page, navigation, request, WebSocket, and source-map URLs observed during that trace;
 - diagnostics: console warnings, runtime errors, source locations, and trace-quality diagnostics.
 
@@ -45,12 +49,13 @@ None of this data is sold, used for advertising, used for credit decisions, or t
 1. Install the submitted package in desktop Chrome 118 or newer.
 2. Open a normal HTTP or HTTPS test page and click the extension action to open the side panel.
 3. Choose **Select element**, approve access to that website, and click a page element.
-4. Choose **Record one click**, then click the selected element again.
+4. Leave **Detect automatically** selected or choose a specific interaction, choose **Record one interaction**, then perform that interaction again.
 5. Expect Chrome's debugging banner for approximately 3.5 seconds.
 6. Confirm that **What happened** gives a step-by-step explanation while **Technical trace** is closed by default.
 7. Open **Technical trace** and confirm that complete timings, source locations, filters, and evidence labels remain available.
 8. Confirm that **Review safe export** opens a redacted preview.
 9. Confirm under extension site settings that access can be revoked per website.
+10. Optionally review the exact AI input and try the local explanation on a supported Chrome 148+ device; the normal explanation must remain available without it.
 
 No account, payment, external service, or special hardware is required.
 
@@ -80,5 +85,6 @@ Do not submit until each blocker is complete.
 
 ## Version history
 
+- `0.9.0` · 6 September 2026 — Added five interaction types, expanded error diagnoses, privacy-safe React shape, deeper Worker/frame metadata, searchable/comparable history, optional on-device AI, local beta feedback, and a 31-scenario browser corpus.
 - `0.8.0` · 6 September 2026 — Added diagnostic failed-request explanations, targeted first checks, progressive technical disclosure, explicit uncertainty wording, and narrow-panel usability verification.
 - `0.7.1` · 6 September 2026 — Added Modern Web Guidance alignment, accessibility checks, safe DOM rendering, and Manifest V3 session recovery.

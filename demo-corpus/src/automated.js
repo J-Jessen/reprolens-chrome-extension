@@ -52,7 +52,12 @@ const actions = {
     });
   },
   "worker-message": function runWorker() {
-    const source = 'self.onmessage = () => self.postMessage("private worker result")';
+    const workerRequestUrl = `${location.origin}/api/ok?case=worker-internal`;
+    const source = `self.onmessage = () => setTimeout(async () => {
+      console.warn("Expected worker warning");
+      await fetch(${JSON.stringify(workerRequestUrl)});
+      self.postMessage("private worker result");
+    }, 100)`;
     const worker = new Worker(URL.createObjectURL(new Blob([source], { type: "text/javascript" })));
     worker.addEventListener("message", () => {
       status.textContent = "Worker result received";

@@ -17,7 +17,8 @@ jobs:
       matrix:
         corpus:
           - react-timer,native-success,fetch-failure,navigation,minified-map
-          - minified-no-map,dom-text,dom-attribute,dom-add,dom-remove
+          - minified-no-map,keyboard-interaction,change-interaction,submit-interaction,drop-interaction,cross-origin-iframe
+          - dom-text,dom-attribute,dom-add,dom-remove
           - timer-zero,timer-delayed,timer-interval,animation-frame,promise-chain,queue-microtask,worker-message
           - fetch-get,fetch-post,fetch-404
           - parallel-fetch,websocket-message,console-warning,sync-error,hash-navigation,history-replace

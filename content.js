@@ -12,6 +12,8 @@
   let observer = null;
   let badgeTimer = null;
   let captureMs = 3000;
+  let interactionMode = "auto";
+  const INTERACTION_EVENTS = ["click", "keydown", "change", "submit", "drop"];
 
   function cssEscape(value) {
     if (window.CSS?.escape) return window.CSS.escape(value);
@@ -194,17 +196,49 @@
     });
   }
 
+  function interactionTarget(event) {
+    if (event.type === "submit" && event.submitter instanceof Element) return event.submitter;
+    return event.target instanceof Element ? event.target : event.target?.parentElement;
+  }
+
+  function selectedInteraction(event, target) {
+    if (!selected || !target) return false;
+    if (selected === target || selected.contains(target) || target.contains(selected)) return true;
+    return event.type === "submit" && event.target instanceof HTMLFormElement && event.target.contains(selected);
+  }
+
+  function interactionModeMatches(event) {
+    if (interactionMode === "auto") return true;
+    const modes = {
+      click: "click",
+      keyboard: "keydown",
+      change: "change",
+      submit: "submit",
+      drop: "drop"
+    };
+    return modes[interactionMode] === event.type;
+  }
+
+  function interactionMetadata(event) {
+    if (event.type !== "keydown") return null;
+    const namedKeys = new Set(["Enter", "Escape", "Tab", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Home", "End", "PageUp", "PageDown", "Backspace", "Delete", " "]);
+    return { key: namedKeys.has(event.key) ? (event.key === " " ? "Space" : event.key) : "Character key" };
+  }
+
   function __behaviourTracerOnInteraction(event) {
-    if (!armed || isOwnElement(event.target)) return;
+    const target = interactionTarget(event);
+    if (!armed || isOwnElement(target) || !interactionModeMatches(event) || !selectedInteraction(event, target)) return;
+    if (event.type === "keydown" && ["Shift", "Control", "Alt", "Meta", "CapsLock"].includes(event.key)) return;
     armed = false;
-    const element = describe(event.target);
+    const element = describe(target);
     startMutationCapture();
     showBadge("Recording behaviour…");
     void sendRuntimeMessage({
       type: "INTERACTION_START",
       at: Date.now(),
       eventType: event.type,
-      element
+      element,
+      metadata: interactionMetadata(event)
     });
 
     setTimeout(function __behaviourTracerFinishCapture() {
@@ -220,7 +254,9 @@
 
   document.addEventListener("pointermove", onPointerMove, true);
   document.addEventListener("click", __behaviourTracerOnPick, true);
-  document.addEventListener("click", __behaviourTracerOnInteraction, true);
+  for (const eventName of INTERACTION_EVENTS) {
+    document.addEventListener(eventName, __behaviourTracerOnInteraction, true);
+  }
 
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (message.type === "START_PICKER") {
@@ -233,8 +269,11 @@
       picking = false;
       armed = true;
       captureMs = Math.max(300, Number(message.captureMs) || 3000);
+      interactionMode = ["auto", "click", "keyboard", "change", "submit", "drop"].includes(message.interactionMode)
+        ? message.interactionMode
+        : "auto";
       hideOverlay();
-      showBadge("Recording armed — perform one click");
+      showBadge(`Recording armed — perform ${interactionMode === "auto" ? "the selected interaction" : `a ${interactionMode} interaction`}`);
       sendResponse({ ok: true });
     }
     return false;

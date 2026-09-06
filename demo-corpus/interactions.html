@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Behaviour Tracer · interaction scenarios</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main>
+      <section class="card">
+        <div class="eyebrow">INTERACTION CORPUS</div>
+        <h1 id="title">Loading interaction…</h1>
+        <p id="status" class="status">Ready.</p>
+        <button id="keyboard-action" type="button" hidden>Press Enter here</button>
+        <label id="change-label" for="change-action" hidden>Change this field</label>
+        <input id="change-action" type="text" autocomplete="off" hidden>
+        <form id="submit-form" hidden>
+          <button id="submit-action" type="submit">Submit test form</button>
+        </form>
+        <div id="drop-action" class="drop-target" tabindex="0" hidden>Drop here</div>
+      </section>
+    </main>
+    <script src="src/interactions.js"></script>
+  </body>
+</html>

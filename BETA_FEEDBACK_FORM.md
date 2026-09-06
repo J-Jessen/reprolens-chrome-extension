@@ -19,6 +19,16 @@ Complete this once after the test guide and return it through the private channe
 - Overall usefulness, 1–5:
 - Trust in certainty labels, 1–5:
 
+Rate each area from 1 (not useful) to 5 (very useful), or write “not available/tested”:
+
+- Deterministic plain-language diagnosis:
+- Technical timeline and source links:
+- React component shape:
+- Worker/iframe context:
+- Trace history, search, and comparison:
+- Optional on-device AI explanation:
+- In-product feedback flow:
+
 ## Experience
 
 - Most valuable part:
@@ -27,6 +37,8 @@ Complete this once after the test guide and return it through the private channe
 - Missing or misleading evidence:
 - Would you use Behaviour Tracer again? For which debugging task?
 - One improvement you would prioritize:
+- Which feature should receive the most development effort next, and why?
+- Which feature could be removed with the least impact, and why?
 
 ## Privacy confirmation
 
