@@ -473,7 +473,9 @@ async function main() {
       document.getElementById("feedback-comment").value = "Contact tester@example.com with Bearer private-beta-secret";
       document.getElementById("feedback-form").requestSubmit();
     });
-    await controller.waitForFunction(() => document.getElementById("feedback-status").textContent.includes("saved locally"));
+    await controller.waitForFunction(() => document.getElementById("feedback-status").textContent.trim().length > 0, { timeout: 5000 });
+    const feedbackStatusText = await controller.$eval("#feedback-status", (node) => node.textContent.trim());
+    if (!feedbackStatusText.includes("saved locally")) throw new Error(`Feedback form failed: ${feedbackStatusText}`);
     const feedbackResponse = await extensionMessage(controller, { type: "GET_FEEDBACK" });
     const savedFeedback = feedbackResponse.feedback.find((item) => item.traceId === lastTrace.traceId);
     if (!savedFeedback || savedFeedback.rating !== 5 || savedFeedback.clarity !== 4) {

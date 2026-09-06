@@ -49,7 +49,7 @@ Qualify testers who answer yes to questions 3–6 and fit at least one role in [
 
 > Tak — du passer godt til testen. Jeg sender dig nu beta-ZIP-filen gennem vores private kanal. Pak den ud, og begynd med `START_HER.md`.
 >
-> Brug kun den vedlagte beta-version v0.9.0-beta.1. Repositoryet og udviklingsbranchen skal ikke bruges.
+> Brug kun den vedlagte beta-version v0.9.0-beta.2. Repositoryet og udviklingsbranchen skal ikke bruges.
 >
 > Vigtigt: test kun på lokale eller staging-systemer, du har tilladelse til at inspicere. Del aldrig rå credentials, cookies, tokens, kundedata eller en eksport, du ikke selv har gennemgået.
 

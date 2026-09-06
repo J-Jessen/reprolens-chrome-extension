@@ -356,16 +356,17 @@ dialog::backdrop { background: rgba(0, 0, 0, .72); }
 .compare-actions button { flex: 1 1 10rem; text-align: center; }
 .comparison { margin-block-start: .75rem; padding: .75rem; border: 1px solid var(--line); border-radius: .625rem; background: var(--selection-bg); }
 .comparison h2 { font-size: .875rem; }
-.comparison > p { margin: .375rem 0; color: var(--summary-text); font-weight: 650; }
+.comparison > p { margin: .375rem 0; color: var(--summary-text); font-weight: 650; overflow-wrap: anywhere; }
 .comparison ul { margin: .625rem 0 0; padding-inline-start: 1.125rem; color: var(--muted); font-size: .75rem; }
+.comparison li { min-inline-size: 0; overflow-wrap: anywhere; }
 
 .feedback { margin-block-start: 1.125rem; padding: 1rem; }
 .feedback h2 { margin-block: .25rem .75rem; font-size: 1rem; }
 .feedback form { display: grid; gap: .625rem; }
 .feedback fieldset { margin: 0; padding: 0; border: 0; }
 .rating-scale { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .375rem; margin-block-start: .375rem; }
-.rating-scale label { display: flex; min-block-size: 2.5rem; align-items: center; justify-content: center; gap: .25rem; border: 1px solid var(--control-line); border-radius: .5rem; background: var(--button-bg); cursor: pointer; }
-.rating-scale input { accent-color: var(--purple); }
+.rating-scale label { display: flex; min-inline-size: 0; min-block-size: 2.5rem; flex-direction: column; align-items: center; justify-content: center; gap: 0; border: 1px solid var(--control-line); border-radius: .5rem; background: var(--button-bg); cursor: pointer; }
+.rating-scale input { margin: 0; accent-color: var(--purple); }
 .feedback form > button { text-align: center; }
 .feedback-actions { margin-block-start: .625rem; }
 .feedback-actions button { flex: 1 1 8rem; text-align: center; }
@@ -374,7 +375,7 @@ dialog::backdrop { background: rgba(0, 0, 0, .72); }
 .dialog-actions { display: flex; justify-content: flex-end; gap: .5rem; }
 .dialog-actions button { text-align: center; }
 
-@media (max-width: 22rem) {
+@media (max-width: 28rem) {
   main { padding-inline: .75rem; }
   .interaction-option, .selection, .status, .permission-note { margin-inline-start: 0; }
   .framework-context dl, .comparison dl { grid-template-columns: 1fr; }

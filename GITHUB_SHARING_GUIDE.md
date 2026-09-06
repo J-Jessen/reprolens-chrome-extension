@@ -4,8 +4,8 @@ The repository is private and owned by the personal account `J-Jessen`. The sele
 
 ## Selected Round 1 method
 
-1. Open the private [v0.9.0-beta.1 release](https://github.com/J-Jessen/behavior-trace-chrome-extension/releases/tag/v0.9.0-beta.1).
-2. Download `behaviour-tracer-v0.9.0-beta.1.zip` from **Assets**. Do not download GitHub's automatic source archive.
+1. Open the private [v0.9.0-beta.2 release](https://github.com/J-Jessen/behavior-trace-chrome-extension/releases/tag/v0.9.0-beta.2).
+2. Download `behaviour-tracer-v0.9.0-beta.2.zip` from **Assets**. Do not download GitHub's automatic source archive.
 3. Send the ZIP through an access-controlled channel already associated with the tester, such as a restricted cloud share, direct email, or encrypted messenger.
 4. Send the acceptance message from `TESTER_RECRUITMENT.md`.
 5. Ask the tester to return completed bug and feedback forms through the same channel.

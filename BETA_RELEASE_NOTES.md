@@ -1,10 +1,10 @@
-# Behaviour Tracer v0.9.0-beta.1
+# Behaviour Tracer v0.9.0-beta.2
 
 This private beta tests which parts of a more complete, local-first behaviour trace are most useful on real local and staging applications.
 
 ## Install and test
 
-1. The owner downloads `behaviour-tracer-v0.9.0-beta.1.zip` from **Assets** below. Do not use GitHub's source-code archives.
+1. The owner downloads `behaviour-tracer-v0.9.0-beta.2.zip` from **Assets** below. Do not use GitHub's source-code archives.
 2. The owner sends the ZIP directly to each selected tester through a private, access-controlled channel.
 3. The tester begins with `START_HER.md` inside the ZIP and returns completed forms through the same private channel.
 
@@ -21,6 +21,7 @@ Testers do not need or receive GitHub repository access.
 - Adds local per-trace usefulness and clarity feedback with redaction, download, and clear controls.
 - Retains the progressive layout, explicit evidence labels, complete technical trace, safe exports, per-website access, and local-only processing.
 - Expands automated browser validation from 26 to 31 scenarios and verifies the new history, feedback, accessibility, narrow-panel, and 200% text flows.
+- Fixes narrow-panel wrapping for ratings and long comparison values at 200% text size in headful Linux Chrome.
 
 Chrome asks for access to each website when it is first selected. Approve only a local or staging website you are authorized to inspect.
 
