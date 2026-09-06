@@ -10,7 +10,7 @@ const copyMarkdownButton = document.getElementById("copy-markdown");
 const exportDialog = document.getElementById("export-dialog");
 const closePreviewButton = document.getElementById("close-preview");
 const downloadButton = document.getElementById("download");
-const exportPreview = document.getElementById("export-preview");
+const exportPreview = document.getElementById("export-preview-code");
 const redactionReport = document.getElementById("redaction-report");
 const historyEnabled = document.getElementById("history-enabled");
 const historyList = document.getElementById("history-list");
@@ -37,12 +37,16 @@ function setStatus(text, recording) {
   status.classList.toggle("recording", Boolean(recording));
 }
 
-function escapeHtml(value) {
-  return String(value ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;");
+function element(tagName, options = {}) {
+  const node = document.createElement(tagName);
+  if (options.className) node.className = options.className;
+  if (options.text !== undefined) node.textContent = String(options.text);
+  if (options.type) node.type = options.type;
+  return node;
+}
+
+function errorMessage(error, fallback) {
+  return error?.message || String(error || fallback);
 }
 
 function safeExport() {
@@ -67,17 +71,28 @@ function statusText(state) {
 function renderTimeline(events) {
   const visible = TraceCore.filterTimeline(events, activeFilter);
   const visibleIds = new Set(visible.map((event) => event.id));
-  timeline.innerHTML = visible.map((event) => `
-    <li class="event ${escapeHtml(event.kind)} ${event.primaryChain ? "primary-chain" : ""} ${event.parentId && visibleIds.has(event.parentId) ? "child-event" : ""}">
-      <div class="time">+${escapeHtml(event.atMs)}ms</div>
-      <div class="dot"></div>
-      <div class="event-body">
-        <p class="event-title">${escapeHtml(event.title)}</p>
-        ${event.detail ? `<p class="event-detail">${escapeHtml(event.detail)}</p>` : ""}
-        <span class="badge ${escapeHtml(event.confidenceLabel)}">${escapeHtml(event.confidenceLabel)} · ${Math.round(event.confidence * 100)}%</span>
-      </div>
-    </li>
-  `).join("");
+  const fragment = document.createDocumentFragment();
+  for (const event of visible) {
+    const item = element("li", { className: "event" });
+    const safeKind = String(event.kind || "event").replace(/[^a-z0-9_-]/gi, "-");
+    const safeConfidence = String(event.confidenceLabel || "possible").replace(/[^a-z0-9_-]/gi, "-");
+    item.classList.add(safeKind);
+    if (event.primaryChain) item.classList.add("primary-chain");
+    if (event.parentId && visibleIds.has(event.parentId)) item.classList.add("child-event");
+    item.append(element("div", { className: "time", text: `+${event.atMs}ms` }));
+    item.append(element("div", { className: "dot" }));
+    const body = element("div", { className: "event-body" });
+    body.append(element("p", { className: "event-title", text: event.title }));
+    if (event.detail) body.append(element("p", { className: "event-detail", text: event.detail }));
+    const confidence = Number.isFinite(event.confidence) ? event.confidence : 0;
+    body.append(element("span", {
+      className: `badge ${safeConfidence}`,
+      text: `${event.confidenceLabel || "possible"} · ${Math.round(confidence * 100)}%`
+    }));
+    item.append(body);
+    fragment.append(item);
+  }
+  timeline.replaceChildren(fragment);
 }
 
 function render(state, force = false) {
@@ -95,39 +110,52 @@ function render(state, force = false) {
   const events = state.timeline?.length ? state.timeline : [];
   if (state.status !== "complete" || !events.length) {
     result.classList.add("hidden");
-    empty.style.display = "grid";
+    empty.hidden = false;
     return;
   }
 
-  empty.style.display = "none";
+  empty.hidden = true;
   result.classList.remove("hidden");
   summary.textContent = state.summary;
   const quality = state.quality || { score: 0, label: "limited", observedEvents: 0, highConfidenceEvents: 0, diagnostics: [] };
-  qualityLabel.textContent = `${quality.label[0].toUpperCase()}${quality.label.slice(1)} coverage`;
+  const qualityName = String(quality.label || "limited");
+  const diagnostics = Array.isArray(quality.diagnostics) ? quality.diagnostics : [];
+  qualityLabel.textContent = `${qualityName[0].toUpperCase()}${qualityName.slice(1)} coverage`;
   qualityScore.textContent = `${quality.score}%`;
-  qualityFill.style.width = `${quality.score}%`;
+  const boundedScore = Math.max(0, Math.min(100, Number(quality.score) || 0));
+  qualityFill.style.setProperty("--quality-score", `${boundedScore}%`);
+  qualityFill.parentElement.setAttribute("aria-valuenow", String(boundedScore));
   qualityMetrics.textContent = `${quality.observedEvents} observed events · ${quality.highConfidenceEvents} with strong or direct evidence`;
-  qualityDiagnostics.innerHTML = quality.diagnostics.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
-  qualityDiagnostics.classList.toggle("hidden", !quality.diagnostics.length);
+  qualityDiagnostics.replaceChildren(...diagnostics.map((item) => element("li", { text: item })));
+  qualityDiagnostics.classList.toggle("hidden", !diagnostics.length);
   renderTimeline(events);
 }
 
 async function refreshHistory() {
   const history = await chrome.runtime.sendMessage({ type: "GET_HISTORY" });
+  if (!history || history.ok === false) throw new Error(history?.error || "Could not load local history.");
   historyEnabled.checked = history.historyEnabled;
   clearHistoryButton.disabled = !history.traces.length;
   const usedMb = ((history.historyBytes || 0) / 1_000_000).toFixed(2);
   const limitMb = ((history.historyByteLimit || 0) / 1_000_000).toFixed(0);
   historyUsage.textContent = `${history.traces.length} of 25 traces · ${usedMb} MB of ${limitMb} MB local budget`;
-  historyList.innerHTML = history.traces.length ? history.traces.map((trace) => `
-    <div class="history-item" data-history-id="${escapeHtml(trace.historyId)}">
-      <button class="history-open">
-        <strong>${escapeHtml(trace.selectedElement?.text || trace.selectedElement?.selector || "Untitled trace")}</strong>
-        <span>${escapeHtml(new Date(trace.savedAt).toLocaleString())} · ${escapeHtml(trace.quality?.score ?? 0)}%</span>
-      </button>
-      <button class="history-delete quiet" aria-label="Delete trace">×</button>
-    </div>
-  `).join("") : '<p class="history-empty">No saved traces yet.</p>';
+  if (!history.traces.length) {
+    historyList.replaceChildren(element("li", { className: "history-empty", text: "No saved traces yet." }));
+    return;
+  }
+  const items = history.traces.map((trace) => {
+    const title = trace.selectedElement?.text || trace.selectedElement?.selector || "Untitled trace";
+    const item = element("li", { className: "history-item" });
+    item.dataset.historyId = trace.historyId;
+    const open = element("button", { className: "history-open", type: "button" });
+    open.append(element("strong", { text: title }));
+    open.append(element("span", { text: `${new Date(trace.savedAt).toLocaleString()} · ${trace.quality?.score ?? 0}%` }));
+    const remove = element("button", { className: "history-delete quiet", text: "×", type: "button" });
+    remove.setAttribute("aria-label", `Delete trace: ${title}`);
+    item.append(open, remove);
+    return item;
+  });
+  historyList.replaceChildren(...items);
 }
 
 filters.addEventListener("click", (event) => {
@@ -156,6 +184,10 @@ async function ensureSiteAccess() {
   if (!activeTabId || !activeOriginPattern) throw new Error("Open the extension again on the website you want to inspect.");
   const granted = await chrome.permissions.request({ origins: [activeOriginPattern] });
   if (!granted) throw new Error("Site access was not granted. Select the element again when you are ready.");
+  await chrome.scripting.insertCSS({
+    target: { tabId: activeTabId },
+    files: ["content.css"]
+  });
   await chrome.scripting.executeScript({
     target: { tabId: activeTabId },
     files: ["content.js"]
@@ -166,6 +198,7 @@ async function refresh() {
   try {
     await getActiveTab();
     const state = await chrome.runtime.sendMessage({ type: "GET_STATE", tabId: activeTabId });
+    if (!state || state.ok === false) throw new Error(state?.error || "Could not load the active trace.");
     render(state);
     await refreshHistory();
   } catch (error) {
@@ -200,16 +233,24 @@ recordButton.addEventListener("click", async () => {
 
 copyButton.addEventListener("click", async () => {
   if (!currentState) return;
-  await navigator.clipboard.writeText(safeExport().json);
-  copyButton.textContent = "Copied";
-  setTimeout(() => { copyButton.textContent = "Copy JSON"; }, 1200);
+  try {
+    await navigator.clipboard.writeText(safeExport().json);
+    copyButton.textContent = "Copied";
+    setTimeout(() => { copyButton.textContent = "Copy safe JSON"; }, 1200);
+  } catch (error) {
+    setStatus(`Copy failed: ${errorMessage(error, "clipboard unavailable")}`);
+  }
 });
 
 copyMarkdownButton.addEventListener("click", async () => {
   if (!currentState) return;
-  await navigator.clipboard.writeText(TraceCore.markdownReport(currentState));
-  copyMarkdownButton.textContent = "Copied";
-  setTimeout(() => { copyMarkdownButton.textContent = "Copy report"; }, 1200);
+  try {
+    await navigator.clipboard.writeText(TraceCore.markdownReport(currentState));
+    copyMarkdownButton.textContent = "Copied";
+    setTimeout(() => { copyMarkdownButton.textContent = "Copy report"; }, 1200);
+  } catch (error) {
+    setStatus(`Copy failed: ${errorMessage(error, "clipboard unavailable")}`);
+  }
 });
 
 previewButton.addEventListener("click", () => {
@@ -234,12 +275,25 @@ downloadButton.addEventListener("click", () => {
 });
 
 historyEnabled.addEventListener("change", async () => {
-  await chrome.runtime.sendMessage({ type: "SET_HISTORY_ENABLED", enabled: historyEnabled.checked });
+  try {
+    const response = await chrome.runtime.sendMessage({ type: "SET_HISTORY_ENABLED", enabled: historyEnabled.checked });
+    if (!response?.ok) throw new Error(response?.error || "Could not update history settings.");
+  } catch (error) {
+    historyEnabled.checked = !historyEnabled.checked;
+    setStatus(errorMessage(error, "Could not update history settings."));
+  }
 });
 
 clearHistoryButton.addEventListener("click", async () => {
-  await chrome.runtime.sendMessage({ type: "CLEAR_HISTORY" });
-  await refreshHistory();
+  if (!window.confirm("Delete all locally saved traces? This cannot be undone.")) return;
+  try {
+    const response = await chrome.runtime.sendMessage({ type: "CLEAR_HISTORY" });
+    if (!response?.ok) throw new Error(response?.error || "Could not clear history.");
+    await refreshHistory();
+    setStatus("Local trace history cleared.");
+  } catch (error) {
+    setStatus(errorMessage(error, "Could not clear history."));
+  }
 });
 
 importTraceButton.addEventListener("click", () => importFile.click());
@@ -265,22 +319,36 @@ importFile.addEventListener("change", async () => {
 historyList.addEventListener("click", async (event) => {
   const item = event.target.closest("[data-history-id]");
   if (!item) return;
-  if (event.target.closest(".history-delete")) {
-    await chrome.runtime.sendMessage({ type: "DELETE_HISTORY_TRACE", historyId: item.dataset.historyId });
-    await refreshHistory();
-    return;
+  try {
+    if (event.target.closest(".history-delete")) {
+      const response = await chrome.runtime.sendMessage({ type: "DELETE_HISTORY_TRACE", historyId: item.dataset.historyId });
+      if (!response?.ok) throw new Error(response?.error || "Could not delete trace.");
+      await refreshHistory();
+      return;
+    }
+    const history = await chrome.runtime.sendMessage({ type: "GET_HISTORY" });
+    if (!history || history.ok === false) throw new Error(history?.error || "Could not load local history.");
+    const trace = history.traces.find((entry) => entry.historyId === item.dataset.historyId);
+    if (trace) render(trace, true);
+  } catch (error) {
+    setStatus(errorMessage(error, "Could not open local trace."));
   }
-  const history = await chrome.runtime.sendMessage({ type: "GET_HISTORY" });
-  const trace = history.traces.find((entry) => entry.historyId === item.dataset.historyId);
-  if (trace) render(trace, true);
 });
 
 chrome.runtime.onMessage.addListener((message) => {
   if (message.type === "TRACE_STATE") {
     render(message.state);
-    if (message.state.status === "complete") refreshHistory().catch(() => {});
+    if (message.state.status === "complete") {
+      void (async () => {
+        try {
+          await refreshHistory();
+        } catch (error) {
+          setStatus(errorMessage(error, "Could not refresh local history."));
+        }
+      })();
+    }
   }
 });
 
 chrome.tabs.onActivated.addListener(() => refresh());
-refresh();
+void refresh();

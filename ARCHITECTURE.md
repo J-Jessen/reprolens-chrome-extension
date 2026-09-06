@@ -12,7 +12,7 @@ It deliberately excludes authentication, teams, cloud storage, AI explanations, 
 
 ```text
 Website
-  └─ content.js (injected on demand after an optional per-origin grant)
+  └─ content.js + content.css (injected on demand after an optional per-origin grant)
      ├─ element picker
      ├─ interaction marker
      └─ MutationObserver
@@ -56,6 +56,8 @@ idle → selected → attaching → armed → recording → processing → compl
 - `processing`: debugger detaches and evidence is normalized.
 - `complete`: immutable timeline is ready for display/export.
 
+The raw active session remains in service-worker memory because it contains short-lived CDP metadata. Chrome 118+ keeps the worker alive while `chrome.debugger` is attached. A privacy-sanitized snapshot of visible selected, completed, or error state is stored in `chrome.storage.session` so the panel can recover after a later worker restart; raw debugger objects and script inventory are never persisted there.
+
 ## Evidence model
 
 Each timeline item contains:
@@ -93,7 +95,7 @@ The interaction happens on the normal page, while the result remains visible bes
 
 ## Security and privacy boundary
 
-- No data leaves the browser in version 0.1.
+- No data leaves the browser in the current private beta.
 - No host is granted at install time and no content script runs until the user approves the active origin.
 - Captured HTML is capped at 2,000 characters.
 - Text is capped at 160 characters.
@@ -101,7 +103,16 @@ The interaction happens on the normal page, while the result remains visible bes
 - Public trace serialization removes debugger scope chains, remote object IDs, receiver objects, return values, and internal script inventory while retaining source locations and async-parent evidence.
 - The debugger detaches automatically after the short trace window.
 
-Before any AI feature, version 0.2 needs a visible redaction preview and an explicit send action.
+Any future network or AI feature requires a new explicit, reviewed data boundary; the current extension has neither.
+
+## Version 0.7 foundations
+
+- Private beta distribution that does not require tester access to the source repository.
+- Semantic landmarks, native controls, visible focus, live status, dialog labelling, responsive light/dark color schemes, and reduced-motion handling.
+- Safe DOM construction for imported and captured trace content; no dynamic `innerHTML` rendering.
+- Static picker and badge styles in an injected stylesheet, with only geometry passed through CSS custom properties.
+- Chrome 118 minimum and privacy-sanitized session-state recovery for Manifest V3 lifecycle resilience.
+- Automated policy, markup, CSP, accessibility, keyboard-focus, packaging, and 26-scenario trace checks.
 
 ## Product roadmap
 

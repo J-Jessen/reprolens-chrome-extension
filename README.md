@@ -1,14 +1,14 @@
 # Behaviour Tracer
 
-Current build: **0.7.0**
+Current build: **0.7.1**
 
-Private beta: **v0.7.0-beta.2**
+Private beta: **v0.7.1-beta.1**
 
 A local-first Chrome Manifest V3 proof-of-concept for the product hypothesis:
 
 > Select an element → perform one interaction → inspect what happened.
 
-This is an instrumentation experiment, not a production extension. It tests whether a useful trace can be assembled from a selected DOM element, JavaScript event-listener pauses, network traffic, runtime exceptions, navigation, and DOM mutations.
+This is a private-beta instrumentation experiment, not yet a production extension. It tests whether a useful trace can be assembled from a selected DOM element, JavaScript event-listener pauses, network traffic, runtime exceptions, navigation, and DOM mutations. It supports desktop Chrome 118 and newer.
 
 ## What the current build does
 
@@ -29,6 +29,8 @@ This is an instrumentation experiment, not a production extension. It tests whet
 15. Provides reviewed, automatically redacted JSON downloads and redacted Markdown reports.
 16. Correlates Promise-parented network initiators and privacy-safe WebSocket lifecycle/frame metadata without storing message content.
 17. Uses trace schema version 2 with explicit relationship, capture-method, and privacy metadata plus local migration of version 1 imports.
+18. Uses semantic, keyboard-accessible side-panel controls with light/dark color support and automated accessibility checks.
+19. Restores privacy-sanitized visible trace state from session storage if the extension service worker restarts.
 
 All trace processing is local. The current build has no backend, analytics, login, or AI call.
 

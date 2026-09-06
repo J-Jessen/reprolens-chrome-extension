@@ -24,7 +24,7 @@ const MIME_TYPES = {
 
 function createTestExtensionRoot() {
   const runtimeFiles = [
-    "manifest.json", "background.js", "content.js", "trace-core.js", "source-map.js", "framework-adapter.js",
+    "manifest.json", "background.js", "content.js", "content.css", "trace-core.js", "source-map.js", "framework-adapter.js",
     "panel.html", "panel.js", "panel.css", "vendor/trace-mapping.js", "vendor/TRACE_MAPPING_LICENSE.txt"
   ];
   const manifestPath = path.join(SOURCE_EXTENSION_ROOT, "manifest.json");
@@ -175,6 +175,7 @@ async function runTrace({ page, worker, controller, baseUrl, pathname, selector,
   if (!tabId) throw new Error(`Could not find Chrome tab for ${page.url()}`);
 
   await worker.evaluate(async (id) => {
+    await chrome.scripting.insertCSS({ target: { tabId: id }, files: ["content.css"] });
     await chrome.scripting.executeScript({ target: { tabId: id }, files: ["content.js"] });
   }, tabId);
   await worker.evaluate((id) => chrome.tabs.sendMessage(id, { type: "START_PICKER" }), tabId);
@@ -244,11 +245,24 @@ async function main() {
     const extensionId = new URL(workerTarget.url()).host;
     const controller = await browser.newPage();
     await controller.goto(`chrome-extension://${extensionId}/panel.html`);
-    const accessibility = await new AxePuppeteer(controller).analyze();
-    const blockingViolations = accessibility.violations.filter((violation) => ["serious", "critical"].includes(violation.impact));
-    if (blockingViolations.length) {
-      throw new Error(`Panel accessibility violations: ${blockingViolations.map((item) => item.id).join(", ")}`);
+    for (const colorScheme of ["light", "dark"]) {
+      await controller.emulateMediaFeatures([{ name: "prefers-color-scheme", value: colorScheme }]);
+      const accessibility = await new AxePuppeteer(controller).analyze();
+      const blockingViolations = accessibility.violations.filter((violation) => ["serious", "critical"].includes(violation.impact));
+      if (blockingViolations.length) {
+        throw new Error(`Panel ${colorScheme}-mode accessibility violations: ${blockingViolations.map((item) => item.id).join(", ")}`);
+      }
     }
+    await controller.keyboard.press("Tab");
+    const focusMoved = await controller.evaluate(() => document.activeElement !== document.body);
+    if (!focusMoved) throw new Error("Keyboard focus did not move into the panel controls");
+    await controller.evaluate(() => document.getElementById("export-dialog").showModal());
+    const dialogAccessibility = await new AxePuppeteer(controller).include("#export-dialog").analyze();
+    const dialogViolations = dialogAccessibility.violations.filter((violation) => ["serious", "critical"].includes(violation.impact));
+    if (dialogViolations.length) {
+      throw new Error(`Export dialog accessibility violations: ${dialogViolations.map((item) => item.id).join(", ")}`);
+    }
+    await controller.evaluate(() => document.getElementById("export-dialog").close());
     const primaryFilterLabel = await controller.$eval('[data-filter="primary"]', (button) => button.textContent.trim());
     if (primaryFilterLabel !== "Primary chain") throw new Error("Primary-chain timeline filter is unavailable");
     process.stdout.write("Panel accessibility audit passed\n");

@@ -9,22 +9,23 @@
   <body>
     <main>
       <header>
-        <div class="eyebrow">BEHAVIOUR TRACER · POC</div>
+        <p class="eyebrow">BEHAVIOUR TRACER · PRIVATE BETA</p>
         <h1>See what happened.</h1>
         <p>Select an element, perform one click, and inspect the observed chain.</p>
       </header>
 
       <section class="controls card">
+        <h2 class="visually-hidden">Trace controls</h2>
         <div class="step">
-          <span>1</span>
-          <button id="pick">Select element</button>
+          <span aria-hidden="true">1</span>
+          <button id="pick" type="button">Select element</button>
         </div>
         <div id="selection" class="selection muted">No element selected</div>
         <div class="step">
-          <span>2</span>
-          <button id="record" class="primary" disabled>Record one click</button>
+          <span aria-hidden="true">2</span>
+          <button id="record" class="primary" type="button" disabled>Record one click</button>
         </div>
-        <p id="status" class="status">Ready</p>
+        <p id="status" class="status" role="status" aria-atomic="true">Ready</p>
         <details class="permission-note">
           <summary>Why Chrome asks for site access and shows a debugging banner</summary>
           <p>Selecting an element grants access only to that website. A short, user-started trace then uses Chrome’s debugger API to observe call frames and network timing. It detaches automatically when the trace ends. No trace is uploaded.</p>
@@ -33,19 +34,19 @@
 
       <section id="result" class="result hidden">
         <div class="summary card">
-          <div class="section-label">DETERMINISTIC SUMMARY</div>
+          <h2 class="section-label">Deterministic summary</h2>
           <p id="summary"></p>
         </div>
 
         <div id="quality" class="quality card">
           <div class="quality-heading">
             <div>
-              <div class="section-label">TRACE QUALITY</div>
+              <h2 class="section-label">Trace quality</h2>
               <strong id="quality-label"></strong>
             </div>
             <span id="quality-score"></span>
           </div>
-          <div class="quality-bar"><span id="quality-fill"></span></div>
+          <div class="quality-bar" role="progressbar" aria-label="Trace quality score" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="quality-fill"></span></div>
           <p id="quality-metrics"></p>
           <ul id="quality-diagnostics"></ul>
         </div>
@@ -53,62 +54,63 @@
         <div class="timeline-header">
           <h2>Trace</h2>
           <div class="export-actions">
-            <button id="preview" class="quiet">Review export</button>
-            <button id="copy-markdown" class="quiet">Copy report</button>
-            <button id="copy" class="quiet">Copy safe JSON</button>
+            <button id="preview" class="quiet" type="button">Review export</button>
+            <button id="copy-markdown" class="quiet" type="button">Copy report</button>
+            <button id="copy" class="quiet" type="button">Copy safe JSON</button>
           </div>
         </div>
-        <div id="filters" class="filters" aria-label="Filter trace events">
-          <button class="filter active" data-filter="all" aria-pressed="true">All</button>
-          <button class="filter" data-filter="primary" aria-pressed="false">Primary chain</button>
-          <button class="filter" data-filter="handler" aria-pressed="false">Handlers</button>
-          <button class="filter" data-filter="network" aria-pressed="false">Network</button>
-          <button class="filter" data-filter="same-origin" aria-pressed="false">App network</button>
-          <button class="filter" data-filter="websocket" aria-pressed="false">WebSocket</button>
-          <button class="filter" data-filter="worker" aria-pressed="false">Workers</button>
-          <button class="filter" data-filter="async" aria-pressed="false">Async</button>
-          <button class="filter" data-filter="dom" aria-pressed="false">DOM</button>
-          <button class="filter" data-filter="errors" aria-pressed="false">Errors</button>
-          <button class="filter" data-filter="navigation" aria-pressed="false">Navigation</button>
-        </div>
-        <ol id="timeline" class="timeline"></ol>
+        <fieldset id="filters" class="filters">
+          <legend class="visually-hidden">Filter trace events</legend>
+          <button class="filter active" type="button" data-filter="all" aria-pressed="true">All</button>
+          <button class="filter" type="button" data-filter="primary" aria-pressed="false">Primary chain</button>
+          <button class="filter" type="button" data-filter="handler" aria-pressed="false">Handlers</button>
+          <button class="filter" type="button" data-filter="network" aria-pressed="false">Network</button>
+          <button class="filter" type="button" data-filter="same-origin" aria-pressed="false">App network</button>
+          <button class="filter" type="button" data-filter="websocket" aria-pressed="false">WebSocket</button>
+          <button class="filter" type="button" data-filter="worker" aria-pressed="false">Workers</button>
+          <button class="filter" type="button" data-filter="async" aria-pressed="false">Async</button>
+          <button class="filter" type="button" data-filter="dom" aria-pressed="false">DOM</button>
+          <button class="filter" type="button" data-filter="errors" aria-pressed="false">Errors</button>
+          <button class="filter" type="button" data-filter="navigation" aria-pressed="false">Navigation</button>
+        </fieldset>
+        <ol id="timeline" class="timeline" aria-label="Observed trace events"></ol>
         <p class="caveat">“Direct” means instrumented causality. Lower confidence means temporal correlation inside the trace window.</p>
       </section>
 
       <section class="history card">
         <div class="history-heading">
           <div>
-            <div class="section-label">LOCAL HISTORY</div>
+            <p class="section-label">Local history</p>
             <h2>Recent traces</h2>
           </div>
-          <label class="toggle"><input id="history-enabled" type="checkbox" checked> Save</label>
+          <label class="toggle" for="history-enabled"><input id="history-enabled" type="checkbox" checked> Save</label>
         </div>
-        <div id="history-list" class="history-list"></div>
+        <ul id="history-list" class="history-list"></ul>
         <p id="history-usage" class="caveat"></p>
         <div class="history-actions">
-          <button id="import-trace" class="quiet">Import JSON</button>
-          <button id="clear-history" class="quiet">Clear history</button>
+          <button id="import-trace" class="quiet" type="button">Import JSON</button>
+          <button id="clear-history" class="quiet" type="button">Clear history</button>
           <input id="import-file" type="file" accept="application/json,.json" hidden>
         </div>
       </section>
 
-      <dialog id="export-dialog">
+      <dialog id="export-dialog" aria-labelledby="export-dialog-title">
         <div class="dialog-heading">
           <div>
-            <div class="section-label">REDACTED EXPORT PREVIEW</div>
-            <h2>Review before sharing</h2>
+            <p class="section-label">Redacted export preview</p>
+            <h2 id="export-dialog-title">Review before sharing</h2>
           </div>
-          <button id="close-preview" class="quiet" aria-label="Close preview">Close</button>
+          <button id="close-preview" class="quiet" type="button">Close</button>
         </div>
         <p id="redaction-report"></p>
-        <pre id="export-preview"></pre>
-        <button id="download" class="primary">Download safe JSON</button>
+        <pre id="export-preview" tabindex="0"><code id="export-preview-code"></code></pre>
+        <button id="download" class="primary" type="button">Download safe JSON</button>
       </dialog>
 
-      <section id="empty" class="empty">
-        <div class="pulse"></div>
+      <div id="empty" class="empty">
+        <div class="pulse" aria-hidden="true"></div>
         <p>Your trace will appear here.</p>
-      </section>
+      </div>
     </main>
     <script src="trace-core.js"></script>
     <script src="panel.js"></script>

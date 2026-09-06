@@ -12,7 +12,7 @@ body:
     attributes:
       label: Beta version
       description: Find this in the release name or manifest.
-      placeholder: v0.7.0-beta.1
+      placeholder: v0.7.1-beta.1
     validations:
       required: true
   - type: input

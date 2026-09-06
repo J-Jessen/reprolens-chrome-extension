@@ -1,5 +1,7 @@
 # Privacy
 
+Last updated: 6 September 2026
+
 Behaviour Tracer is local-first. Trace collection, source-map resolution, quality scoring, history, and export redaction run inside the browser extension. The project has no backend, analytics, account system, or automatic upload.
 
 ## Website access
@@ -19,6 +21,8 @@ Request and response bodies, HTTP headers, cookies, storage values, form values,
 ## Local history
 
 Completed traces can be retained in `chrome.storage.local`, with a maximum of 25 traces and a 5 MB application budget. The oldest traces are evicted automatically when either limit is reached, and current usage is visible in the side panel. History can be disabled or cleared from the side panel. Uninstalling the extension removes its local storage according to Chrome's extension-storage behaviour.
+
+The extension also keeps a privacy-sanitized snapshot of the current trace in `chrome.storage.session`. This allows the side panel to recover safe UI state if its Manifest V3 service worker restarts. Session storage is cleared when the browser session ends, and the snapshot for a tab is removed when that tab closes. Raw debugger objects and script metadata are not written to session storage.
 
 ## Export
 

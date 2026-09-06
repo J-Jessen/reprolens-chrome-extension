@@ -70,16 +70,7 @@
     if (!overlay) {
       overlay = document.createElement("div");
       overlay.id = OVERLAY_ID;
-      Object.assign(overlay.style, {
-        position: "fixed",
-        zIndex: "2147483646",
-        pointerEvents: "none",
-        border: "2px solid #6d5efc",
-        background: "rgba(109, 94, 252, .12)",
-        borderRadius: "4px",
-        boxSizing: "border-box",
-        display: "none"
-      });
+      overlay.setAttribute("aria-hidden", "true");
       document.documentElement.appendChild(overlay);
     }
     return overlay;
@@ -88,18 +79,16 @@
   function showOverlay(element) {
     const rect = element.getBoundingClientRect();
     const overlay = ensureOverlay();
-    Object.assign(overlay.style, {
-      display: "block",
-      left: `${rect.left}px`,
-      top: `${rect.top}px`,
-      width: `${rect.width}px`,
-      height: `${rect.height}px`
-    });
+    overlay.style.setProperty("--behaviour-tracer-left", `${rect.left}px`);
+    overlay.style.setProperty("--behaviour-tracer-top", `${rect.top}px`);
+    overlay.style.setProperty("--behaviour-tracer-width", `${rect.width}px`);
+    overlay.style.setProperty("--behaviour-tracer-height", `${rect.height}px`);
+    overlay.classList.add("__behaviour_tracer_visible");
   }
 
   function hideOverlay() {
     const overlay = document.getElementById(OVERLAY_ID);
-    if (overlay) overlay.style.display = "none";
+    overlay?.classList.remove("__behaviour_tracer_visible");
   }
 
   function showBadge(text) {
@@ -111,20 +100,9 @@
     if (!badge) {
       badge = document.createElement("div");
       badge.id = BADGE_ID;
-      Object.assign(badge.style, {
-        position: "fixed",
-        top: "14px",
-        left: "50%",
-        transform: "translateX(-50%)",
-        zIndex: "2147483647",
-        padding: "9px 14px",
-        borderRadius: "999px",
-        background: "#17171c",
-        color: "#fff",
-        font: "600 12px/1.2 system-ui, sans-serif",
-        boxShadow: "0 6px 24px rgba(0,0,0,.25)",
-        pointerEvents: "none"
-      });
+      badge.setAttribute("role", "status");
+      badge.setAttribute("aria-live", "polite");
+      badge.setAttribute("aria-atomic", "true");
       document.documentElement.appendChild(badge);
     }
     badge.textContent = text;
@@ -147,6 +125,14 @@
     return Boolean(element && (isOwnElement(element) || element.closest?.(`#${OVERLAY_ID}, #${BADGE_ID}`)));
   }
 
+  async function sendRuntimeMessage(message) {
+    try {
+      await chrome.runtime.sendMessage(message);
+    } catch (_) {
+      // The extension can be reloaded or the page can close while a trace is active.
+    }
+  }
+
   function onPointerMove(event) {
     if (!picking || isOwnElement(event.target)) return;
     hovered = event.target;
@@ -162,10 +148,10 @@
     hideOverlay();
     showBadge("Element selected — start recording in the side panel");
     __behaviourTracerHideBadge(1800);
-    chrome.runtime.sendMessage({
+    void sendRuntimeMessage({
       type: "ELEMENT_SELECTED",
       element: describe(selected)
-    }).catch(() => {});
+    });
   }
 
   function startMutationCapture() {
@@ -214,19 +200,19 @@
     const element = describe(event.target);
     startMutationCapture();
     showBadge("Recording behaviour…");
-    chrome.runtime.sendMessage({
+    void sendRuntimeMessage({
       type: "INTERACTION_START",
       at: Date.now(),
       eventType: event.type,
       element
-    }).catch(() => {});
+    });
 
     setTimeout(function __behaviourTracerFinishCapture() {
       observer?.disconnect();
-      chrome.runtime.sendMessage({
+      void sendRuntimeMessage({
         type: "DOM_MUTATIONS",
         mutations
-      }).catch(() => {});
+      });
       showBadge("Trace captured — open the side panel");
       __behaviourTracerHideBadge(1800);
     }, captureMs);

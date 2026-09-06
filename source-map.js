@@ -81,11 +81,14 @@
       if (!frame.url && script?.url) frame.url = script.url;
       const mapUrl = mapUrlFor(script);
       const position = generatedPosition(frame);
-      if (!mapUrl || !position) continue;
+        if (!mapUrl || !position) continue;
 
       try {
         if (!cache.has(mapUrl)) {
-          cache.set(mapUrl, Promise.resolve(fetchMap(mapUrl)).then((map) => new root.TraceMapping.TraceMap(map)));
+          cache.set(mapUrl, (async () => {
+            const map = await fetchMap(mapUrl);
+            return new root.TraceMapping.TraceMap(map);
+          })());
         }
         const traceMap = await cache.get(mapUrl);
         const original = root.TraceMapping.originalPositionFor(traceMap, position);

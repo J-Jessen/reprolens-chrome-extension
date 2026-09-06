@@ -14,13 +14,15 @@ Stop testing and contact the owner privately if the browser behaves abnormally o
 
 ## Install the beta
 
-1. Save the `behaviour-tracer-v0.7.0-beta.2.zip` file supplied directly by the owner.
+1. Save the `behaviour-tracer-v0.7.1-beta.1.zip` file supplied directly by the owner.
 2. Extract the ZIP into a folder you will keep for the duration of the beta.
 3. Confirm that the folder contains `manifest.json`, `START_HER.md`, and this guide.
 4. Open `chrome://extensions` in Chrome.
 5. Enable **Developer mode**.
 6. Choose **Load unpacked** and select the extracted folder containing `manifest.json`.
 7. Pin **Behaviour Tracer Beta** from Chrome's Extensions menu.
+
+Behaviour Tracer requires desktop Chrome 118 or newer.
 
 Chrome shows a debugging banner during a 3.5-second trace. This is expected. The debugger detaches automatically when the trace ends.
 

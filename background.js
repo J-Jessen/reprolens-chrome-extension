@@ -5,10 +5,17 @@ const TRACE_WINDOW_MS = 3500;
 const TIMER_STORE_KEY = "__behaviourTracerAsyncStore_v020";
 const HISTORY_LIMIT = 25;
 const HISTORY_BYTE_LIMIT = 5_000_000;
+const SESSION_KEY_PREFIX = "traceState:";
 
-chrome.sidePanel
-  .setPanelBehavior({ openPanelOnActionClick: true })
-  .catch(() => {});
+async function configureSidePanel() {
+  try {
+    await chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
+  } catch (_) {
+    // Chrome can briefly reject this while an extension update is settling.
+  }
+}
+
+void configureSidePanel();
 
 function blankSession(tabId) {
   return {
@@ -50,11 +57,41 @@ function publicSession(session) {
   return TraceCore.sanitizePublicSession(session);
 }
 
+function sessionStorageKey(tabId) {
+  return `${SESSION_KEY_PREFIX}${tabId}`;
+}
+
+async function storedSession(tabId) {
+  if (!tabId) return null;
+  const key = sessionStorageKey(tabId);
+  const stored = await chrome.storage.session.get(key);
+  return stored[key] || null;
+}
+
+async function visibleSession(tabId) {
+  return sessions.has(tabId)
+    ? publicSession(sessions.get(tabId))
+    : (await storedSession(tabId)) || publicSession(blankSession(tabId));
+}
+
+async function publishState(session) {
+  const state = publicSession(session);
+  if (["idle", "selected", "complete", "error"].includes(state.status)) {
+    try {
+      await chrome.storage.session.set({ [sessionStorageKey(session.tabId)]: state });
+    } catch (_) {
+      // A transient storage failure must not interrupt an active debugger session.
+    }
+  }
+  try {
+    await chrome.runtime.sendMessage({ type: "TRACE_STATE", state });
+  } catch (_) {
+    // The side panel is optional and is commonly closed while capture continues.
+  }
+}
+
 function publish(session) {
-  chrome.runtime.sendMessage({
-    type: "TRACE_STATE",
-    state: publicSession(session)
-  }).catch(() => {});
+  void publishState(session);
 }
 
 async function historySettings() {
@@ -264,11 +301,13 @@ async function configureTimerCapture(tabId) {
       return { mode: "cdp+main-world-hook", domain };
     } catch (error) {
       failures.push(error.message || String(error));
-      await Promise.all(eventNames.map((eventName) => command(
-        tabId,
-        `${domain}.removeInstrumentationBreakpoint`,
-        { eventName }
-      ).catch(() => {})));
+      await Promise.all(eventNames.map(async (eventName) => {
+        try {
+          await command(tabId, `${domain}.removeInstrumentationBreakpoint`, { eventName });
+        } catch (_) {
+          // Unsupported breakpoint domains can also reject their matching removal calls.
+        }
+      }));
     }
   }
 
@@ -343,7 +382,11 @@ async function attach(tabId) {
     command(tabId, "Runtime.enable"),
     command(tabId, "Log.enable")
   ]);
-  await command(tabId, "Debugger.setAsyncCallStackDepth", { maxDepth: 32 }).catch(() => {});
+  try {
+    await command(tabId, "Debugger.setAsyncCallStackDepth", { maxDepth: 32 });
+  } catch (_) {
+    // Async stack depth is an enhancement and is not supported by every target.
+  }
   await command(tabId, "DOMDebugger.setEventListenerBreakpoint", {
     eventName: "click"
   });
@@ -370,7 +413,7 @@ async function detach(tabId) {
 }
 
 async function startTrace(tabId, traceWindowMs = TRACE_WINDOW_MS) {
-  const previous = getSession(tabId);
+  const previous = sessions.get(tabId) || (await storedSession(tabId)) || blankSession(tabId);
   if (previous.status === "recording" || previous.status === "armed") {
     throw new Error("A trace is already running in this tab.");
   }
@@ -386,7 +429,11 @@ async function startTrace(tabId, traceWindowMs = TRACE_WINDOW_MS) {
 
   try {
     session.timerCapture = await attach(tabId);
-    session.framework = await inspectFramework(tabId, session.selectedElement?.selector).catch(() => null);
+    try {
+      session.framework = await inspectFramework(tabId, session.selectedElement?.selector);
+    } catch (_) {
+      session.framework = null;
+    }
     session.status = "armed";
     await chrome.tabs.sendMessage(tabId, {
       type: "ARM_INTERACTION",
@@ -397,7 +444,11 @@ async function startTrace(tabId, traceWindowMs = TRACE_WINDOW_MS) {
   } catch (error) {
     session.status = "error";
     session.error = error.message || String(error);
-    await collectTimerHookEvents(tabId, session).catch(() => {});
+    try {
+      await collectTimerHookEvents(tabId, session);
+    } catch (_) {
+      // Preserve the original startup error.
+    }
     await detach(tabId);
     publish(session);
     throw error;
@@ -409,12 +460,14 @@ async function finishTrace(tabId) {
   if (!["armed", "recording", "attaching"].includes(session.status)) return;
   session.status = "processing";
   publish(session);
-  await collectTimerHookEvents(tabId, session).catch((error) => {
+  try {
+    await collectTimerHookEvents(tabId, session);
+  } catch (error) {
     session.timerCapture = {
       ...session.timerCapture,
       collectionError: error.message || String(error)
     };
-  });
+  }
   await detach(tabId);
   await SourceMapResolver.enrichSession(session);
   session.timeline = TraceCore.buildTimeline(session);
@@ -422,98 +475,101 @@ async function finishTrace(tabId) {
   session.quality = TraceCore.assessQuality(session);
   session.status = "complete";
   publish(session);
-  saveTraceToHistory(session).catch(() => {});
+  try {
+    await saveTraceToHistory(session);
+  } catch (_) {
+    // The completed trace remains available in session storage and the side panel.
+  }
 }
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+async function finishTraceSafely(tabId) {
+  try {
+    await finishTrace(tabId);
+  } catch (error) {
+    const session = getSession(tabId);
+    session.status = "error";
+    session.error = error.message || String(error);
+    await detach(tabId);
+    publish(session);
+  }
+}
+
+async function handleMessage(message, sender) {
   const tabId = message.tabId || sender.tab?.id;
 
-  if (message.type === "GET_STATE") {
-    sendResponse(publicSession(getSession(tabId)));
-    return false;
-  }
+  if (message.type === "GET_STATE") return visibleSession(tabId);
 
   if (message.type === "ELEMENT_SELECTED") {
     const session = getSession(tabId);
     session.selectedElement = message.element;
     session.status = session.status === "idle" ? "selected" : session.status;
     publish(session);
-    sendResponse({ ok: true });
-    return false;
+    return { ok: true };
   }
 
   if (message.type === "START_TRACE") {
-    startTrace(tabId, message.traceWindowMs)
-      .then((state) => sendResponse({ ok: true, state }))
-      .catch((error) => sendResponse({ ok: false, error: error.message || String(error) }));
-    return true;
+    return { ok: true, state: await startTrace(tabId, message.traceWindowMs) };
   }
 
   if (message.type === "CANCEL_TRACE") {
-    finishTrace(tabId).then(() => sendResponse({ ok: true }));
-    return true;
+    await finishTrace(tabId);
+    return { ok: true };
   }
 
   if (message.type === "GET_HISTORY") {
-    Promise.all([
+    const [stored, settings] = await Promise.all([
       chrome.storage.local.get({ traceHistory: [] }),
       historySettings()
-    ]).then(([stored, settings]) => {
-      const migrated = stored.traceHistory.map((trace) => {
-        try { return TraceCore.migrateTrace(trace); } catch (_) { return null; }
-      }).filter(Boolean);
-      const bounded = TraceCore.limitHistory(migrated, HISTORY_LIMIT, HISTORY_BYTE_LIMIT);
-      sendResponse({
-        ...settings,
-        traces: bounded.traces,
-        historyBytes: bounded.bytes,
-        historyByteLimit: HISTORY_BYTE_LIMIT
-      });
-    });
-    return true;
+    ]);
+    const migrated = stored.traceHistory.map((trace) => {
+      try { return TraceCore.migrateTrace(trace); } catch (_) { return null; }
+    }).filter(Boolean);
+    const bounded = TraceCore.limitHistory(migrated, HISTORY_LIMIT, HISTORY_BYTE_LIMIT);
+    return {
+      ...settings,
+      traces: bounded.traces,
+      historyBytes: bounded.bytes,
+      historyByteLimit: HISTORY_BYTE_LIMIT
+    };
   }
 
   if (message.type === "SET_HISTORY_ENABLED") {
-    chrome.storage.local.set({ historyEnabled: Boolean(message.enabled) })
-      .then(() => sendResponse({ ok: true }));
-    return true;
+    await chrome.storage.local.set({ historyEnabled: Boolean(message.enabled) });
+    return { ok: true };
   }
 
   if (message.type === "DELETE_HISTORY_TRACE") {
-    chrome.storage.local.get({ traceHistory: [] }).then(({ traceHistory }) => {
-      const traces = traceHistory.filter((trace) => trace.historyId !== message.historyId);
-      return chrome.storage.local.set({ traceHistory: traces });
-    }).then(() => sendResponse({ ok: true }));
-    return true;
+    const { traceHistory } = await chrome.storage.local.get({ traceHistory: [] });
+    const traces = traceHistory.filter((trace) => trace.historyId !== message.historyId);
+    await chrome.storage.local.set({ traceHistory: traces });
+    return { ok: true };
   }
 
   if (message.type === "CLEAR_HISTORY") {
-    chrome.storage.local.set({ traceHistory: [] }).then(() => sendResponse({ ok: true }));
-    return true;
+    await chrome.storage.local.set({ traceHistory: [] });
+    return { ok: true };
   }
 
   if (message.type === "IMPORT_TRACE") {
     const validation = TraceCore.validateImportedTrace(message.trace);
-    if (!validation.ok) {
-      sendResponse({ ok: false, error: validation.error });
-      return false;
+    if (!validation.ok) return { ok: false, error: validation.error };
+    const { traceHistory } = await chrome.storage.local.get({ traceHistory: [] });
+    const trace = TraceCore.sanitizePublicSession(TraceCore.migrateTrace(message.trace));
+    trace.historyId = `import-${Date.now()}`;
+    trace.savedAt = Date.now();
+    const bounded = TraceCore.limitHistory([trace, ...traceHistory], HISTORY_LIMIT, HISTORY_BYTE_LIMIT);
+    if (!bounded.traces.some((item) => item.historyId === trace.historyId)) {
+      throw new Error("Imported trace exceeds the local history size budget.");
     }
-    chrome.storage.local.get({ traceHistory: [] }).then(({ traceHistory }) => {
-      const trace = TraceCore.sanitizePublicSession(TraceCore.migrateTrace(message.trace));
-      trace.historyId = `import-${Date.now()}`;
-      trace.savedAt = Date.now();
-      const bounded = TraceCore.limitHistory([trace, ...traceHistory], HISTORY_LIMIT, HISTORY_BYTE_LIMIT);
-      if (!bounded.traces.some((item) => item.historyId === trace.historyId)) {
-        throw new Error("Imported trace exceeds the local history size budget.");
-      }
-      return chrome.storage.local.set({ traceHistory: bounded.traces });
-    }).then(() => sendResponse({ ok: true })).catch((error) => sendResponse({ ok: false, error: error.message }));
-    return true;
+    await chrome.storage.local.set({ traceHistory: bounded.traces });
+    return { ok: true };
   }
 
   if (message.type === "INTERACTION_START") {
     const session = getSession(tabId);
-    if (!["armed", "recording"].includes(session.status)) return false;
+    if (!["armed", "recording"].includes(session.status)) {
+      return { ok: false, error: "No trace is armed for this tab." };
+    }
     session.status = "recording";
     session.interactionAt = message.at || Date.now();
     session.interaction = {
@@ -521,9 +577,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       element: message.element
     };
     publish(session);
-    setTimeout(() => finishTrace(tabId), session.traceWindowMs || TRACE_WINDOW_MS);
-    sendResponse({ ok: true });
-    return false;
+    setTimeout(() => { void finishTraceSafely(tabId); }, session.traceWindowMs || TRACE_WINDOW_MS);
+    return { ok: true };
   }
 
   if (message.type === "DOM_MUTATIONS") {
@@ -532,18 +587,35 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       session.mutations.push(...message.mutations);
       publish(session);
     }
-    sendResponse({ ok: true });
-    return false;
+    return { ok: true };
   }
 
-  return false;
+  return { ok: false, error: "Unknown extension message." };
+}
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  async function respond() {
+    try {
+      sendResponse(await handleMessage(message, sender));
+    } catch (error) {
+      sendResponse({ ok: false, error: error.message || String(error) });
+    }
+  }
+  void respond();
+  return true;
 });
 
 chrome.debugger.onEvent.addListener(async (source, method, params) => {
   const tabId = source.tabId;
   const session = sessions.get(tabId);
   if (!session || !["attaching", "armed", "recording", "processing"].includes(session.status)) {
-    if (method === "Debugger.paused") await command(tabId, "Debugger.resume").catch(() => {});
+    if (method === "Debugger.paused") {
+      try {
+        await command(tabId, "Debugger.resume");
+      } catch (_) {
+        // The target may detach between the pause event and this resume request.
+      }
+    }
     return;
   }
 
@@ -582,7 +654,11 @@ chrome.debugger.onEvent.addListener(async (source, method, params) => {
         publish(session);
       }
     }
-    await command(tabId, "Debugger.resume").catch(() => {});
+    try {
+      await command(tabId, "Debugger.resume");
+    } catch (_) {
+      // The target may detach between the pause event and this resume request.
+    }
     return;
   }
 
@@ -685,7 +761,20 @@ chrome.debugger.onDetach.addListener(async (source, reason) => {
     session.error = `Debugger detached: ${reason}`;
   }
   publish(session);
-  saveTraceToHistory(session).catch(() => {});
+  try {
+    await saveTraceToHistory(session);
+  } catch (_) {
+    // The completed trace remains available in session storage and the side panel.
+  }
 });
 
-chrome.tabs.onRemoved.addListener((tabId) => sessions.delete(tabId));
+chrome.tabs.onRemoved.addListener((tabId) => {
+  sessions.delete(tabId);
+  void (async () => {
+    try {
+      await chrome.storage.session.remove(sessionStorageKey(tabId));
+    } catch (_) {
+      // Storage cleanup is best-effort when Chrome is shutting down.
+    }
+  })();
+});

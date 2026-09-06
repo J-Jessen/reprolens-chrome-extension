@@ -7,6 +7,7 @@ const files = [
   "manifest.json",
   "background.js",
   "content.js",
+  "content.css",
   "trace-core.js",
   "source-map.js",
   "framework-adapter.js",
