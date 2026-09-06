@@ -1,0 +1,103 @@
+:root {
+  color-scheme: dark;
+  background: #0e1015;
+  color: #f5f7fb;
+  font-family: Inter, system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  display: grid;
+  min-block-size: 100vh;
+  margin: 0;
+  place-items: center;
+  background: radial-gradient(circle at 40% 30%, #24224c, transparent 40%), #0e1015;
+}
+
+main {
+  inline-size: min(32.5rem, calc(100% - 2.5rem));
+  padding: 2.125rem;
+  border: 1px solid #4a4f63;
+  border-radius: 1.375rem;
+  background: rgba(22, 24, 32, .92);
+  box-shadow: 0 1.5625rem 5rem #0008;
+}
+
+.eyebrow {
+  color: #a99fff;
+  font-size: .6875rem;
+  font-weight: 800;
+  letter-spacing: .14em;
+}
+
+h1 {
+  margin: .5rem 0 .25rem;
+  font-size: clamp(1.75rem, 7vw, 2rem);
+  line-height: 1.15;
+}
+
+.lede {
+  max-inline-size: 60ch;
+  color: #b3b9ca;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-block-start: 1.75rem;
+  padding-block-start: 1.375rem;
+  border-block-start: 1px solid #414654;
+}
+
+button {
+  min-block-size: 2.75rem;
+  padding: .75rem 1rem;
+  border: 0;
+  border-radius: .625rem;
+  background: #7868ff;
+  color: white;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 750;
+}
+
+button:hover:not(:disabled) { background: #897cff; }
+button:disabled { cursor: wait; opacity: .7; }
+button.danger { background: #c33c4d; }
+button.danger:hover:not(:disabled) { background: #d24b5b; }
+
+:where(button, a):focus-visible {
+  outline: 3px solid #c7c1ff;
+  outline-offset: 3px;
+}
+
+.result {
+  min-block-size: 1.5rem;
+  margin-block: 1.125rem 0;
+  font-weight: 650;
+}
+
+.result.success { color: #5ce0a9; }
+.result.error { color: #ff929e; }
+
+.demo-links {
+  margin-block-start: 1.5rem;
+  padding-block-start: 1rem;
+  border-block-start: 1px solid #414654;
+}
+
+.demo-links a { color: #b9b1ff; }
+
+@media (max-width: 24rem) {
+  main {
+    inline-size: calc(100% - 1.25rem);
+    padding: 1.375rem;
+  }
+
+  .row { align-items: stretch; }
+  .row button { inline-size: 100%; text-align: center; }
+}

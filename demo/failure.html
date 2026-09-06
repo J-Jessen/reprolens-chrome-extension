@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Failed request | Behaviour Tracer demo</title>
+    <link rel="stylesheet" href="demo.css">
+  </head>
+  <body>
+    <main>
+      <div class="eyebrow">EXPECTED FAILURE</div>
+      <h1>Failed request demo</h1>
+      <p class="lede">Use this page to trace a request that deliberately receives a 404 response. No real order or data is affected.</p>
+      <div class="row">
+        <strong>Expected result · 404</strong>
+        <button class="danger" id="fail-request" type="button">Send failing request</button>
+      </div>
+      <p id="result" class="result" aria-live="polite">Ready to run the intentional failure.</p>
+      <nav class="demo-links" aria-label="Other trace demos">
+        <a href="index.html">Return to the successful-request demo</a>
+      </nav>
+    </main>
+    <script src="failure.js"></script>
+  </body>
+</html>

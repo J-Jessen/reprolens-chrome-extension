@@ -4,29 +4,21 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Behaviour Tracer demo target</title>
-    <style>
-      :root { color-scheme: dark; font-family: Inter, system-ui, sans-serif; background: #0e1015; color: #f5f7fb; }
-      body { min-height: 100vh; margin: 0; display: grid; place-items: center; background: radial-gradient(circle at 40% 30%, #24224c, transparent 40%), #0e1015; }
-      main { width: min(520px, calc(100% - 40px)); padding: 34px; border: 1px solid #333748; border-radius: 22px; background: rgba(22,24,32,.9); box-shadow: 0 25px 80px #0008; }
-      .eyebrow { color: #9488ff; font-size: 11px; font-weight: 800; letter-spacing: .14em; }
-      h1 { margin: 8px 0 4px; font-size: 32px; }
-      p { color: #9ca3b6; }
-      .row { display: flex; justify-content: space-between; align-items: center; margin-top: 28px; padding-top: 22px; border-top: 1px solid #313440; }
-      button { border: 0; border-radius: 10px; padding: 12px 16px; background: #7868ff; color: white; font: inherit; font-weight: 750; cursor: pointer; }
-      button:hover { background: #897cff; }
-      #result { margin-top: 18px; min-height: 22px; color: #4bd49b; }
-    </style>
+    <link rel="stylesheet" href="demo.css">
   </head>
   <body>
     <main>
       <div class="eyebrow">TRACE TARGET</div>
       <h1>Demo checkout</h1>
-      <p>The button triggers JavaScript, a fetch request, and a DOM update.</p>
+      <p class="lede">The button triggers JavaScript, a successful fetch request, and a DOM update.</p>
       <div class="row">
         <strong>Total · €24</strong>
         <button id="checkout">Complete order</button>
       </div>
-      <div id="result" aria-live="polite"></div>
+      <p id="result" class="result success" aria-live="polite"></p>
+      <nav class="demo-links" aria-label="Other trace demos">
+        <a href="failure.html">Open the failed-request demo</a>
+      </nav>
     </main>
     <script src="demo.js"></script>
   </body>

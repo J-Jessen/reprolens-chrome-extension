@@ -271,7 +271,7 @@ async function main() {
     const cases = [
       ["react-timer", "/demo-react/index.html", "button", 3500],
       ["native-success", "/demo/index.html", "#checkout"],
-      ["fetch-failure", "/demo-corpus/fetch-failure.html", "#run-failure"],
+      ["fetch-failure", "/demo/failure.html", "#fail-request"],
       ["navigation", "/demo-corpus/navigation.html", "#navigate"],
       ["minified-map", "/demo-corpus/minified-map.html", "#mapped-action", 3500],
       ["minified-no-map", "/demo-corpus/minified-no-map.html", "#unmapped-action"],

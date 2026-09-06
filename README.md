@@ -63,6 +63,12 @@ Expected evidence:
 - `GET /order.json?traceDemo=1` and its `200` response;
 - button and result DOM mutations.
 
+### Try an intentional failed request
+
+With the same demo server running, open `http://127.0.0.1:4173/failure.html`. Select **Send failing request**, choose **Record one click**, and click the button again.
+
+The page deliberately requests a missing JSON file. The expected trace includes `GET /missing-order.json?traceDemo=failure`, a `404` response, the handled error message shown on the page, and a contextual explanation that identifies the failed request. This failure is local and does not affect real data.
+
 ## Run the React delegation demo
 
 The second test target uses React 19 with a delegated `onClick`, an authored async handler, a fetch request, and a timer-delayed state update.
