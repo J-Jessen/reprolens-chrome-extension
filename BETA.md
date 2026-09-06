@@ -6,7 +6,7 @@ This plan turns Behaviour Tracer into a small, controlled product test. The exte
 
 Determine whether Behaviour Tracer reliably saves developers time when they need to understand what one browser interaction caused.
 
-The expanded `0.9.0` beta also compares feature-level usefulness. Testers rate the deterministic explanation, technical evidence, React context, Worker/frame context, history comparison, optional local AI, and feedback flow separately so the next roadmap is based on observed value rather than feature count.
+The expanded `0.10.0` beta also compares feature-level usefulness. Testers rate the deterministic explanation, technical evidence, React context, Worker/frame context, history comparison, multi-step recording, safe bug report, GitHub draft, Playwright output, optional local AI, and feedback flow separately so the next roadmap is based on observed value rather than feature count.
 
 The beta is successful when all of these are true:
 

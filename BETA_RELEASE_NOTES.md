@@ -1,10 +1,10 @@
-# Behaviour Tracer v0.9.0-beta.3
+# Behaviour Tracer v0.10.0-beta.1
 
 This private beta tests which parts of a more complete, local-first behaviour trace are most useful on real local and staging applications.
 
 ## Install and test
 
-1. The owner downloads `behaviour-tracer-v0.9.0-beta.3.zip` from **Assets** below. Do not use GitHub's source-code archives.
+1. The owner downloads `behaviour-tracer-v0.10.0-beta.1.zip` from **Assets** below. Do not use GitHub's source-code archives.
 2. The owner sends the ZIP directly to each selected tester through a private, access-controlled channel.
 3. The tester begins with `START_HER.md` inside the ZIP and returns completed forms through the same private channel.
 
@@ -12,6 +12,10 @@ Testers do not need or receive GitHub repository access.
 
 ## Changes in this build
 
+- Records a complete user journey of up to 30 supported interactions for up to two minutes on one approved website.
+- Turns completed evidence into a locally redacted Markdown/JSON bug report with reproduction steps and expected/actual behaviour.
+- Opens a reviewable GitHub issue draft without requesting or storing a GitHub token; the extension never submits the issue.
+- Generates a Playwright test skeleton with captured selectors, non-production placeholders for private values, and a visible-result assertion when the trace supports one.
 - Records click/tap, keyboard, input-change, form-submit, and drop interactions with automatic detection by default; field, key, and drop payload values are not captured.
 - Explains HTTP errors, browser transport failures, CORS blocks, cancellations, and common JavaScript error types with a concrete first check.
 - Shows a privacy-safe React component path, prop names/types, and state shape without capturing values.

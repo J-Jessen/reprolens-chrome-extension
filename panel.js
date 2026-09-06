@@ -5,9 +5,13 @@ let currentHistory = [];
 const comparisonSelection = new Set();
 let renameHistoryId = null;
 let aiAbortController = null;
+let currentBugArtifact = null;
+let lastReportTraceId = null;
 
 const pickButton = document.getElementById("pick");
 const recordButton = document.getElementById("record");
+const recordJourneyButton = document.getElementById("record-journey");
+const stopJourneyButton = document.getElementById("stop-journey");
 const interactionType = document.getElementById("interaction-type");
 const copyButton = document.getElementById("copy");
 const previewButton = document.getElementById("preview");
@@ -65,6 +69,28 @@ const feedbackForm = document.getElementById("feedback-form");
 const downloadFeedbackButton = document.getElementById("download-feedback");
 const clearFeedbackButton = document.getElementById("clear-feedback");
 const feedbackStatus = document.getElementById("feedback-status");
+const journeyCard = document.getElementById("journey-card");
+const journeySteps = document.getElementById("journey-steps");
+const bugReportForm = document.getElementById("bug-report-form");
+const reportTitle = document.getElementById("report-title");
+const reportExpected = document.getElementById("report-expected");
+const reportActual = document.getElementById("report-actual");
+const reportNotes = document.getElementById("report-notes");
+const reportActions = document.getElementById("report-actions");
+const reportSafety = document.getElementById("report-safety");
+const reportStatus = document.getElementById("report-status");
+const downloadReportButton = document.getElementById("download-report");
+const downloadReportJsonButton = document.getElementById("download-report-json");
+const downloadPlaywrightButton = document.getElementById("download-playwright");
+const copyPlaywrightButton = document.getElementById("copy-playwright");
+const githubForm = document.getElementById("github-form");
+const githubRepository = document.getElementById("github-repository");
+const reportDialog = document.getElementById("report-dialog");
+const closeReportPreviewButton = document.getElementById("close-report-preview");
+const reportRedactionSummary = document.getElementById("report-redaction-summary");
+const reportPreviewCode = document.getElementById("report-preview-code");
+const copyReportButton = document.getElementById("copy-report");
+const confirmDownloadReportButton = document.getElementById("confirm-download-report");
 const renameDialog = document.getElementById("rename-dialog");
 const renameForm = document.getElementById("rename-form");
 const renameInput = document.getElementById("rename-input");
@@ -127,11 +153,45 @@ function statusText(state) {
     attaching: "Connecting to Chrome debugger…",
     armed: "Armed — perform the selected interaction on the page",
     recording: "Recording for 3.5 seconds…",
+    "multi-recording": `${state.multiSteps?.length || 0} journey step${state.multiSteps?.length === 1 ? "" : "s"} recorded — continue on the page or stop here`,
     processing: "Building trace…",
     complete: "Trace complete — explanation ready",
     error: state.error || "Trace failed"
   };
   return labels[state.status] || state.status;
+}
+
+function reportFormInput() {
+  return {
+    title: reportTitle.value,
+    expected: reportExpected.value,
+    actual: reportActual.value,
+    notes: reportNotes.value
+  };
+}
+
+function renderJourney(state) {
+  const steps = Array.isArray(state.multiSteps) ? state.multiSteps : [];
+  journeyCard.classList.toggle("hidden", !steps.length);
+  if (!steps.length) {
+    journeySteps.replaceChildren();
+    return;
+  }
+  const safeSteps = TraceCore.buildBugReport(state).report.stepsToReproduce;
+  journeySteps.replaceChildren(...safeSteps.map((step) => element("li", { text: step.instruction })));
+}
+
+function prepareReportForm(state) {
+  if (lastReportTraceId === state.traceId) return;
+  const explanation = TraceCore.explain(state);
+  reportTitle.value = explanation.headline.slice(0, 120);
+  reportExpected.value = "";
+  reportActual.value = explanation.headline.slice(0, 1600);
+  reportNotes.value = "";
+  reportActions.classList.add("hidden");
+  reportStatus.textContent = "";
+  currentBugArtifact = null;
+  lastReportTraceId = state.traceId;
 }
 
 function renderTimeline(events) {
@@ -231,10 +291,14 @@ function render(state, force = false) {
     ? `${selectedElement.selector}${selectedElement.text ? ` · ${selectedElement.text.slice(0, 70)}` : ""}`
     : "No element selected";
   selection.classList.toggle("muted", !selectedElement);
-  recordButton.disabled = !selectedElement || ["attaching", "armed", "recording", "processing"].includes(state.status);
-  pickButton.disabled = ["attaching", "armed", "recording", "processing"].includes(state.status);
-  interactionType.disabled = ["attaching", "armed", "recording", "processing"].includes(state.status);
-  setStatus(statusText(state), ["armed", "recording"].includes(state.status));
+  const busy = ["attaching", "armed", "recording", "multi-recording", "processing"].includes(state.status);
+  recordButton.disabled = !selectedElement || busy;
+  recordJourneyButton.disabled = busy;
+  stopJourneyButton.classList.toggle("hidden", state.status !== "multi-recording");
+  stopJourneyButton.disabled = state.status !== "multi-recording";
+  pickButton.disabled = busy;
+  interactionType.disabled = busy;
+  setStatus(statusText(state), ["armed", "recording", "multi-recording"].includes(state.status));
 
   const events = state.timeline?.length ? state.timeline : [];
   if (state.status !== "complete" || !events.length) {
@@ -247,6 +311,8 @@ function render(state, force = false) {
   empty.hidden = true;
   result.classList.remove("hidden");
   feedbackCard.classList.remove("hidden");
+  renderJourney(state);
+  prepareReportForm(state);
   renderExplanation(state);
   renderFrameworkContext(state);
   technicalCount.textContent = `${events.length} event${events.length === 1 ? "" : "s"}`;
@@ -525,6 +591,165 @@ recordButton.addEventListener("click", async () => {
   }
 });
 
+recordJourneyButton.addEventListener("click", async () => {
+  recordJourneyButton.disabled = true;
+  try {
+    await ensureSiteAccess();
+    const response = await chrome.runtime.sendMessage({ type: "START_MULTI_TRACE", tabId: activeTabId });
+    if (!response?.ok) throw new Error(response?.error || "Could not start the journey recording.");
+    render(response.state);
+  } catch (error) {
+    setStatus(errorMessage(error, "Could not start the journey recording."));
+    recordJourneyButton.disabled = false;
+  }
+});
+
+stopJourneyButton.addEventListener("click", async () => {
+  stopJourneyButton.disabled = true;
+  try {
+    let pendingMutations = [];
+    try {
+      const contentResponse = await chrome.tabs.sendMessage(activeTabId, { type: "STOP_MULTI_RECORDING" });
+      pendingMutations = contentResponse?.mutations || [];
+    } catch (_) {
+      // A navigation can replace the content script immediately before the user stops.
+    }
+    const response = await chrome.runtime.sendMessage({
+      type: "STOP_MULTI_TRACE",
+      tabId: activeTabId,
+      mutations: pendingMutations
+    });
+    if (!response?.ok) throw new Error(response?.error || "Could not finish the journey recording.");
+    render(response.state);
+  } catch (error) {
+    setStatus(errorMessage(error, "Could not finish the journey recording."));
+    stopJourneyButton.disabled = false;
+  }
+});
+
+function downloadText(filename, text, mimeType) {
+  const blob = new Blob([text], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
+function reportFilename(extension) {
+  const title = (currentBugArtifact?.report?.title || "behaviour-tracer-bug-report")
+    .toLocaleLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 60) || "behaviour-tracer-bug-report";
+  return `${title}.${extension}`;
+}
+
+function buildCurrentBugArtifact() {
+  if (!currentState) throw new Error("Complete a trace before building a report.");
+  currentBugArtifact = TraceCore.buildBugReport(currentState, reportFormInput());
+  return currentBugArtifact;
+}
+
+function showBugReportPreview(artifact) {
+  reportPreviewCode.textContent = artifact.markdown;
+  reportRedactionSummary.textContent = artifact.totalRedactions
+    ? `${artifact.totalRedactions} potentially sensitive value(s) were redacted. Review the full report before sharing.`
+    : "No known sensitive patterns were found. Review the full report before sharing.";
+  reportDialog.showModal();
+}
+
+bugReportForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  if (!bugReportForm.reportValidity()) return;
+  try {
+    const artifact = buildCurrentBugArtifact();
+    reportActions.classList.remove("hidden");
+    reportSafety.textContent = artifact.totalRedactions
+      ? `${artifact.totalRedactions} potentially sensitive value(s) were removed locally. Nothing has been uploaded.`
+      : "Safety check complete. Nothing has been uploaded. Review the report before sharing.";
+    reportStatus.textContent = "Report ready for review, GitHub, or Playwright export.";
+    showBugReportPreview(artifact);
+  } catch (error) {
+    reportStatus.textContent = errorMessage(error, "Could not build the bug report.");
+  }
+});
+
+bugReportForm.addEventListener("input", () => {
+  if (!currentBugArtifact) return;
+  currentBugArtifact = null;
+  reportActions.classList.add("hidden");
+  reportStatus.textContent = "Report details changed. Build and review the safety-checked report again before sharing.";
+});
+
+closeReportPreviewButton.addEventListener("click", () => reportDialog.close());
+
+copyReportButton.addEventListener("click", async () => {
+  try {
+    const artifact = currentBugArtifact || buildCurrentBugArtifact();
+    await navigator.clipboard.writeText(artifact.markdown);
+    copyReportButton.textContent = "Copied";
+    setTimeout(() => { copyReportButton.textContent = "Copy Markdown"; }, 1200);
+  } catch (error) {
+    reportStatus.textContent = errorMessage(error, "Could not copy the report.");
+  }
+});
+
+function downloadMarkdownReport() {
+  const artifact = currentBugArtifact || buildCurrentBugArtifact();
+  downloadText(reportFilename("md"), artifact.markdown, "text/markdown;charset=utf-8");
+  reportStatus.textContent = "Safe Markdown report downloaded.";
+}
+
+confirmDownloadReportButton.addEventListener("click", downloadMarkdownReport);
+downloadReportButton.addEventListener("click", downloadMarkdownReport);
+
+downloadReportJsonButton.addEventListener("click", () => {
+  const artifact = currentBugArtifact || buildCurrentBugArtifact();
+  downloadText(reportFilename("json"), `${JSON.stringify(artifact.report, null, 2)}\n`, "application/json");
+  reportStatus.textContent = "Safe JSON report downloaded.";
+});
+
+function currentPlaywrightTest() {
+  if (!currentState) throw new Error("Complete a trace before generating a test.");
+  return TraceCore.buildPlaywrightTest(currentState, reportFormInput());
+}
+
+downloadPlaywrightButton.addEventListener("click", () => {
+  downloadText(reportFilename("spec.js"), currentPlaywrightTest(), "text/javascript;charset=utf-8");
+  reportStatus.textContent = "Playwright test downloaded. Replace any TODO placeholders with non-production test data.";
+});
+
+copyPlaywrightButton.addEventListener("click", async () => {
+  try {
+    await navigator.clipboard.writeText(currentPlaywrightTest());
+    copyPlaywrightButton.textContent = "Copied";
+    setTimeout(() => { copyPlaywrightButton.textContent = "Copy Playwright test"; }, 1200);
+  } catch (error) {
+    reportStatus.textContent = errorMessage(error, "Could not copy the Playwright test.");
+  }
+});
+
+githubForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (!githubForm.reportValidity()) return;
+  try {
+    const artifact = currentBugArtifact || buildCurrentBugArtifact();
+    const draft = TraceCore.buildGitHubIssueUrl(githubRepository.value, artifact.report);
+    await chrome.storage.local.set({ githubRepository: draft.repository });
+    await chrome.tabs.create({ url: draft.url, active: false });
+    reportStatus.textContent = draft.truncated
+      ? "GitHub draft opened in a background tab. Its body was shortened; attach the downloaded report for complete evidence."
+      : "GitHub draft opened in a background tab. Review it there before submitting.";
+  } catch (error) {
+    githubRepository.setCustomValidity(errorMessage(error, "Enter a valid GitHub repository."));
+    githubRepository.reportValidity();
+  }
+});
+
+githubRepository.addEventListener("input", () => githubRepository.setCustomValidity(""));
+
 copyButton.addEventListener("click", async () => {
   if (!currentState) return;
   try {
@@ -748,4 +973,12 @@ chrome.runtime.onMessage.addListener((message) => {
 });
 
 chrome.tabs.onActivated.addListener(() => refresh());
+void (async () => {
+  try {
+    const preferences = await chrome.storage.local.get({ githubRepository: "" });
+    githubRepository.value = preferences.githubRepository || "";
+  } catch (_) {
+    // Repository convenience is optional; report generation remains available.
+  }
+})();
 void refresh();

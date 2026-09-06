@@ -1,6 +1,6 @@
 # Validation corpus
 
-The corpus contains 31 distinct interaction shapes. A case passes only when every evaluator check succeeds; the product threshold is at least 80% useful traces across 20 or more interactions.
+The corpus contains 31 distinct interaction shapes plus one end-to-end multi-step product workflow. A trace case passes only when every evaluator check succeeds; the product threshold is at least 80% useful traces across 20 or more interactions.
 
 | ID | Scenario | Status |
 |---|---|---|
@@ -46,9 +46,12 @@ The runner starts its own fixture server and headless Chrome, loads the unpacked
 
 GitHub Actions runs the same end-to-end corpus on every push and pull request, so no manual browser work is required.
 
+Before the individual corpus cases, the runner also records the three-step local checkout demo and verifies: ordered reproduction steps, the expected 404 evidence, redaction of entered values and named credentials, safe report preview, accessible report dialog, valid review-first GitHub draft URL, and generated Playwright code with privacy placeholders.
+
 ## Automated result
 
 - Executed: 31 interactions
 - Passed: 31
 - Useful-trace rate: 100%
+- Multi-step product workflow: PASS (3 steps)
 - Decision: the predefined minimum sample and useful-trace threshold are satisfied.

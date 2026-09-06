@@ -1,10 +1,11 @@
 {
   "manifest_version": 3,
   "name": "Behaviour Tracer Beta",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "minimum_chrome_version": "118",
-  "description": "BETA: Trace one page interaction and get a diagnostic explanation, framework context, and optional local AI review.",
+  "description": "BETA: Record browser behaviour, create a safe bug report, open a GitHub issue, and generate a Playwright test.",
   "permissions": [
+    "alarms",
     "debugger",
     "scripting",
     "sidePanel",

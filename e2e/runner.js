@@ -242,6 +242,88 @@ async function runTrace({ page, worker, controller, baseUrl, pathname, selector,
   return state;
 }
 
+async function runMultiStepJourney({ page, worker, controller, baseUrl }) {
+  await page.goto(`${baseUrl}/demo/multi-step.html`, { waitUntil: "domcontentloaded" });
+  const tabId = await worker.evaluate(async (url) => {
+    const tabs = await chrome.tabs.query({ url });
+    return tabs[0]?.id;
+  }, page.url());
+  if (!tabId) throw new Error("Could not find the multi-step demo tab");
+  await worker.evaluate(async (id) => {
+    await chrome.scripting.insertCSS({ target: { tabId: id }, files: ["content.css"] });
+    await chrome.scripting.executeScript({ target: { tabId: id }, files: ["content.js"] });
+  }, tabId);
+  const started = await extensionMessage(controller, { type: "START_MULTI_TRACE", tabId });
+  if (!started?.ok || started.state?.status !== "multi-recording") {
+    throw new Error(started?.error || "Multi-step recording did not start");
+  }
+
+  await page.click("#open-checkout");
+  await page.type("#test-reference", "private-test-value");
+  await page.click("#submit-order");
+  await page.waitForFunction(() => document.getElementById("status")?.textContent.includes("HTTP 404"));
+  await new Promise((resolve) => setTimeout(resolve, 450));
+
+  const contentResult = await worker.evaluate((id) => chrome.tabs.sendMessage(id, { type: "STOP_MULTI_RECORDING" }), tabId);
+  const stopped = await extensionMessage(controller, {
+    type: "STOP_MULTI_TRACE",
+    tabId,
+    mutations: contentResult?.mutations || []
+  });
+  if (!stopped?.ok) throw new Error(stopped?.error || "Multi-step recording did not stop");
+
+  const deadline = Date.now() + 10000;
+  let state = stopped.state;
+  while (state?.status !== "complete") {
+    if (state?.status === "error") throw new Error(state.error);
+    if (Date.now() >= deadline) throw new Error(`Timed out waiting for multi-step trace (${state?.status})`);
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    state = await extensionMessage(controller, { type: "GET_STATE", tabId });
+  }
+  if ((state.multiSteps || []).length < 3) throw new Error(`Multi-step trace captured only ${state.multiSteps?.length || 0} steps`);
+  if (!(state.timeline || []).some((event) => event.kind === "response" && Number(event.status) === 404)) {
+    throw new Error("Multi-step trace did not capture the expected 404 response");
+  }
+
+  const artifact = TraceCore.buildBugReport(state, {
+    title: "Checkout journey fails",
+    expected: "The test order should complete",
+    actual: "token=private should never appear in the shared report"
+  });
+  if (!artifact.markdown.includes("## Steps to reproduce") || artifact.report.stepsToReproduce.length < 3) {
+    throw new Error("Multi-step bug report did not include reproducible steps");
+  }
+  if (artifact.markdown.includes("token=private") || artifact.markdown.includes("private-test-value")) {
+    throw new Error("Multi-step bug report exposed private test data");
+  }
+  const generatedTest = TraceCore.buildPlaywrightTest(state, { title: "Checkout journey fails" });
+  if (!generatedTest.includes("@playwright/test") || !generatedTest.includes("REPLACE_WITH_TEST_VALUE")) {
+    throw new Error("Playwright regression-test skeleton was incomplete");
+  }
+  const issueDraft = TraceCore.buildGitHubIssueUrl("acme/web-app", artifact.report);
+  if (!issueDraft.url.startsWith("https://github.com/acme/web-app/issues/new?")) {
+    throw new Error("GitHub issue draft URL was invalid");
+  }
+
+  await controller.evaluate((trace) => {
+    render(trace, true);
+    document.getElementById("report-title").value = "Checkout journey fails";
+    document.getElementById("report-expected").value = "The test order should complete";
+    document.getElementById("report-actual").value = "token=private must be redacted";
+    document.getElementById("bug-report-form").requestSubmit();
+  }, state);
+  await controller.waitForSelector("#report-dialog[open]");
+  const preview = await controller.$eval("#report-preview-code", (node) => node.textContent);
+  if (!preview.includes("Checkout journey fails") || preview.includes("token=private")) {
+    throw new Error("Side-panel safe report preview was missing or unredacted");
+  }
+  const reportDialogAccessibility = await new AxePuppeteer(controller).include("#report-dialog").analyze();
+  const blocking = reportDialogAccessibility.violations.filter((violation) => ["serious", "critical"].includes(violation.impact));
+  if (blocking.length) throw new Error(`Report dialog accessibility violations: ${blocking.map((item) => item.id).join(", ")}`);
+  await controller.evaluate(() => document.getElementById("report-dialog").close());
+  return state;
+}
+
 async function main() {
   const server = createFixtureServer();
   const testExtensionRoot = createTestExtensionRoot();
@@ -322,6 +404,13 @@ async function main() {
     }
     await page.setViewport({ width: 1280, height: 800 });
     process.stdout.write("Demo navigation background audit passed\n");
+    const multiStepTrace = await withTimeout(runMultiStepJourney({
+      page,
+      worker,
+      controller,
+      baseUrl: `http://127.0.0.1:${port}`
+    }), CASE_TIMEOUT_MS, "multi-step-journey");
+    process.stdout.write(`PASS multi-step-journey (${multiStepTrace.multiSteps.length} steps)\n`);
     const cases = [
       ["react-timer", "/demo-react/index.html", "button", 3500],
       ["native-success", "/demo/index.html", "#checkout"],

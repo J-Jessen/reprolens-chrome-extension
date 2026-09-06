@@ -138,6 +138,7 @@ header p { margin: 0; color: var(--muted); max-width: 330px; }
   font-size: .6875rem;
   font-weight: 700;
 }
+.step > button { min-block-size: 3rem; }
 
 button {
   appearance: none;
@@ -160,6 +161,9 @@ button.primary:hover:not(:disabled) { background: var(--primary-hover); border-c
 button.quiet { min-height: auto; padding: 5px 8px; background: transparent; font-size: .6875rem; color: var(--muted); }
 button.danger-outline { border-color: var(--red); background: var(--problem-bg); color: var(--red); }
 button.danger-outline:hover:not(:disabled) { border-color: var(--red); background: var(--problem-bg); }
+.journey-choice { display: grid; gap: .5rem; margin-block: 1rem .5rem; padding-block-start: 1rem; border-block-start: 1px solid var(--line); }
+.journey-choice button { min-block-size: 3rem; text-align: center; }
+.control-help { margin: .5rem 0 .75rem 2.125rem; color: var(--muted); font-size: .6875rem; }
 
 :where(input:not([type="checkbox"], [type="radio"]), select, textarea) {
   inline-size: 100%;
@@ -211,8 +215,20 @@ label, legend { color: var(--explanatory); font-size: .75rem; font-weight: 650; 
 
 .result { display: grid; gap: .75rem; margin-top: 18px; }
 [hidden] { display: none !important; }
-.hidden { display: none; }
+.hidden { display: none !important; }
 .explanation { padding: 1rem; }
+.journey, .bug-report { padding: 1rem; }
+.journey h2, .bug-report h2 { margin-block-start: .25rem; font-size: 1.0625rem; }
+.journey ol { display: grid; gap: .5rem; margin: .875rem 0 0; padding-inline-start: 1.5rem; }
+.journey li { padding-inline-start: .25rem; color: var(--summary-text); overflow-wrap: anywhere; }
+.form-intro { margin: .5rem 0 1rem; color: var(--muted); font-size: .8125rem; }
+.bug-report form { display: grid; gap: .5rem; }
+.field-help { margin: -.25rem 0 .25rem; color: var(--muted); font-size: .6875rem; }
+.bug-report form > button { margin-block-start: .25rem; text-align: center; }
+.report-actions { display: grid; gap: .875rem; margin-block-start: 1rem; padding-block-start: 1rem; border-block-start: 1px solid var(--line); }
+.artifact-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; }
+.artifact-actions button { min-block-size: 3rem; text-align: center; }
+.safety-notice { margin: 0; padding: .75rem; border: 1px solid var(--control-line); border-radius: .625rem; background: var(--selection-bg); color: var(--explanatory); font-size: .75rem; }
 .explanation h2 { margin-block-start: .25rem; font-size: 1.125rem; }
 .explanation-headline { margin: .75rem 0 .25rem; color: var(--event-title); font-size: 1rem; font-weight: 750; line-height: 1.35; overflow-wrap: anywhere; text-wrap: balance; }
 .explanation-overview { max-inline-size: 65ch; margin: 0; color: var(--muted); font-size: .8125rem; overflow-wrap: anywhere; text-wrap: pretty; }
@@ -325,7 +341,7 @@ dialog::backdrop { background: rgba(0, 0, 0, .72); }
 .dialog-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .dialog-heading h2 { margin-top: 5px; }
 #redaction-report { color: var(--amber); font-size: .6875rem; }
-#export-preview { max-height: 52vh; overflow: auto; padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--code-bg); color: var(--code-text); font: .625rem/1.45 ui-monospace, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
+#export-preview, #report-preview { max-height: 52vh; overflow: auto; padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--code-bg); color: var(--code-text); font: .625rem/1.45 ui-monospace, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
 #download { width: 100%; text-align: center; }
 .export-tools .export-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr)); gap: .5rem; }
 .export-tools button { text-align: center; }
@@ -384,6 +400,8 @@ dialog::backdrop { background: rgba(0, 0, 0, .72); }
 @media (max-width: 28rem) {
   main { padding-inline: .75rem; }
   .interaction-option, .selection, .status, .permission-note { margin-inline-start: 0; }
+  .control-help { margin-inline-start: 0; }
+  .artifact-actions { grid-template-columns: 1fr; }
   .framework-context dl, .comparison dl { grid-template-columns: 1fr; }
   .framework-context dd, .comparison dd { margin-block-end: .375rem; }
 }

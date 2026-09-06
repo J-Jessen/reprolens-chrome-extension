@@ -6,14 +6,19 @@
   const BADGE_ID = "__behaviour_tracer_badge";
   let picking = false;
   let armed = false;
+  let multiRecording = false;
+  let nextMultiStepId = 1;
+  let activeMultiStepId = null;
   let hovered = null;
   let selected = null;
   let mutations = [];
   let observer = null;
+  let mutationFlushTimer = null;
   let badgeTimer = null;
   let captureMs = 3000;
   let interactionMode = "auto";
   const INTERACTION_EVENTS = ["click", "keydown", "change", "submit", "drop"];
+  const MULTI_STEP_LIMIT = 30;
 
   function cssEscape(value) {
     if (window.CSS?.escape) return window.CSS.escape(value);
@@ -175,6 +180,7 @@
           const targetText = (target.innerText || target.textContent || "").trim().replace(/\s+/g, " ").slice(0, 100);
           grouped.set(key, {
             at,
+            stepId: activeMultiStepId,
             summary: record.type === "attributes"
               ? `Attribute “${record.attributeName}” changed`
               : record.type === "characterData"
@@ -187,6 +193,7 @@
         }
       }
       mutations.push(...grouped.values());
+      if (multiRecording) scheduleMutationFlush();
     });
     observer.observe(document.documentElement, {
       subtree: true,
@@ -194,6 +201,24 @@
       attributes: true,
       characterData: true
     });
+  }
+
+  function flushMutationBatch() {
+    if (mutationFlushTimer) {
+      clearTimeout(mutationFlushTimer);
+      mutationFlushTimer = null;
+    }
+    if (!mutations.length) return [];
+    const batch = mutations.splice(0, 500);
+    void sendRuntimeMessage({ type: "DOM_MUTATIONS", mutations: batch });
+    return batch;
+  }
+
+  function scheduleMutationFlush() {
+    if (mutationFlushTimer) clearTimeout(mutationFlushTimer);
+    mutationFlushTimer = setTimeout(function __behaviourTracerFlushMutations() {
+      flushMutationBatch();
+    }, 300);
   }
 
   function interactionTarget(event) {
@@ -225,10 +250,42 @@
     return { key: namedKeys.has(event.key) ? (event.key === " " ? "Space" : event.key) : "Character key" };
   }
 
+  function isSubmitControl(target) {
+    if (!(target instanceof Element)) return false;
+    const control = target.closest("button, input");
+    if (!control) return false;
+    if (control instanceof HTMLButtonElement) return (control.getAttribute("type") || "submit").toLowerCase() === "submit";
+    return control instanceof HTMLInputElement && ["submit", "image"].includes(control.type);
+  }
+
   function __behaviourTracerOnInteraction(event) {
     const target = interactionTarget(event);
-    if (!armed || isOwnElement(target) || !interactionModeMatches(event) || !selectedInteraction(event, target)) return;
+    const singleMatch = armed && interactionModeMatches(event) && selectedInteraction(event, target);
+    if ((!singleMatch && !multiRecording) || isOwnElement(target)) return;
     if (event.type === "keydown" && ["Shift", "Control", "Alt", "Meta", "CapsLock"].includes(event.key)) return;
+    if (multiRecording) {
+      if (event.type === "keydown" && interactionMetadata(event)?.key === "Character key") return;
+      if (event.type === "click" && isSubmitControl(target)) return;
+      if (nextMultiStepId > MULTI_STEP_LIMIT) {
+        showBadge("30-step safety limit reached — stop the journey in the side panel");
+        return;
+      }
+      const stepId = nextMultiStepId++;
+      activeMultiStepId = stepId;
+      showBadge(stepId === MULTI_STEP_LIMIT
+        ? "30-step safety limit reached — stop the journey in the side panel"
+        : `Recording journey · ${stepId} step${stepId === 1 ? "" : "s"}`);
+      void sendRuntimeMessage({
+        type: "MULTI_INTERACTION",
+        stepId,
+        at: Date.now(),
+        eventType: event.type,
+        element: describe(target),
+        metadata: interactionMetadata(event),
+        pageUrl: location.href
+      });
+      return;
+    }
     armed = false;
     const element = describe(target);
     startMutationCapture();
@@ -268,6 +325,7 @@
     } else if (message.type === "ARM_INTERACTION") {
       picking = false;
       armed = true;
+      multiRecording = false;
       captureMs = Math.max(300, Number(message.captureMs) || 3000);
       interactionMode = ["auto", "click", "keyboard", "change", "submit", "drop"].includes(message.interactionMode)
         ? message.interactionMode
@@ -275,7 +333,30 @@
       hideOverlay();
       showBadge(`Recording armed — perform ${interactionMode === "auto" ? "the selected interaction" : `a ${interactionMode} interaction`}`);
       sendResponse({ ok: true });
+    } else if (message.type === "START_MULTI_RECORDING") {
+      picking = false;
+      armed = false;
+      multiRecording = true;
+      nextMultiStepId = Math.max(1, Number(message.nextStepId) || 1);
+      activeMultiStepId = nextMultiStepId - 1 || null;
+      hideOverlay();
+      startMutationCapture();
+      showBadge(`Recording journey · ${nextMultiStepId - 1} steps`);
+      sendResponse({ ok: true });
+    } else if (message.type === "STOP_MULTI_RECORDING") {
+      multiRecording = false;
+      observer?.disconnect();
+      if (mutationFlushTimer) clearTimeout(mutationFlushTimer);
+      mutationFlushTimer = null;
+      const pendingMutations = mutations.splice(0, 500);
+      showBadge("Journey captured — building bug report");
+      __behaviourTracerHideBadge(1800);
+      sendResponse({ ok: true, mutations: pendingMutations });
     }
     return false;
+  });
+
+  window.addEventListener("pagehide", () => {
+    if (multiRecording) flushMutationBatch();
   });
 })();

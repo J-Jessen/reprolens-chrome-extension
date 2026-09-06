@@ -26,6 +26,10 @@ Rate each area from 1 (not useful) to 5 (very useful), or write “not available
 - React component shape:
 - Worker/iframe context:
 - Trace history, search, and comparison:
+- Multi-step journey recording:
+- Safe bug-report preview and download:
+- GitHub issue draft:
+- Generated Playwright test:
 - Optional on-device AI explanation:
 - In-product feedback flow:
 

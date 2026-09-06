@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Multi-step failure | Behaviour Tracer</title>
+    <link rel="stylesheet" href="demo.css">
+  </head>
+  <body>
+    <main class="demo-shell">
+      <section class="demo-card" aria-labelledby="demo-title">
+        <p class="demo-label">EXPECTED MULTI-STEP FAILURE</p>
+        <h1 id="demo-title">Checkout journey demo</h1>
+        <p>Record this full journey to create a bug report and Playwright test. No real order or data is used.</p>
+        <ol>
+          <li>Choose <strong>Open checkout</strong>.</li>
+          <li>Enter any test text and leave the field.</li>
+          <li>Choose <strong>Submit test order</strong>.</li>
+        </ol>
+        <div class="demo-divider"></div>
+        <button id="open-checkout" type="button">Open checkout</button>
+        <form id="checkout-form" class="hidden" action="" method="post">
+          <label for="test-reference">Test reference</label>
+          <input id="test-reference" name="test-reference" autocomplete="off" placeholder="Use non-production test text">
+          <button id="submit-order" type="submit">Submit test order</button>
+        </form>
+        <p id="status" class="demo-status" role="status" aria-live="polite">Ready to start the journey.</p>
+        <div class="demo-divider"></div>
+        <nav class="demo-links" aria-label="Demo pages">
+          <a href="index.html">Successful request demo</a>
+          <a href="failure.html">Single failed request demo</a>
+        </nav>
+      </section>
+    </main>
+    <script src="multi-step.js"></script>
+  </body>
+</html>

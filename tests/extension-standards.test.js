@@ -10,7 +10,7 @@ const manifest = JSON.parse(read("manifest.json"));
 test("manifest follows the extension's Chrome 118+ permission policy", () => {
   assert.equal(manifest.manifest_version, 3);
   assert.ok(Number.parseInt(manifest.minimum_chrome_version, 10) >= 118);
-  assert.deepEqual(manifest.permissions.sort(), ["debugger", "scripting", "sidePanel", "storage", "tabs"].sort());
+  assert.deepEqual(manifest.permissions.sort(), ["alarms", "debugger", "scripting", "sidePanel", "storage", "tabs"].sort());
   assert.deepEqual(manifest.optional_host_permissions.sort(), ["http://*/*", "https://*/*"].sort());
   assert.equal(manifest.host_permissions, undefined);
   assert.equal(manifest.content_scripts, undefined);
@@ -42,6 +42,10 @@ test("side panel uses semantic, keyboard-accessible, CSP-safe markup", () => {
   assert.match(panel, /<details\s+id="technical-details"/);
   assert.match(panel, /<details\s+class="history disclosure card"/);
   assert.match(panel, /<ol\s+id="explanation-steps"[^>]*role="list"/);
+  assert.match(panel, /id="record-journey"/);
+  assert.match(panel, /<form\s+id="bug-report-form"/);
+  assert.match(panel, /<form\s+id="github-form"/);
+  assert.match(panel, /id="download-playwright"/);
   assert.match(panel, /<pre\b[^>]*tabindex="0"><code\b/);
   assert.match(panel, /1<[^>]*visually-hidden[^>]*> — Not useful/);
   assert.match(panel, /5<[^>]*visually-hidden[^>]*> — Very useful/);

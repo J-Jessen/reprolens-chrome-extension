@@ -1,12 +1,12 @@
 # Behaviour Tracer
 
-Current build: **0.9.0**
+Current build: **0.10.0**
 
-Private beta: **v0.9.0-beta.3**
+Private beta: **v0.10.0-beta.1**
 
 A local-first Chrome Manifest V3 proof-of-concept for the product hypothesis:
 
-> Select an element → perform one interaction → inspect what happened.
+> Record one interaction or a user journey → understand what happened → create a safe bug report and regression test.
 
 This is a private-beta instrumentation experiment, not yet a production extension. It tests whether a useful trace can be assembled from a selected DOM element, JavaScript event-listener pauses, network traffic, runtime exceptions, navigation, and DOM mutations. It supports desktop Chrome 118 and newer.
 
@@ -36,6 +36,10 @@ This is a private-beta instrumentation experiment, not yet a production extensio
 22. Adds trace naming, search, quality/problem filters, and two-trace comparison to local history.
 23. Offers an optional second opinion from Chrome's on-device Prompt API after showing the exact redacted input; no cloud fallback is used.
 24. Collects per-trace usefulness and clarity feedback locally, redacts common credentials before storage, and exports it only on request.
+25. Records a multi-step journey of up to 30 supported interactions for up to two minutes, including same-origin page navigation, while omitting typed values and payloads.
+26. Builds a locally redacted Markdown/JSON bug report with steps to reproduce, expected result, actual result, browser context, diagnosis, and evidence quality.
+27. Opens a reviewable, prefilled GitHub issue without storing a GitHub token or submitting anything automatically.
+28. Generates a Playwright regression-test skeleton with stable captured selectors, safe placeholders for private input, and a user-visible assertion when evidence supports one.
 
 All trace processing is local. The current build has no backend, analytics, login, or remote AI call. The optional AI feature runs Chrome's local model and remains unavailable when that browser capability or device model is unavailable.
 
@@ -45,7 +49,9 @@ All trace processing is local. The current build has no backend, analytics, logi
 2. Enable **Developer mode**.
 3. Run `npm run build`, then choose **Load unpacked** and select the generated `dist` directory. A GitHub release archive can be extracted and loaded the same way.
 4. Open a normal website and click the extension icon to open its side panel.
-5. Choose **Select element** and approve that website the first time. Previously approved websites do not prompt again.
+5. Choose **Select element for one-step trace** and approve that website the first time. Previously approved websites do not prompt again.
+
+For a complete flow, choose **Record a user journey**, perform the relevant steps on that website, and choose **Stop journey and build report**. Add expected and actual behaviour, review the redacted report, then download it, open a GitHub draft, or download the generated Playwright test.
 
 Chrome will show a debugging banner while a 3.5-second trace is active. This is expected: deep runtime tracing requires the `debugger` permission.
 
@@ -57,7 +63,7 @@ Run this command from the project root:
 python3 -m http.server 4173 --bind 127.0.0.1 --directory demo
 ```
 
-Then open exactly `http://127.0.0.1:4173/`, select **Complete order**, leave interaction detection on **Detect automatically**, choose **Record one interaction**, and click the button again.
+Then open exactly `http://127.0.0.1:4173/`, select **Complete order**, leave interaction detection on **Detect automatically**, choose **Record selected interaction**, and click the button again.
 
 Expected evidence:
 
@@ -69,9 +75,13 @@ Expected evidence:
 
 ### Try an intentional failed request
 
-With the same demo server running, open `http://127.0.0.1:4173/failure.html`. Select **Send failing request**, choose **Record one interaction**, and click the button again.
+With the same demo server running, open `http://127.0.0.1:4173/failure.html`. Select **Send failing request**, choose **Record selected interaction**, and click the button again.
 
 The page deliberately requests a missing JSON file. The expected trace includes `GET /missing-order.json?traceDemo=failure`, a `404` response, the handled error message shown on the page, and a contextual explanation that identifies the failed request. This failure is local and does not affect real data.
+
+### Try the complete report workflow
+
+Open `http://127.0.0.1:4173/multi-step.html`, choose **Record a user journey**, and follow the three instructions on the page. Stop the journey after the expected 404 appears. The result should contain ordered reproduction steps, a detailed failure explanation, a safe bug-report form, GitHub draft action, and Playwright download. Enter only dummy text; the generated report must not include the field value.
 
 ## Run the React delegation demo
 
@@ -133,7 +143,7 @@ The versioned export contract and migration rules are documented in `TRACE_SCHEM
 - A request is “direct” only when its CDP initiator stack matches a captured interaction-handler frame. The primary chain follows explicit parent relationships; timing-only correlations remain visible but are excluded. Time proximity is not proof of causality.
 - Framework event delegation can expose a framework dispatcher rather than the authored handler.
 - Available source maps are fetched and applied locally. Missing, inaccessible, malformed, or unsupported maps fall back to deployed JavaScript locations.
-- Timer capture prefers CDP instrumentation. On Chrome builds without `EventBreakpoints`, the extension temporarily wraps the page's MAIN-world `setTimeout` during the trace and restores it on completion or automatically after 10 seconds.
+- Timer capture prefers CDP instrumentation. On Chrome builds without `EventBreakpoints`, the extension temporarily wraps supported MAIN-world async APIs and restores them on completion or at the trace safety limit (10 seconds for a single trace and about two minutes for a journey).
 - Public state and copied JSON retain function names, deployed locations, source-mapped locations, and async parents, but remove CDP `callFrameId`, scope objects, receiver objects, and return values.
 - Promise continuations, queued microtasks, `setTimeout`, `setInterval`, and `requestAnimationFrame` boundaries are explicit when the browser or trace-scoped fallback exposes them. Worker and WebSocket lifecycle/message direction are captured without content. Worker and cross-origin iframe internals require Chrome's flat debugger-session support; the trace reports partial coverage when unavailable.
 - Same-document History API and fragment navigation are captured through `Page.navigatedWithinDocument` when the connected Chrome build exposes that experimental event.
@@ -141,7 +151,9 @@ The versioned export contract and migration rules are documented in `TRACE_SCHEM
 - Site access is granted to one exact HTTP or HTTPS origin at a time. Cross-origin source maps may remain unavailable until their own host is explicitly supported; tracing does not silently expand access.
 - Opening DevTools on the traced tab detaches `chrome.debugger`.
 - Chrome's on-device Prompt API requires Chrome 148+ on a supported desktop device and may require an initial model download. Chromium-based browsers that do not expose `LanguageModel`, including the current Brave beta-test setup, receive an actionable browser-specific explanation instead. The deterministic explanation always remains available; there is no cloud fallback.
-- The extension declares HTTP and HTTPS hosts as optional and requests only the active website from a direct **Select element** or **Record one interaction** action. Chrome's extension settings can revoke previously granted sites.
+- The extension declares HTTP and HTTPS hosts as optional and requests only the active website from a direct **Select element for one-step trace**, **Record selected interaction**, or **Record a user journey** action. Chrome's extension settings can revoke previously granted sites.
+- Multi-step recording stops when the active tab leaves the website whose origin was granted. Cross-origin journeys must be captured as separate reports.
+- Generated Playwright tests are privacy-safe starting points, not guaranteed final tests. Values and complex drop interactions require explicit non-production fixtures, and TODO comments remain where the trace cannot infer a safe assertion.
 
 ## Go/no-go test
 

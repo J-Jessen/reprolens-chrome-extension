@@ -256,7 +256,7 @@
       report.credentials += 1;
       return "[REDACTED_TOKEN]";
     });
-    redacted = redacted.replace(/(\b(?:api[_-]?key|access[_-]?token|refresh[_-]?token|client[_-]?secret|password|passcode)\b\s*[:=]\s*)("[^"]*"|'[^']*'|[^\s,;&]+)/gi, (match, prefix, credential) => {
+    redacted = redacted.replace(/(\b(?:api[\s_-]?key|token|access[_-]?token|refresh[_-]?token|client[_-]?secret|password|passcode)\b\s*[:=]\s*)("[^"]*"|'[^']*'|[^\s,;&]+)/gi, (match, prefix, credential) => {
       if (/(?:%5B|\[)REDACTED(?:%5D|\])/i.test(credential)) return match;
       report.credentials += 1;
       return `${prefix}[REDACTED]`;
@@ -437,10 +437,21 @@
   }
 
   function buildTimeline(session) {
-    const origin = session.interactionAt || session.startedAt;
+    const recordedSteps = Array.isArray(session.multiSteps) && session.multiSteps.length
+      ? session.multiSteps
+      : [];
+    const origin = recordedSteps[0]?.at || session.interactionAt || session.startedAt;
     const events = [];
-    const afterInteraction = (item) => !session.interactionAt || item.at >= session.interactionAt;
-    const aroundInteraction = (item) => !session.interactionAt || item.at >= session.interactionAt - 100;
+    const firstInteractionAt = recordedSteps[0]?.at || session.interactionAt;
+    const afterInteraction = (item) => !firstInteractionAt || item.at >= firstInteractionAt;
+    const aroundInteraction = (item) => !firstInteractionAt || item.at >= firstInteractionAt - 100;
+    const interactionId = (step) => recordedSteps.length ? `interaction-${step.stepId}` : "interaction";
+    const parentInteractionId = (item) => {
+      if (!recordedSteps.length) return session.interaction ? "interaction" : null;
+      if (item?.stepId != null) return `interaction-${item.stepId}`;
+      const preceding = [...recordedSteps].reverse().find((step) => step.at <= (item?.at || 0));
+      return preceding ? interactionId(preceding) : interactionId(recordedSteps[0]);
+    };
     const handlerFrameKeys = new Set(
       (session.handlers || [])
         .filter(aroundInteraction)
@@ -470,20 +481,22 @@
       return confidenceFor("request", relativeMs(item.at, origin, session.startedAt));
     }
 
-    if (session.interaction) {
-      const component = session.framework?.owner
+    const interactions = recordedSteps.length ? recordedSteps : session.interaction ? [session.interaction] : [];
+    interactions.forEach((step, index) => {
+      const component = !recordedSteps.length && session.framework?.owner
         ? `${session.framework.library || "Framework"} · ${session.framework.owner}`
         : "";
       events.push({
-        id: "interaction",
+        id: interactionId(step),
         kind: "interaction",
-        atMs: 0,
-        title: `${session.interaction.eventType || "click"} ${session.interaction.element?.selector || "element"}`,
-        detail: [session.interaction.element?.text || session.interaction.element?.tagName || "", component].filter(Boolean).join(" · "),
+        stepNumber: recordedSteps.length ? index + 1 : null,
+        atMs: relativeMs(step.at || session.interactionAt, origin, session.startedAt),
+        title: `${step.eventType || "click"} ${step.element?.selector || "element"}`,
+        detail: [step.element?.text || step.element?.tagName || "", component].filter(Boolean).join(" · "),
         confidence: 1,
         confidenceLabel: "direct"
       });
-    }
+    });
 
     const displayedHandlerIdsByKey = new Map();
     (session.handlers || []).filter(aroundInteraction).forEach((handler, index) => {
@@ -504,7 +517,7 @@
         contextType: handler.contextType || "page",
         location: top || null,
         frames,
-        parentId: session.interaction ? "interaction" : null,
+        parentId: parentInteractionId(handler),
         confidence: 1,
         confidenceLabel: "direct"
       });
@@ -572,7 +585,7 @@
             detail: `authored request initiator${locationLabel(authoredFrame) ? ` · ${locationLabel(authoredFrame)}` : ""}`,
             location: authoredFrame,
             frames: initiatorFrames,
-            parentId: session.interaction ? "interaction" : null,
+            parentId: parentInteractionId(item),
             confidence: 0.95,
             confidenceLabel: "direct"
           });
@@ -580,7 +593,7 @@
       }
 
       const requestParentId = item.phase === "request"
-        ? evidence.allInitiatorFrames.map((frame) => displayedHandlerIdsByKey.get(frameKey(frame))).find(Boolean) || null
+        ? evidence.allInitiatorFrames.map((frame) => displayedHandlerIdsByKey.get(frameKey(frame))).find(Boolean) || parentInteractionId(item)
         : null;
 
       events.push({
@@ -794,6 +807,7 @@
 
   function summarize(session) {
     const timeline = buildTimeline(session);
+    const stepCount = Array.isArray(session.multiSteps) ? session.multiSteps.length : 0;
     const element = session.interaction?.element;
     const subject = element?.text
       ? `“${element.text.slice(0, 60)}”`
@@ -809,7 +823,11 @@
     const errors = timeline.filter((event) => event.kind === "exception");
     const authoredHandlers = timeline.filter((event) => event.kind === "handler" && event.origin === "request-initiator");
 
-    const sentences = [`${interactionGerund(session, true)} produced ${timeline.length - 1} observed trace events.`];
+    const interactionCount = stepCount || (session.interaction ? 1 : 0);
+    const observedCount = Math.max(0, timeline.length - interactionCount);
+    const sentences = stepCount
+      ? [`The recorded journey included ${stepCount} interaction${stepCount === 1 ? "" : "s"} and ${observedCount} observed trace event${observedCount === 1 ? "" : "s"}.`]
+      : [`${interactionGerund(session, true)} produced ${observedCount} observed trace events.`];
     if (session.framework?.owner) sentences.push(`The element is owned by ${session.framework.library} component ${session.framework.owner}.`);
     if (handlers.length) sentences.push(`Chrome paused in ${handlers[0].title}.`);
     if (authoredHandlers.length) sentences.push(`The authored request initiator was ${authoredHandlers[0].title}.`);
@@ -1362,13 +1380,243 @@
     return JSON.stringify(input, null, 2);
   }
 
+  function cleanReportText(value, limit = 1200) {
+    return String(value || "").replace(/\r\n?/g, "\n").trim().slice(0, limit);
+  }
+
+  function reportStep(step, index) {
+    const element = step.element || {};
+    const subject = cleanReportText(element.text || element.selector || element.tagName || "the page", 120).replace(/\s+/g, " ");
+    const selector = cleanReportText(element.selector, 240).replace(/\s+/g, " ");
+    const suffix = selector && selector !== subject ? ` (${selector})` : "";
+    const key = step.metadata?.key;
+    const descriptions = {
+      click: `Click “${subject}”${suffix}.`,
+      keydown: key && key !== "Character key"
+        ? `Press ${key} on “${subject}”${suffix}.`
+        : `Use the keyboard on “${subject}”${suffix}. The typed value was intentionally not captured.`,
+      change: `Change “${subject}”${suffix}. The entered value was intentionally not captured.`,
+      submit: `Submit “${subject}”${suffix}.`,
+      drop: `Drop content on “${subject}”${suffix}. The dropped content was intentionally not captured.`
+    };
+    return {
+      number: index + 1,
+      eventType: step.eventType || "interaction",
+      selector,
+      instruction: descriptions[step.eventType] || `Interact with “${subject}”${suffix}.`
+    };
+  }
+
+  function buildBugReport(session, input = {}) {
+    const traceExport = redactForExport(session);
+    const detailExport = redactForExport({
+      reportDetails: {
+        title: cleanReportText(input.title, 120),
+        expected: cleanReportText(input.expected, 1600),
+        actual: cleanReportText(input.actual, 1600),
+        notes: cleanReportText(input.notes, 1600)
+      }
+    });
+    const trace = traceExport.trace || {};
+    const details = detailExport.trace.reportDetails || {};
+    const redactionReport = Object.fromEntries(Object.keys(traceExport.report).map((key) => [
+      key,
+      (traceExport.report[key] || 0) + (detailExport.report[key] || 0)
+    ]));
+    const totalRedactions = traceExport.totalRedactions + detailExport.totalRedactions;
+    const explanation = explain(trace);
+    const rawSteps = Array.isArray(trace.multiSteps) && trace.multiSteps.length
+      ? trace.multiSteps
+      : trace.interaction ? [trace.interaction] : [];
+    const problems = (trace.timeline || [])
+      .filter((event) => event.kind === "exception" || event.kind === "network-failure" || (event.kind === "response" && Number(event.status) >= 400))
+      .slice(0, 8)
+      .map((event) => ({
+        kind: event.kind,
+        title: cleanReportText(event.title, 240),
+        detail: cleanReportText(event.detail, 320),
+        atMs: Number(event.atMs) || 0
+      }));
+    const report = {
+      schemaVersion: 1,
+      title: details.title || cleanReportText(explanation.headline, 120) || "Observed browser behaviour",
+      page: cleanReportText(trace.pageUrl, 1000) || "Unknown page",
+      capturedAt: new Date(trace.startedAt || Date.now()).toISOString(),
+      environment: trace.environment || null,
+      stepsToReproduce: rawSteps.slice(0, 30).map(reportStep),
+      expectedResult: details.expected || "Not specified",
+      actualResult: details.actual || cleanReportText(explanation.headline, 1600) || "See observed evidence below.",
+      reporterNotes: details.notes || "",
+      diagnosis: {
+        headline: cleanReportText(explanation.headline, 600),
+        overview: cleanReportText(explanation.overview, 1600),
+        evidenceNote: cleanReportText(explanation.evidenceNote, 1000)
+      },
+      observedProblems: problems,
+      traceQuality: trace.quality || null,
+      technicalSummary: cleanReportText(trace.summary, 2000),
+      privacy: {
+        redactionsApplied: totalRedactions,
+        notice: "Generated locally. Common secrets, credentials, email addresses, sensitive URL parameters, and DOM values were redacted. Review before sharing."
+      }
+    };
+    return {
+      report,
+      markdown: bugReportMarkdown(report),
+      redactionReport,
+      totalRedactions
+    };
+  }
+
+  function bugReportMarkdown(report) {
+    const safe = (value) => cleanReportText(value, 4000);
+    const lines = [
+      `# ${safe(report.title)}`,
+      "",
+      "## Context",
+      "",
+      `- Page: ${safe(report.page)}`,
+      `- Captured: ${safe(report.capturedAt)}`
+    ];
+    if (report.environment) {
+      const viewport = report.environment.viewport
+        ? `${report.environment.viewport.width}×${report.environment.viewport.height}`
+        : "Unknown";
+      lines.push(`- Browser: ${safe(report.environment.browser || report.environment.userAgent || "Unknown")}`);
+      lines.push(`- Viewport: ${viewport}`);
+    }
+    lines.push("", "## Steps to reproduce", "");
+    if (report.stepsToReproduce.length) {
+      for (const step of report.stepsToReproduce) lines.push(`${step.number}. ${safe(step.instruction)}`);
+    } else {
+      lines.push("1. No interaction steps were captured.");
+    }
+    lines.push(
+      "",
+      "## Expected result",
+      "",
+      safe(report.expectedResult),
+      "",
+      "## Actual result",
+      "",
+      safe(report.actualResult),
+      "",
+      "## Behaviour Tracer diagnosis",
+      "",
+      safe(report.diagnosis.headline),
+      "",
+      safe(report.diagnosis.overview)
+    );
+    if (report.observedProblems.length) {
+      lines.push("", "### Observed problems", "");
+      for (const problem of report.observedProblems) {
+        lines.push(`- **+${problem.atMs}ms · ${safe(problem.kind)}:** ${safe(problem.title)}${problem.detail ? ` — ${safe(problem.detail)}` : ""}`);
+      }
+    }
+    if (report.reporterNotes) lines.push("", "## Reporter notes", "", safe(report.reporterNotes));
+    lines.push(
+      "",
+      "## Evidence quality",
+      "",
+      `- Trace quality: ${report.traceQuality?.score ?? 0}% (${safe(report.traceQuality?.label || "unknown")})`,
+      `- ${safe(report.technicalSummary || "No technical summary available.")}`,
+      "",
+      "---",
+      "",
+      `${safe(report.privacy.notice)} Redactions applied: ${report.privacy.redactionsApplied}.`
+    );
+    return `${lines.join("\n")}\n`;
+  }
+
+  function parseGitHubRepository(value) {
+    const repository = cleanReportText(value, 160).replace(/^https:\/\/github\.com\//i, "").replace(/\/$/, "");
+    if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repository) || repository.split("/").some((part) => part.startsWith(".") || part.endsWith("."))) {
+      return null;
+    }
+    return repository;
+  }
+
+  function buildGitHubIssueUrl(repositoryInput, report) {
+    const repository = parseGitHubRepository(repositoryInput);
+    if (!repository) throw new Error("Use the format owner/repository, for example acme/web-app.");
+    const body = bugReportMarkdown(report);
+    const maxBodyLength = 6500;
+    const truncated = body.length > maxBodyLength;
+    const issueBody = truncated
+      ? `${body.slice(0, maxBodyLength)}\n\n_The report was shortened for the GitHub URL. Attach the downloaded Markdown or JSON report for the complete evidence._\n`
+      : body;
+    return {
+      repository,
+      truncated,
+      url: `https://github.com/${repository}/issues/new?title=${encodeURIComponent(report.title)}&body=${encodeURIComponent(issueBody)}`
+    };
+  }
+
+  function playwrightPageUrl(value) {
+    try {
+      const url = new URL(value);
+      url.hash = "";
+      for (const key of [...url.searchParams.keys()]) {
+        if (/token|key|secret|password|passcode|auth|session|code/i.test(key)) url.searchParams.delete(key);
+      }
+      return url.toString();
+    } catch (_) {
+      return "https://example.test/replace-with-page-url";
+    }
+  }
+
+  function buildPlaywrightTest(session, input = {}) {
+    const { trace } = redactForExport(session);
+    const report = buildBugReport(trace, input).report;
+    const rawSteps = Array.isArray(trace.multiSteps) && trace.multiSteps.length
+      ? trace.multiSteps
+      : trace.interaction ? [trace.interaction] : [];
+    const lines = [
+      'import { test, expect } from "@playwright/test";',
+      "",
+      `test(${JSON.stringify(report.title)}, async ({ page }) => {`,
+      `  await page.goto(${JSON.stringify(playwrightPageUrl(trace.pageUrl))});`
+    ];
+    rawSteps.slice(0, 30).forEach((step, index) => {
+      const selector = step.element?.selector || "REPLACE_WITH_SELECTOR";
+      const locator = `page.locator(${JSON.stringify(selector)})`;
+      const instruction = reportStep(step, index).instruction.replace(/[\r\n]+/g, " ");
+      lines.push("", `  // Step ${index + 1}: ${instruction}`);
+      if (step.eventType === "click") {
+        lines.push(`  await ${locator}.click();`);
+      } else if (step.eventType === "keydown" && step.metadata?.key && step.metadata.key !== "Character key") {
+        lines.push(`  await ${locator}.press(${JSON.stringify(step.metadata.key)});`);
+      } else if (step.eventType === "change") {
+        lines.push(`  await ${locator}.fill("REPLACE_WITH_TEST_VALUE");`);
+      } else if (step.eventType === "submit") {
+        lines.push(`  await ${locator}.click();`);
+      } else {
+        lines.push("  // TODO: Recreate this privacy-sensitive interaction with non-production test data.");
+      }
+    });
+    const finalTextMutation = [...(trace.mutations || [])].reverse().find((mutation) => /Text changed to “.+”/.test(mutation.summary || ""));
+    const expectedText = finalTextMutation?.summary?.match(/Text changed to “(.+)”/)?.[1];
+    lines.push("");
+    if (expectedText && finalTextMutation.target) {
+      lines.push(`  await expect(page.locator(${JSON.stringify(finalTextMutation.target)})).toContainText(${JSON.stringify(expectedText)});`);
+    } else if ((report.observedProblems || []).length) {
+      lines.push("  // TODO: Replace with the user-visible result that should confirm the bug is fixed.");
+      lines.push("  await expect(page).toHaveURL(/.*/);");
+    } else {
+      lines.push("  // TODO: Add an assertion for the expected user-visible result.");
+      lines.push("  await expect(page).toHaveURL(/.*/);");
+    }
+    lines.push("});", "");
+    return lines.join("\n");
+  }
+
   function assessQuality(session) {
     const timeline = session.timeline?.length ? session.timeline : buildTimeline(session);
     const observed = timeline.filter((event) => event.kind !== "interaction");
     const requests = timeline.filter((event) => event.kind === "request");
     const responses = timeline.filter((event) => event.kind === "response");
     const checks = [
-      { id: "interaction", passed: Boolean(session.interaction), label: "Interaction captured" },
+      { id: "interaction", passed: Boolean(session.interaction || session.multiSteps?.length), label: "Interaction captured" },
       { id: "handler", passed: timeline.some((event) => event.kind === "handler"), label: "JavaScript handler captured" },
       { id: "effect", passed: observed.some((event) => !["handler"].includes(event.kind)), label: "Observable effect captured" },
       { id: "confidence", passed: observed.some((event) => event.confidence >= 0.7), label: "Strong supporting evidence" }
@@ -1404,6 +1652,10 @@
     assessQuality,
     buildTimeline,
     buildAiInput,
+    buildBugReport,
+    buildGitHubIssueUrl,
+    buildPlaywrightTest,
+    bugReportMarkdown,
     compactFrame,
     confidenceFor,
     confidenceLabel,
@@ -1417,6 +1669,7 @@
     migrateTrace,
     networkScope,
     parseBrowserStack,
+    parseGitHubRepository,
     redactForExport,
     sanitizePublicSession,
     serializedBytes,

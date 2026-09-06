@@ -2,11 +2,11 @@
 
 ## Product boundary
 
-The proof of concept is organized around one claim:
+The product is organized around one claim:
 
-> For one user-started interaction, can the browser automatically assemble a useful, honest behavioural trace?
+> Can the browser turn user-started behaviour into an honest, reproducible bug report and regression-test starting point?
 
-It deliberately excludes authentication, teams, cloud storage, remote AI, integrations, screenshot editing, responsive tools, and general-purpose DevTools features. It retains bounded, user-controlled local trace history, local beta feedback, and an optional on-device AI second opinion.
+It deliberately excludes authentication, teams, cloud storage, remote AI, screenshot editing, and general-purpose DevTools features. GitHub uses a review-first issue-draft URL rather than OAuth or stored tokens. It retains bounded, user-controlled local trace history, local beta feedback, and an optional on-device AI second opinion.
 
 ## Runtime components
 
@@ -15,6 +15,7 @@ Website
   └─ content.js + content.css (injected on demand after an optional per-origin grant)
      ├─ element picker
      ├─ click, keyboard, change, submit, and drop interaction marker
+     ├─ bounded multi-step journey recorder
      └─ MutationObserver
             │ runtime messages
             ▼
@@ -45,6 +46,9 @@ panel.html / panel.js
   ├─ progressively disclosed technical trace and framework shape
   ├─ searchable, comparable local history
   ├─ reviewed JSON and Markdown export
+  ├─ locally redacted bug-report builder
+  ├─ review-first GitHub issue draft
+  ├─ Playwright test generator with privacy placeholders
   ├─ optional reviewed-input on-device AI explanation
   └─ local, exportable beta feedback
 ```
@@ -52,13 +56,15 @@ panel.html / panel.js
 ## Session state machine
 
 ```text
-idle → selected → attaching → armed → recording → processing → complete
+single: idle → selected → attaching → armed → recording → processing → complete
+multi:  idle → attaching → multi-recording → processing → complete
                          └──────────────────────────────→ error
 ```
 
 - `selected`: picker has returned stable element metadata.
 - `armed`: debugger is attached and the selected interaction listener breakpoint is active.
 - `recording`: the content script observed the next matching interaction; the 3.5-second window is running.
+- `multi-recording`: the content script records up to 30 supported interaction summaries for up to two minutes on the granted website.
 - `processing`: debugger detaches and evidence is normalized.
 - `complete`: immutable timeline is ready for display/export.
 

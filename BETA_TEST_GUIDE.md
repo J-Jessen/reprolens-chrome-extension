@@ -14,7 +14,7 @@ Stop testing and contact the owner privately if the browser behaves abnormally o
 
 ## Install the beta
 
-1. Save the `behaviour-tracer-v0.9.0-beta.3.zip` file supplied directly by the owner.
+1. Save the `behaviour-tracer-v0.10.0-beta.1.zip` file supplied directly by the owner.
 2. Extract the ZIP into a folder you will keep for the duration of the beta.
 3. Confirm that the folder contains `manifest.json`, `START_HER.md`, and this guide.
 4. Open `chrome://extensions` in Chrome.
@@ -26,15 +26,15 @@ Behaviour Tracer requires desktop Chrome 118 or newer.
 
 Chrome shows a debugging banner during a 3.5-second trace. This is expected. The debugger detaches automatically when the trace ends.
 
-When you choose **Select element** on a website for the first time, Chrome asks for access to that website. Approve only the test website. Previously approved websites do not prompt again, and access can be revoked in Chrome's extension settings.
+When you choose **Select element for one-step trace** or **Record a user journey** on a website for the first time, Chrome asks for access to that website. Approve only the test website. Previously approved websites do not prompt again, and access can be revoked in Chrome's extension settings.
 
 ## Part A: first trace
 
 1. Open a local or staging page with a button or link that has a visible result.
 2. Open Behaviour Tracer from the toolbar.
-3. Choose **Select element** and approve access to this website if Chrome asks.
+3. Choose **Select element for one-step trace** and approve access to this website if Chrome asks.
 4. Move over the page and click the chosen element.
-5. Leave **Detect automatically** selected and choose **Record one interaction**.
+5. Leave **Detect automatically** selected and choose **Record selected interaction**.
 6. Perform the same interaction once.
 7. Wait for the trace to complete.
 8. Read **What happened** without opening **Technical trace**. In one sentence, write what you believe the interaction did.
@@ -83,6 +83,20 @@ Verify these once:
 - save a usefulness and clarity rating in the in-product feedback card, then download the local feedback file and verify no private input is present;
 - delete one history item;
 - reload the extension and confirm the approved test site still works.
+
+## Part D: complete bug-report workflow
+
+Run one safe journey with at least three steps:
+
+1. Choose **Record a user journey** before the first step.
+2. Perform the steps that lead to a visible success or failure on the same approved website.
+3. Choose **Stop journey and build report**. Confirm the reproduction steps are in the correct order and no typed value appears.
+4. Add an issue title plus expected and actual results, then choose **Build and review safe report**.
+5. Read the entire preview. Confirm private-looking URL parameters, email addresses, and named credentials are removed; do not continue if anything sensitive remains.
+6. Download the Markdown report and Playwright test. Confirm the test uses `REPLACE_WITH_TEST_VALUE` or a TODO where private input was omitted.
+7. If you have a disposable test repository, enter `owner/repository` and open the GitHub draft. Confirm it opens in a new background tab and is not submitted automatically. Close the draft without submitting if you do not want to create an issue.
+
+Note whether the generated report saved meaningful time, whether the steps were reproducible, and how much editing the Playwright test needed before it could run.
 
 ## Report a defect
 

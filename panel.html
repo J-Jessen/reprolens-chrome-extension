@@ -11,14 +11,14 @@
       <header>
         <p class="eyebrow">BEHAVIOUR TRACER · PRIVATE BETA</p>
         <h1>See what happened.</h1>
-        <p>Select an element, perform one interaction, and start with a plain-language explanation.</p>
+        <p>Trace one interaction or record a complete user journey, then turn the evidence into a safe bug report and test.</p>
       </header>
 
       <section class="controls card">
         <h2 class="visually-hidden">Trace controls</h2>
         <div class="step">
           <span aria-hidden="true">1</span>
-          <button id="pick" type="button">Select element</button>
+          <button id="pick" type="button">Select element for one-step trace</button>
         </div>
         <div id="selection" class="selection muted">No element selected</div>
         <div class="interaction-option">
@@ -34,8 +34,14 @@
         </div>
         <div class="step">
           <span aria-hidden="true">2</span>
-          <button id="record" class="primary" type="button" disabled>Record one interaction</button>
+          <button id="record" type="button" disabled>Record selected interaction</button>
         </div>
+        <div class="journey-choice">
+          <p class="section-label">Or capture a complete flow</p>
+          <button id="record-journey" class="primary" type="button">Record a user journey</button>
+          <button id="stop-journey" class="danger-outline hidden" type="button">Stop journey and build report</button>
+        </div>
+        <p class="control-help">A journey records up to 30 supported interactions for two minutes. Typed values, form contents, and network bodies are not captured.</p>
         <p id="status" class="status" role="status" aria-atomic="true">Ready</p>
         <details class="permission-note">
           <summary>Why Chrome asks for site access and shows a debugging banner</summary>
@@ -44,6 +50,12 @@
       </section>
 
       <section id="result" class="result hidden">
+        <section id="journey-card" class="journey card hidden" aria-labelledby="journey-title">
+          <p class="section-label">Recorded journey</p>
+          <h2 id="journey-title">Steps to reproduce</h2>
+          <ol id="journey-steps"></ol>
+        </section>
+
         <section class="explanation card" aria-labelledby="explanation-title">
           <p class="section-label">Plain-language explanation</p>
           <h2 id="explanation-title">What happened</h2>
@@ -51,6 +63,45 @@
           <p id="explanation-overview" class="explanation-overview"></p>
           <ol id="explanation-steps" class="explanation-steps" role="list"></ol>
           <p id="evidence-note" class="evidence-note"></p>
+        </section>
+
+        <section id="bug-report-card" class="bug-report card" aria-labelledby="bug-report-title">
+          <p class="section-label">Shareable bug report</p>
+          <h2 id="bug-report-title">Turn this trace into a reproducible issue</h2>
+          <p class="form-intro">Add the product context that browser evidence cannot know. Every field is redacted locally before preview or sharing.</p>
+          <form id="bug-report-form" action="" method="post">
+            <label for="report-title">Issue title</label>
+            <input id="report-title" name="title" required maxlength="120" aria-describedby="report-title-help">
+            <p id="report-title-help" class="field-help">Keep it specific: action, page, and visible problem.</p>
+
+            <label for="report-expected">Expected result</label>
+            <textarea id="report-expected" name="expected" maxlength="1600" rows="3" placeholder="What should have happened?"></textarea>
+
+            <label for="report-actual">Actual result</label>
+            <textarea id="report-actual" name="actual" maxlength="1600" rows="3" placeholder="What did you see instead?"></textarea>
+
+            <label for="report-notes">Optional context</label>
+            <textarea id="report-notes" name="notes" maxlength="1600" rows="2" placeholder="Frequency, account type, recent change, or other useful context"></textarea>
+
+            <button class="primary" type="submit">Build and review safe report</button>
+          </form>
+
+          <div id="report-actions" class="report-actions hidden">
+            <p id="report-safety" class="safety-notice" role="status" aria-atomic="true"></p>
+            <div class="artifact-actions">
+              <button id="download-report" type="button">Download Markdown report</button>
+              <button id="download-report-json" type="button">Download report JSON</button>
+              <button id="download-playwright" type="button">Download Playwright test</button>
+              <button id="copy-playwright" type="button">Copy Playwright test</button>
+            </div>
+            <form id="github-form" action="" method="post">
+              <label for="github-repository">GitHub repository</label>
+              <input id="github-repository" name="repository" required maxlength="160" placeholder="owner/repository" autocomplete="off" aria-describedby="github-help">
+              <p id="github-help" class="field-help">Stored only on this device. GitHub opens a draft—you review it before submitting.</p>
+              <button class="primary" type="submit">Open draft GitHub issue</button>
+            </form>
+          </div>
+          <p id="report-status" class="status-inline" role="status" aria-atomic="true"></p>
         </section>
 
         <section id="framework-context" class="framework-context card hidden" aria-labelledby="framework-context-title">
@@ -218,6 +269,10 @@
             <option value="framework">Framework context</option>
             <option value="contexts">Worker and frame context</option>
             <option value="history">History and comparison</option>
+            <option value="journey">Multi-step journey</option>
+            <option value="report">Safe bug report</option>
+            <option value="github">GitHub issue draft</option>
+            <option value="playwright">Playwright test</option>
             <option value="ai">On-device AI explanation</option>
           </select>
           <label for="feedback-comment">Optional note</label>
@@ -255,6 +310,22 @@
             <button class="primary" type="submit">Save name</button>
           </div>
         </form>
+      </dialog>
+
+      <dialog id="report-dialog" aria-labelledby="report-dialog-title">
+        <div class="dialog-heading">
+          <div>
+            <p class="section-label">Safe bug report preview</p>
+            <h2 id="report-dialog-title">Review every detail before sharing</h2>
+          </div>
+          <button id="close-report-preview" class="quiet" type="button">Close</button>
+        </div>
+        <p id="report-redaction-summary" class="safety-notice"></p>
+        <pre id="report-preview" tabindex="0"><code id="report-preview-code"></code></pre>
+        <div class="dialog-actions">
+          <button id="copy-report" type="button">Copy Markdown</button>
+          <button id="confirm-download-report" class="primary" type="button">Download Markdown</button>
+        </div>
       </dialog>
 
       <div id="empty" class="empty">

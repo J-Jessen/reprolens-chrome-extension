@@ -691,3 +691,91 @@ test("builds a compact redacted input for optional on-device AI", () => {
   assert.doesNotMatch(input, /private|user@example\.com/);
   assert.doesNotMatch(input, /outerHTML|<button/);
 });
+
+test("builds a redacted multi-step bug report with reproducible steps", () => {
+  const session = {
+    schemaVersion: 2,
+    status: "complete",
+    traceId: "journey-1",
+    startedAt: 1000,
+    pageUrl: "https://app.example/checkout?token=private",
+    environment: { browser: "Test Browser", viewport: { width: 1280, height: 800 } },
+    multiSteps: [
+      { stepId: 1, at: 1010, eventType: "click", element: { selector: "#cart", text: "Open cart" } },
+      { stepId: 2, at: 1200, eventType: "change", element: { selector: "#email", text: "user@example.com" } },
+      { stepId: 3, at: 1400, eventType: "click", element: { selector: "#pay", text: "Pay" } }
+    ],
+    interaction: { eventType: "click", element: { selector: "#pay", text: "Pay" } },
+    timeline: [
+      { id: "interaction-1", kind: "interaction", title: "click #cart", confidence: 1, primaryChain: true },
+      { id: "failure", kind: "response", title: "500 https://app.example/pay", detail: "same-origin", status: 500, atMs: 420 }
+    ],
+    handlers: [], network: [], asyncEvents: [], mutations: [], exceptions: [], logs: [], navigations: [],
+    summary: "A payment request returned 500.",
+    quality: { score: 75, label: "partial" }
+  };
+  const artifact = TraceCore.buildBugReport(session, {
+    title: "Checkout failed for user@example.com",
+    expected: "Order should complete with token=secret",
+    actual: "API key: ghp_abcdefghijklmnopqrstuvwxyz123456"
+  });
+  assert.equal(artifact.report.stepsToReproduce.length, 3);
+  assert.match(artifact.report.stepsToReproduce[1].instruction, /entered value was intentionally not captured/);
+  assert.match(artifact.markdown, /## Steps to reproduce/);
+  assert.match(artifact.markdown, /500/);
+  assert.ok(artifact.totalRedactions >= 3);
+  assert.doesNotMatch(JSON.stringify(artifact), /user@example\.com|token=secret|ghp_abcdefghijklmnopqrstuvwxyz123456|token=private/);
+});
+
+test("creates a review-first GitHub issue URL without credentials", () => {
+  const artifact = TraceCore.buildBugReport({
+    schemaVersion: 2,
+    status: "complete",
+    pageUrl: "https://app.example/",
+    interaction: { eventType: "click", element: { selector: "#save", text: "Save" } },
+    timeline: [{ id: "interaction", kind: "interaction", title: "click #save", confidence: 1 }],
+    handlers: [], network: [], asyncEvents: [], mutations: [], exceptions: [], logs: [], navigations: []
+  }, { title: "Save does not complete" });
+  const issue = TraceCore.buildGitHubIssueUrl("acme/web-app", artifact.report);
+  assert.match(issue.url, /^https:\/\/github\.com\/acme\/web-app\/issues\/new\?/);
+  assert.match(decodeURIComponent(issue.url), /Save does not complete/);
+  assert.equal(TraceCore.parseGitHubRepository("https://github.com/acme/web-app/"), "acme/web-app");
+  assert.equal(TraceCore.parseGitHubRepository("acme"), null);
+});
+
+test("generates a Playwright test with privacy placeholders", () => {
+  const generated = TraceCore.buildPlaywrightTest({
+    schemaVersion: 2,
+    status: "complete",
+    pageUrl: "https://app.example/checkout?token=secret&view=cart",
+    multiSteps: [
+      { stepId: 1, at: 1000, eventType: "click", element: { selector: "#cart", text: "Cart" } },
+      { stepId: 2, at: 1100, eventType: "change", element: { selector: "#email", text: "Email" } },
+      { stepId: 3, at: 1200, eventType: "keydown", metadata: { key: "Enter" }, element: { selector: "#search", text: "Search" } }
+    ],
+    interaction: { eventType: "keydown", metadata: { key: "Enter" }, element: { selector: "#search", text: "Search" } },
+    timeline: [], handlers: [], network: [], asyncEvents: [],
+    mutations: [{ at: 1300, target: "#status", summary: "Text changed to “Order ready”" }],
+    exceptions: [], logs: [], navigations: []
+  }, { title: "Checkout journey" });
+  assert.match(generated, /from "@playwright\/test"/);
+  assert.match(generated, /locator\("#cart"\)\.click/);
+  assert.match(generated, /REPLACE_WITH_TEST_VALUE/);
+  assert.match(generated, /locator\("#search"\)\.press\("Enter"\)/);
+  assert.match(generated, /toContainText\("Order ready"\)/);
+  assert.doesNotMatch(generated, /token=secret/);
+});
+
+test("anchors multi-step timeline evidence to the latest preceding interaction", () => {
+  const timeline = TraceCore.buildTimeline({
+    startedAt: 1000,
+    multiSteps: [
+      { stepId: 1, at: 1010, eventType: "click", element: { selector: "#first" } },
+      { stepId: 2, at: 1210, eventType: "click", element: { selector: "#second" } }
+    ],
+    handlers: [{ at: 1220, stepId: 2, callFrames: [{ functionName: "save", url: "https://app.example/app.js", lineNumber: 2, columnNumber: 1 }] }],
+    network: [], asyncEvents: [], mutations: [], exceptions: [], logs: [], navigations: []
+  });
+  assert.equal(timeline.filter((event) => event.kind === "interaction").length, 2);
+  assert.equal(timeline.find((event) => event.kind === "handler").parentId, "interaction-2");
+});

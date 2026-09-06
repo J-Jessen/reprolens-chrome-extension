@@ -78,6 +78,24 @@ button:disabled { cursor: wait; opacity: .7; }
 button.danger { background: #c33c4d; }
 button.danger:hover:not(:disabled) { background: #d24b5b; }
 
+.hidden { display: none; }
+.demo-label { color: #a99fff; font-size: .6875rem; font-weight: 800; letter-spacing: .14em; }
+.demo-divider { margin-block: 1.25rem; border-block-start: 1px solid #414654; }
+.demo-status { min-block-size: 1.5rem; color: #c5cad7; font-weight: 650; }
+#checkout-form { display: grid; gap: .625rem; margin-block-start: 1rem; }
+#checkout-form.hidden { display: none; }
+#checkout-form input {
+  min-block-size: 2.75rem;
+  padding: .75rem;
+  border: 1px solid #596074;
+  border-radius: .625rem;
+  background: #11131a;
+  color: #f5f7fb;
+  font: inherit;
+}
+#checkout-form input:focus-visible { outline: 3px solid #c7c1ff; outline-offset: 2px; }
+.demo-links { display: flex; flex-wrap: wrap; gap: .75rem 1rem; }
+
 :where(button, a):focus-visible {
   outline: 3px solid #c7c1ff;
   outline-offset: 3px;

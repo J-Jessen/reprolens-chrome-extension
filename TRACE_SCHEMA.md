@@ -11,7 +11,7 @@ Required fields:
 - `status`: must be `complete` for import or export.
 - `timeline`: ordered event array.
 
-The envelope may also contain page and selected-element metadata, interaction type and privacy-safe key metadata, framework ownership and structural context, related execution contexts, quality diagnostics, source-map results, and privacy-safe raw observations.
+The envelope may also contain page and selected-element metadata, interaction type and privacy-safe key metadata, framework ownership and structural context, related execution contexts, quality diagnostics, source-map results, and privacy-safe raw observations. Multi-step traces use `mode: "multi"` and a `multiSteps` array with ordered `stepId`, timestamp, event type, element summary, optional named control key, and same-origin page URL. Typed values and payloads are never part of a step.
 
 ## Timeline event
 
@@ -30,6 +30,10 @@ Every event includes:
 - `privacyClassification`: the category of retained information.
 
 Related-target events may include `contextId` and `contextType` (`page`, `worker`, `shared_worker`, or `iframe`). These identify where metadata was observed; they do not contain Worker message data, iframe DOM, request/response bodies, or runtime scope values.
+
+For a multi-step trace, each interaction is a root timeline event named `interaction-{stepId}`. Evidence with a captured `stepId` is linked to that interaction; otherwise it is assigned to the latest preceding step and retains its normal evidence label.
+
+Bug-report JSON is a separate schema (`schemaVersion: 1`) derived from a completed trace after local redaction. It contains reproduction steps, expected/actual results, environment, diagnosis, observed problems, evidence quality, and a privacy notice. Generated Playwright files and GitHub draft URLs are outputs, not trace-schema fields.
 
 ## Compatibility
 

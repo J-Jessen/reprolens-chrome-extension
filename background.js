@@ -2,6 +2,9 @@ importScripts("trace-core.js", "vendor/trace-mapping.js", "source-map.js", "fram
 
 const sessions = new Map();
 const TRACE_WINDOW_MS = 3500;
+const MULTI_TRACE_WINDOW_MS = 120000;
+const MULTI_STEP_LIMIT = 30;
+const TRACE_ALARM_PREFIX = "behaviour-trace:";
 const TIMER_STORE_KEY = "__behaviourTracerAsyncStore_v020";
 const HISTORY_LIMIT = 25;
 const HISTORY_BYTE_LIMIT = 5_000_000;
@@ -32,6 +35,10 @@ function blankSession(tabId) {
     startedAt: null,
     interactionAt: null,
     interaction: null,
+    mode: "single",
+    multiSteps: [],
+    activeStepId: null,
+    environment: null,
     handlers: [],
     asyncEvents: [],
     workerEvents: [],
@@ -82,12 +89,10 @@ async function visibleSession(tabId) {
 
 async function publishState(session) {
   const state = publicSession(session);
-  if (["idle", "selected", "complete", "error"].includes(state.status)) {
-    try {
-      await chrome.storage.session.set({ [sessionStorageKey(session.tabId)]: state });
-    } catch (_) {
-      // A transient storage failure must not interrupt an active debugger session.
-    }
+  try {
+    await chrome.storage.session.set({ [sessionStorageKey(session.tabId)]: state });
+  } catch (_) {
+    // A transient storage failure must not interrupt an active debugger session.
   }
   try {
     await chrome.runtime.sendMessage({ type: "TRACE_STATE", state });
@@ -124,8 +129,8 @@ function command(target, method, params = {}) {
   return chrome.debugger.sendCommand(debuggee, method, params);
 }
 
-function installTimerHookExpression(captureTimers = true) {
-  function __behaviourTracerInstallTimerHook(captureTimers) {
+function installTimerHookExpression(captureTimers = true, restoreAfterMs = 10000) {
+  function __behaviourTracerInstallTimerHook(captureTimers, restoreAfterMs) {
     const key = "__behaviourTracerAsyncStore_v020";
     const existing = window[key];
     if (existing?.installed) {
@@ -253,11 +258,11 @@ function installTimerHookExpression(captureTimers = true) {
       if (window.Promise?.prototype?.then === __behaviourTracerPromiseThen) window.Promise.prototype.then = store.native.promiseThen;
       for (const restore of store.workerRestores) restore();
       delete window[key];
-    }, 10000]);
+    }, Math.max(10000, Number(restoreAfterMs) || 10000)]);
     return { installed: true, reused: false };
   }
 
-  return `(${__behaviourTracerInstallTimerHook.toString()})(${JSON.stringify(captureTimers)})`;
+  return `(${__behaviourTracerInstallTimerHook.toString()})(${JSON.stringify(captureTimers)}, ${JSON.stringify(restoreAfterMs)})`;
 }
 
 function collectTimerHookExpression() {
@@ -279,9 +284,9 @@ function collectTimerHookExpression() {
   })()`;
 }
 
-async function installTimerHook(tabId, captureTimers = true) {
+async function installTimerHook(tabId, captureTimers = true, restoreAfterMs = 10000) {
   const response = await command(tabId, "Runtime.evaluate", {
-    expression: installTimerHookExpression(captureTimers),
+    expression: installTimerHookExpression(captureTimers, restoreAfterMs),
     returnByValue: true,
     silent: true
   });
@@ -290,7 +295,7 @@ async function installTimerHook(tabId, captureTimers = true) {
   }
 }
 
-async function configureTimerCapture(tabId) {
+async function configureTimerCapture(tabId, restoreAfterMs = 10000) {
   const failures = [];
   const eventNames = [
     "setTimeout", "setTimeout.callback",
@@ -304,7 +309,7 @@ async function configureTimerCapture(tabId) {
         `${domain}.setInstrumentationBreakpoint`,
         { eventName }
       )));
-      await installTimerHook(tabId, false);
+      await installTimerHook(tabId, false, restoreAfterMs);
       return { mode: "cdp+main-world-hook", domain };
     } catch (error) {
       failures.push(error.message || String(error));
@@ -319,7 +324,7 @@ async function configureTimerCapture(tabId) {
   }
 
   try {
-    await installTimerHook(tabId);
+    await installTimerHook(tabId, true, restoreAfterMs);
     return { mode: "main-world-hook", fallbackReason: failures[0] || "CDP timer instrumentation unavailable" };
   } catch (error) {
     return {
@@ -409,7 +414,7 @@ async function enableRelatedTargets(tabId) {
   }
 }
 
-async function attach(tabId, interactionMode = "auto") {
+async function attach(tabId, interactionMode = "auto", restoreAfterMs = 10000) {
   await chrome.debugger.attach({ tabId }, "1.3");
   await Promise.all([
     command(tabId, "Debugger.enable"),
@@ -429,7 +434,7 @@ async function attach(tabId, interactionMode = "auto") {
     { eventName }
   )));
   const [timerCapture, relatedTargetCapture] = await Promise.all([
-    configureTimerCapture(tabId),
+    configureTimerCapture(tabId, restoreAfterMs),
     enableRelatedTargets(tabId)
   ]);
   return { ...timerCapture, relatedTargetCapture };
@@ -446,6 +451,24 @@ async function inspectFramework(tabId, selector) {
   return response?.result?.value || null;
 }
 
+async function captureEnvironment(tabId) {
+  try {
+    const [result] = await chrome.scripting.executeScript({
+      target: { tabId },
+      func: () => ({
+        browser: navigator.userAgentData?.brands?.map((brand) => `${brand.brand} ${brand.version}`).join(", ") || navigator.userAgent,
+        platform: navigator.userAgentData?.platform || navigator.platform || "Unknown",
+        language: navigator.language || "Unknown",
+        viewport: { width: window.innerWidth, height: window.innerHeight },
+        devicePixelRatio: window.devicePixelRatio || 1
+      })
+    });
+    return result?.result || null;
+  } catch (_) {
+    return null;
+  }
+}
+
 async function detach(tabId) {
   try {
     await chrome.debugger.detach({ tabId });
@@ -456,11 +479,12 @@ async function detach(tabId) {
 
 async function startTrace(tabId, traceWindowMs = TRACE_WINDOW_MS, interactionMode = "auto") {
   const previous = sessions.get(tabId) || (await storedSession(tabId)) || blankSession(tabId);
-  if (previous.status === "recording" || previous.status === "armed") {
+  if (["attaching", "armed", "recording", "multi-recording", "processing"].includes(previous.status)) {
     throw new Error("A trace is already running in this tab.");
   }
 
   const session = blankSession(tabId);
+  session.mode = "single";
   session.traceWindowMs = Math.max(500, Math.min(Number(traceWindowMs) || TRACE_WINDOW_MS, TRACE_WINDOW_MS));
   session.interactionMode = ["auto", "click", "keyboard", "change", "submit", "drop"].includes(interactionMode)
     ? interactionMode
@@ -469,6 +493,7 @@ async function startTrace(tabId, traceWindowMs = TRACE_WINDOW_MS, interactionMod
   session.status = "attaching";
   session.startedAt = Date.now();
   session.pageUrl = (await chrome.tabs.get(tabId)).url || "";
+  session.environment = await captureEnvironment(tabId);
   sessions.set(tabId, session);
   publish(session);
 
@@ -501,11 +526,54 @@ async function startTrace(tabId, traceWindowMs = TRACE_WINDOW_MS, interactionMod
   }
 }
 
+async function startMultiTrace(tabId) {
+  const previous = sessions.get(tabId) || (await storedSession(tabId)) || blankSession(tabId);
+  if (["attaching", "armed", "recording", "multi-recording", "processing"].includes(previous.status)) {
+    throw new Error("A trace is already running in this tab.");
+  }
+
+  const tab = await chrome.tabs.get(tabId);
+  const session = blankSession(tabId);
+  session.mode = "multi";
+  session.status = "attaching";
+  session.startedAt = Date.now();
+  session.pageUrl = tab.url || "";
+  session.environment = await captureEnvironment(tabId);
+  sessions.set(tabId, session);
+  publish(session);
+
+  try {
+    session.timerCapture = await attach(tabId, "auto", MULTI_TRACE_WINDOW_MS + 10000);
+    session.status = "multi-recording";
+    await chrome.tabs.sendMessage(tabId, { type: "START_MULTI_RECORDING", nextStepId: 1 });
+    await chrome.alarms.create(`${TRACE_ALARM_PREFIX}${tabId}`, { when: Date.now() + MULTI_TRACE_WINDOW_MS });
+    publish(session);
+    return publicSession(session);
+  } catch (error) {
+    session.status = "error";
+    session.error = error.message || String(error);
+    await detach(tabId);
+    publish(session);
+    throw error;
+  }
+}
+
 async function finishTrace(tabId) {
-  const session = getSession(tabId);
-  if (!["armed", "recording", "attaching"].includes(session.status)) return;
+  const session = sessions.get(tabId) || (await storedSession(tabId)) || blankSession(tabId);
+  sessions.set(tabId, session);
+  if (!["armed", "recording", "multi-recording", "attaching"].includes(session.status)) return;
+  if (session.mode === "multi" && session.status === "multi-recording") {
+    try {
+      const contentResult = await chrome.tabs.sendMessage(tabId, { type: "STOP_MULTI_RECORDING" });
+      const room = Math.max(0, 1000 - session.mutations.length);
+      if (room && Array.isArray(contentResult?.mutations)) session.mutations.push(...contentResult.mutations.slice(0, room));
+    } catch (_) {
+      // Navigation or tab closure can remove the content script before final collection.
+    }
+  }
   session.status = "processing";
   publish(session);
+  await chrome.alarms.clear(`${TRACE_ALARM_PREFIX}${tabId}`);
   try {
     await collectTimerHookEvents(tabId, session);
   } catch (error) {
@@ -555,6 +623,20 @@ async function handleMessage(message, sender) {
 
   if (message.type === "START_TRACE") {
     return { ok: true, state: await startTrace(tabId, message.traceWindowMs, message.interactionMode) };
+  }
+
+  if (message.type === "START_MULTI_TRACE") {
+    return { ok: true, state: await startMultiTrace(tabId) };
+  }
+
+  if (message.type === "STOP_MULTI_TRACE") {
+    const session = sessions.get(tabId) || (await storedSession(tabId)) || blankSession(tabId);
+    sessions.set(tabId, session);
+    if (Array.isArray(message.mutations) && message.mutations.length) {
+      session.mutations.push(...message.mutations.slice(0, Math.max(0, 1000 - session.mutations.length)));
+    }
+    await finishTrace(tabId);
+    return { ok: true, state: await visibleSession(tabId) };
   }
 
   if (message.type === "CANCEL_TRACE") {
@@ -638,7 +720,7 @@ async function handleMessage(message, sender) {
       traceId: String(input.traceId || "").slice(0, 100),
       rating,
       clarity,
-      mostUseful: ["explanation", "interactions", "technical", "network", "source", "framework", "contexts", "history", "ai"].includes(input.mostUseful)
+      mostUseful: ["explanation", "interactions", "technical", "network", "source", "framework", "contexts", "history", "journey", "report", "github", "playwright", "ai"].includes(input.mostUseful)
         ? input.mostUseful
         : "",
       comment: String(input.comment || "").trim().slice(0, 600),
@@ -671,19 +753,52 @@ async function handleMessage(message, sender) {
     session.status = "recording";
     session.interactionAt = message.at || Date.now();
     session.interaction = {
+      at: session.interactionAt,
       eventType: message.eventType,
       element: message.element,
       metadata: message.metadata || null
     };
     publish(session);
-    setTimeout(() => { void finishTraceSafely(tabId); }, session.traceWindowMs || TRACE_WINDOW_MS);
+    await chrome.alarms.create(`${TRACE_ALARM_PREFIX}${tabId}`, {
+      when: Date.now() + (session.traceWindowMs || TRACE_WINDOW_MS)
+    });
     return { ok: true };
   }
 
+  if (message.type === "MULTI_INTERACTION") {
+    const session = sessions.get(tabId) || (await storedSession(tabId)) || blankSession(tabId);
+    sessions.set(tabId, session);
+    if (session.status !== "multi-recording") return { ok: false, error: "No multi-step recording is active for this tab." };
+    if (session.multiSteps.length >= MULTI_STEP_LIMIT) {
+      return { ok: false, error: `The ${MULTI_STEP_LIMIT}-step safety limit has been reached.` };
+    }
+    const at = message.at || Date.now();
+    const stepId = session.multiSteps.length + 1;
+    const step = {
+      stepId,
+      at,
+      eventType: message.eventType,
+      element: message.element,
+      metadata: message.metadata || null,
+      pageUrl: String(message.pageUrl || session.pageUrl || "").slice(0, 2000)
+    };
+    session.multiSteps.push(step);
+    session.activeStepId = stepId;
+    session.interactionAt ||= at;
+    session.interaction = step;
+    session.selectedElement ||= step.element;
+    if (!session.framework && step.element?.selector) {
+      try { session.framework = await inspectFramework(tabId, step.element.selector); } catch (_) { session.framework = null; }
+    }
+    publish(session);
+    return { ok: true, stepId };
+  }
+
   if (message.type === "DOM_MUTATIONS") {
-    const session = getSession(tabId);
-    if (["recording", "processing"].includes(session.status)) {
-      session.mutations.push(...message.mutations);
+    const session = sessions.get(tabId) || (await storedSession(tabId)) || blankSession(tabId);
+    sessions.set(tabId, session);
+    if (["recording", "multi-recording", "processing"].includes(session.status)) {
+      session.mutations.push(...message.mutations.slice(0, Math.max(0, 1000 - session.mutations.length)));
       publish(session);
     }
     return { ok: true };
@@ -778,8 +893,9 @@ async function initializeRelatedTarget(source, params, session) {
 
 chrome.debugger.onEvent.addListener(async (source, method, params) => {
   const tabId = source.tabId;
-  const session = sessions.get(tabId);
-  if (!session || !["attaching", "armed", "recording", "processing"].includes(session.status)) {
+  const session = sessions.get(tabId) || (await storedSession(tabId));
+  if (session && !sessions.has(tabId)) sessions.set(tabId, session);
+  if (!session || !["attaching", "armed", "recording", "multi-recording", "processing"].includes(session.status)) {
     if (method === "Debugger.paused") {
       try {
         await command(source, "Debugger.resume");
@@ -827,6 +943,7 @@ chrome.debugger.onEvent.addListener(async (source, method, params) => {
       if (frames.length) {
         session.handlers.push({
           at,
+          stepId: session.activeStepId,
           eventName: eventName || "click",
           callFrames: params.callFrames || [],
           contextId: context?.contextId || null,
@@ -847,6 +964,7 @@ chrome.debugger.onEvent.addListener(async (source, method, params) => {
     session.network.push({
       phase: "request",
       at,
+      stepId: session.activeStepId,
       requestId: params.requestId,
       method: params.request?.method,
       url: params.request?.url,
@@ -861,6 +979,7 @@ chrome.debugger.onEvent.addListener(async (source, method, params) => {
     session.network.push({
       phase: "response",
       at,
+      stepId: session.activeStepId,
       requestId: params.requestId,
       status: params.response?.status,
       statusText: params.response?.statusText,
@@ -873,6 +992,7 @@ chrome.debugger.onEvent.addListener(async (source, method, params) => {
     session.network.push({
       phase: "failure",
       at,
+      stepId: session.activeStepId,
       requestId: params.requestId,
       errorText: params.errorText || "Request failed",
       canceled: Boolean(params.canceled),
@@ -881,7 +1001,7 @@ chrome.debugger.onEvent.addListener(async (source, method, params) => {
       contextType: context?.type || "page"
     });
   } else if (method === "Network.webSocketCreated") {
-    session.webSockets.push({ phase: "created", at, requestId: params.requestId, url: params.url });
+    session.webSockets.push({ phase: "created", at, stepId: session.activeStepId, requestId: params.requestId, url: params.url });
   } else if (method === "Network.webSocketHandshakeResponseReceived") {
     session.webSockets.push({ phase: "open", at, requestId: params.requestId, status: params.response?.status });
   } else if (method === "Network.webSocketFrameSent" || method === "Network.webSocketFrameReceived") {
@@ -898,6 +1018,7 @@ chrome.debugger.onEvent.addListener(async (source, method, params) => {
   } else if (method === "Runtime.exceptionThrown") {
     session.exceptions.push({
       at,
+      stepId: session.activeStepId,
       text: params.exceptionDetails?.text,
       url: params.exceptionDetails?.url,
       lineNumber: params.exceptionDetails?.lineNumber,
@@ -908,6 +1029,7 @@ chrome.debugger.onEvent.addListener(async (source, method, params) => {
   } else if (method === "Runtime.consoleAPICalled" && ["error", "warning"].includes(params.type)) {
     session.logs.push({
       at,
+      stepId: session.activeStepId,
       level: params.type,
       text: (params.args || []).map((arg) => arg.value ?? arg.description ?? arg.type).join(" "),
       url: params.stackTrace?.callFrames?.[0]?.url || "",
@@ -917,6 +1039,7 @@ chrome.debugger.onEvent.addListener(async (source, method, params) => {
   } else if (method === "Log.entryAdded" && ["error", "warning"].includes(params.entry?.level)) {
     session.logs.push({
       at,
+      stepId: session.activeStepId,
       level: params.entry.level,
       text: params.entry.text,
       url: params.entry.url || "",
@@ -926,6 +1049,7 @@ chrome.debugger.onEvent.addListener(async (source, method, params) => {
   } else if (method === "Page.frameNavigated") {
     session.navigations.push({
       at,
+      stepId: session.activeStepId,
       url: params.frame?.url,
       name: params.frame?.name,
       frameId: params.frame?.id,
@@ -936,6 +1060,7 @@ chrome.debugger.onEvent.addListener(async (source, method, params) => {
   } else if (method === "Page.navigatedWithinDocument") {
     session.navigations.push({
       at,
+      stepId: session.activeStepId,
       url: params.url,
       name: params.navigationType || "same-document",
       contextId: context?.contextId || null,
@@ -949,7 +1074,8 @@ chrome.debugger.onEvent.addListener(async (source, method, params) => {
 });
 
 chrome.debugger.onDetach.addListener(async (source, reason) => {
-  const session = sessions.get(source.tabId);
+  const session = sessions.get(source.tabId) || (await storedSession(source.tabId));
+  if (session && !sessions.has(source.tabId)) sessions.set(source.tabId, session);
   if (!session || ["complete", "idle", "selected", "processing"].includes(session.status)) return;
   session.status = "processing";
   publish(session);
@@ -967,6 +1093,43 @@ chrome.debugger.onDetach.addListener(async (source, reason) => {
   } catch (_) {
     // The completed trace remains available in session storage and the side panel.
   }
+});
+
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (!alarm.name.startsWith(TRACE_ALARM_PREFIX)) return;
+  const tabId = Number(alarm.name.slice(TRACE_ALARM_PREFIX.length));
+  if (!Number.isInteger(tabId)) return;
+  void finishTraceSafely(tabId);
+});
+
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (changeInfo.status !== "complete") return;
+  void (async () => {
+    const session = sessions.get(tabId) || (await storedSession(tabId));
+    if (!session || session.status !== "multi-recording") return;
+    sessions.set(tabId, session);
+    const currentPattern = TraceCore.siteOriginPattern(tab.url || "");
+    const originalPattern = TraceCore.siteOriginPattern(session.pageUrl || "");
+    if (!currentPattern || currentPattern !== originalPattern) {
+      session.stopReason = "The recording stopped when the tab left the website that had been granted access.";
+      await finishTraceSafely(tabId);
+      return;
+    }
+    const hasAccess = await chrome.permissions.contains({ origins: [currentPattern] });
+    if (!hasAccess) {
+      session.stopReason = "The recording stopped because site access is no longer available.";
+      await finishTraceSafely(tabId);
+      return;
+    }
+    try {
+      await chrome.scripting.insertCSS({ target: { tabId }, files: ["content.css"] });
+      await chrome.scripting.executeScript({ target: { tabId }, files: ["content.js"] });
+      await chrome.tabs.sendMessage(tabId, { type: "START_MULTI_RECORDING", nextStepId: session.multiSteps.length + 1 });
+    } catch (_) {
+      session.stopReason = "The recording stopped because the next page could not be inspected.";
+      await finishTraceSafely(tabId);
+    }
+  })();
 });
 
 chrome.tabs.onRemoved.addListener((tabId) => {
