@@ -570,6 +570,9 @@ async function finishTrace(tabId) {
     } catch (_) {
       // Navigation or tab closure can remove the content script before final collection.
     }
+    if (!session.framework && session.multiSteps[0]?.element?.selector) {
+      try { session.framework = await inspectFramework(tabId, session.multiSteps[0].element.selector); } catch (_) { session.framework = null; }
+    }
   }
   session.status = "processing";
   publish(session);
@@ -787,9 +790,6 @@ async function handleMessage(message, sender) {
     session.interactionAt ||= at;
     session.interaction = step;
     session.selectedElement ||= step.element;
-    if (!session.framework && step.element?.selector) {
-      try { session.framework = await inspectFramework(tabId, step.element.selector); } catch (_) { session.framework = null; }
-    }
     publish(session);
     return { ok: true, stepId };
   }
