@@ -588,6 +588,12 @@
             ? `FAILED ${request?.url || item.url || "request"}`
           : `${item.method || "GET"} ${item.url}`,
         detail: `${scope} · ${item.type || "Network"}${item.errorText ? ` · ${item.errorText}` : ""}${durationMs != null && item.phase !== "request" ? ` · ${durationMs}ms` : ""}${initiatorFrames[0] ? ` · from ${initiatorFrames[0].functionName}()` : ""}${locationLabel(initiatorFrames[0]) ? ` · ${locationLabel(initiatorFrames[0])}` : ""}`,
+        method: request?.method || item.method || "GET",
+        url: request?.url || item.url || "",
+        status: item.phase === "response" ? Number(item.status) || 0 : null,
+        statusText: item.phase === "response" ? item.statusText || "" : "",
+        errorText: item.phase === "failure" ? item.errorText || "Request failed" : "",
+        canceled: item.phase === "failure" ? Boolean(item.canceled) : false,
         networkScope: scope,
         durationMs: item.phase === "request" ? null : durationMs,
         parentId: item.phase !== "request" ? requestEventIdById.get(item.requestId) || null : requestParentId,
@@ -836,7 +842,95 @@
   }
 
   function requestUrl(event) {
-    return String(event?.title || "").replace(/^\S+\s+/, "");
+    return event?.url || String(event?.title || "").replace(/^\S+\s+/, "");
+  }
+
+  function requestMethod(event) {
+    return event?.method || String(event?.title || "").match(/^([A-Z]+)\s+/)?.[1] || "GET";
+  }
+
+  function responseStatus(event) {
+    const explicit = Number(event?.status);
+    if (explicit) return explicit;
+    return Number.parseInt(event?.title, 10) || 0;
+  }
+
+  function standardStatusText(status) {
+    return ({
+      400: "Bad Request",
+      401: "Unauthorized",
+      403: "Forbidden",
+      404: "Not Found",
+      408: "Request Timeout",
+      409: "Conflict",
+      422: "Unprocessable Content",
+      429: "Too Many Requests",
+      500: "Internal Server Error",
+      502: "Bad Gateway",
+      503: "Service Unavailable",
+      504: "Gateway Timeout"
+    })[status] || "";
+  }
+
+  function lowerInitial(value) {
+    const text = String(value || "");
+    return text ? `${text[0].toLowerCase()}${text.slice(1)}` : text;
+  }
+
+  function networkProblemDiagnosis({ request, outcome, pageUrl }) {
+    const method = requestMethod(request);
+    const destination = conciseUrl(requestUrl(request), pageUrl) || "the requested address";
+    const status = outcome?.kind === "response" ? responseStatus(outcome) : 0;
+    const statusText = standardStatusText(status) || outcome?.statusText || "";
+    const statusLabel = [status, statusText].filter(Boolean).join(" ");
+    const httpDiagnoses = {
+      400: ["The server rejected the request because it considered the request invalid.", "Check the request parameters, headers, and body against the endpoint contract."],
+      401: ["The server requires valid authentication for this request.", "Check that the user is signed in and that the request sends the expected authentication credentials."],
+      403: ["The server understood the request but refused access.", "Check the current user's permissions and the server's access rules for this endpoint."],
+      404: ["The server could not find a resource at that address.", "Check that the request URL is correct and that the backend route or file is available in this environment."],
+      408: ["The server stopped waiting before the request completed.", "Check for a slow request body, network delay, or a server timeout that is set too low."],
+      409: ["The request conflicts with the resource's current state.", "Check for stale data, duplicate operations, or a required version value."],
+      422: ["The server understood the request but could not accept its submitted values.", "Check the submitted fields and show the server's validation message if one is available."],
+      429: ["The server rejected the request because too many requests were sent.", "Check the rate limit and add retry or backoff handling where appropriate."],
+      500: ["Server-side code failed while processing the request.", "Check the server logs for this endpoint and reproduce the request with the same input."],
+      502: ["A gateway received an invalid response from an upstream service.", "Check the upstream service and the gateway or proxy logs."],
+      503: ["The service is temporarily unavailable.", "Check service health, deployment status, and whether retry handling is needed."],
+      504: ["A gateway timed out while waiting for an upstream service.", "Check the upstream service's response time and the gateway timeout configuration."]
+    };
+
+    if (status) {
+      const fallback = status >= 500
+        ? ["The server failed while processing the request.", "Check the server logs for this endpoint and reproduce the same request."]
+        : ["The server rejected the request.", "Check the endpoint contract, request values, authentication, and server logs."];
+      const [meaning, check] = httpDiagnoses[status] || fallback;
+      return {
+        title: `${method} ${destination} returned ${statusLabel}`,
+        meaning,
+        check
+      };
+    }
+
+    const errorText = String(outcome?.errorText || outcome?.detail || "Request failed");
+    const code = errorText.match(/(?:net::)?(ERR_[A-Z_]+)/)?.[1] || "";
+    const transportDiagnoses = {
+      ERR_ABORTED: ["The request was cancelled before a response arrived.", "Check whether navigation, an AbortController, or page code cancelled the request."],
+      ERR_BLOCKED_BY_CLIENT: ["The browser or an installed extension blocked the request.", "Check content blockers, privacy tools, and browser request-blocking rules."],
+      ERR_CERT_AUTHORITY_INVALID: ["The browser did not trust the server's security certificate.", "Check the certificate issuer, hostname, and local development certificate setup."],
+      ERR_CERT_COMMON_NAME_INVALID: ["The server certificate does not match the requested hostname.", "Check the certificate's hostnames and the request URL."],
+      ERR_CONNECTION_REFUSED: ["No server accepted the connection at that address.", "Check that the backend is running and that the host and port are correct."],
+      ERR_CONNECTION_TIMED_OUT: ["The browser could not establish a connection before timing out.", "Check network access, firewall rules, the host, and the port."],
+      ERR_INTERNET_DISCONNECTED: ["The browser had no network connection.", "Restore the network connection and retry the request."],
+      ERR_NAME_NOT_RESOLVED: ["The browser could not resolve the server's hostname.", "Check the hostname, DNS configuration, and local hosts file."],
+      ERR_TIMED_OUT: ["The request did not complete before the browser timed out.", "Check network latency and whether the server is responding."],
+      ERR_FAILED: ["The browser could not complete the request.", "Check the related console message for CORS, certificate, network, or browser-blocking details."]
+    };
+    const [meaning, check] = transportDiagnoses[code]
+      || ["The request ended before the server returned an HTTP response.", "Check the network error, endpoint address, browser console, and server availability."];
+    return {
+      title: `${method} ${destination} did not receive a response${code ? ` (${code})` : ""}`,
+      meaning: outcome?.canceled && code !== "ERR_ABORTED" ? "The request was cancelled before a response arrived." : meaning,
+      check
+    };
   }
 
   function visibleMutation(event) {
@@ -879,9 +973,20 @@
     const navigations = timeline.filter((event) => event.kind === "navigation");
     const errors = timeline.filter((event) => event.kind === "exception");
     const requestDestination = requests.length ? conciseUrl(requestUrl(requests[0]), session.pageUrl) : "";
-    const successfulResponses = responses.filter((event) => Number.parseInt(event.title, 10) < 400).length;
-    const failedResponses = responses.filter((event) => Number.parseInt(event.title, 10) >= 400).length;
+    const successfulResponses = responses.filter((event) => {
+      const status = responseStatus(event);
+      return status > 0 && status < 400;
+    }).length;
+    const failedResponse = responses.find((event) => responseStatus(event) >= 400);
+    const failedResponses = responses.filter((event) => responseStatus(event) >= 400).length;
     const hasNetworkProblem = failures.length > 0 || failedResponses > 0;
+    const failedOutcome = failedResponse || failures[0] || null;
+    const failedRequest = failedOutcome
+      ? requests.find((event) => event.id === failedOutcome.parentId) || requests[0] || null
+      : null;
+    const diagnosis = failedOutcome
+      ? networkProblemDiagnosis({ request: failedRequest, outcome: failedOutcome, pageUrl: session.pageUrl })
+      : null;
     const importantChange = importantVisibleChange(mutations, session);
     const steps = [];
 
@@ -894,7 +999,9 @@
     });
 
     if (handlers.length) {
-      const authored = handlers.find((event) => event.origin === "request-initiator") || handlers[0];
+      const authored = handlers.find((event) => event.id === failedRequest?.parentId)
+        || handlers.find((event) => event.origin === "request-initiator")
+        || handlers[0];
       const functionName = String(authored.title || "").replace(/\(\)$/, "");
       const generic = !functionName || ["(anonymous)", "anonymous", "n"].includes(functionName);
       const location = locationLabel(authored.location || authored.frames?.[0]);
@@ -938,11 +1045,11 @@
       steps.push({
         kind: hasNetworkProblem ? "problem" : "network",
         label: "Data request",
-        title: requestCount === 1
+        title: diagnosis?.title || (requestCount === 1
           ? `The page requested ${requestDestination || "data"}`
-          : `The page started ${requestCount} data requests`,
-        detail: resultParts.join(" ") || "A request problem was observed.",
-        relation: relationLabel(anchor)
+          : `The page started ${requestCount} data requests`),
+        detail: diagnosis ? `${diagnosis.meaning} ${diagnosis.check}` : resultParts.join(" ") || "A request problem was observed.",
+        relation: relationLabel(failedRequest || anchor)
       });
     }
 
@@ -978,20 +1085,25 @@
     }
 
     if (errors.length) {
+      const messages = errors.slice(0, 2).map((event) => shorten(String(event.title || "").replace(/^(?:error|warning):\s*/i, ""), 100));
+      const firstMessage = messages[0] || "JavaScript error";
       steps.push({
         kind: "problem",
-        label: "Problem detected",
-        title: errors.length === 1 ? "A warning or error occurred" : `${errors.length} warnings or errors occurred`,
-        detail: errors.slice(0, 2).map((event) => event.title).join("; "),
+        label: hasNetworkProblem ? "Related messages" : "Problem detected",
+        title: hasNetworkProblem
+          ? `The browser or page also logged ${errors.length === 1 ? "one related message" : `${errors.length} related messages`}`
+          : `JavaScript reported “${shorten(firstMessage, 72)}”`,
+        detail: messages.map((message) => `“${message}”`).join("; "),
         relation: relationLabel(errors[0])
       });
     }
 
     let headline = `After clicking ${subject}, the page ran code`;
-    if (errors.length || hasNetworkProblem) {
-      headline = requestDestination
-        ? `After clicking ${subject}, a problem was observed while requesting ${requestDestination}`
-        : `A problem was observed after clicking ${subject}`;
+    if (diagnosis) {
+      headline = `${diagnosis.title} — ${lowerInitial(diagnosis.meaning.replace(/\.$/, ""))}`;
+    } else if (errors.length) {
+      const firstMessage = shorten(String(errors[0].title || "JavaScript error").replace(/^(?:error|warning):\s*/i, ""), 88);
+      headline = `After clicking ${subject}, JavaScript reported “${firstMessage}”`;
     } else if (navigations.length) {
       const destination = String(navigations[0].title || "").replace(/^Navigate to\s+/, "");
       headline = `After clicking ${subject}, the browser opened ${conciseUrl(destination, session.pageUrl)}`;
@@ -1008,19 +1120,34 @@
     }
 
     const overviewParts = [];
-    if (hasNetworkProblem) overviewParts.push("At least one data request failed or returned an error.");
-    else if (requests.length && successfulResponses >= requests.length) {
+    if (diagnosis) {
+      const sourceHandler = handlers.find((event) => event.id === failedRequest?.parentId)
+        || handlers.find((event) => event.origin === "request-initiator");
+      const sourceName = String(sourceHandler?.title || "").replace(/\(\)$/, "");
+      const sourceIsReadable = sourceName && !["(anonymous)", "anonymous", "n"].includes(sourceName);
+      const sourceLocation = locationLabel(sourceHandler?.location || sourceHandler?.frames?.[0]);
+      if (sourceIsReadable) {
+        overviewParts.push(`${sourceName}() started this request${sourceLocation ? ` from ${sourceLocation}` : ""}.`);
+      } else {
+        overviewParts.push(`This request followed clicking ${subject}.`);
+      }
+      if (importantChange?.text) {
+        overviewParts.push(`The trace later observed the page showing “${importantChange.text}”${/[.!?]$/.test(importantChange.text) ? "" : "."}`);
+      } else if (requests.length > 1) {
+        overviewParts.push(`One of ${requests.length} observed data requests failed.`);
+      }
+    } else if (requests.length && successfulResponses >= requests.length) {
       overviewParts.push(`${requests.length === 1 ? "The data request" : "All data requests"} completed successfully.`);
     } else if (successfulResponses) {
       overviewParts.push(`${successfulResponses} of ${requests.length} data requests completed successfully.`);
     } else if (requests.length) {
       overviewParts.push(`${requests.length === 1 ? "One data request was" : `${requests.length} data requests were`} observed.`);
     }
-    if (mutations.length) {
+    if (mutations.length && !diagnosis) {
       overviewParts.push(`${mutations.length === 1 ? "One page change was" : `${mutations.length} page changes were`} observed.`);
     }
     if (navigations.length) overviewParts.push("The browser address also changed.");
-    if (errors.length) overviewParts.push(`${errors.length === 1 ? "One warning or error was" : `${errors.length} warnings or errors were`} captured.`);
+    if (errors.length && !diagnosis) overviewParts.push(`${errors.length === 1 ? "One warning or error was" : `${errors.length} warnings or errors were`} captured.`);
     if (!overviewParts.length) {
       overviewParts.push(`${steps.length} step${steps.length === 1 ? " was" : "s were"} observed from your action to the result.`);
     }

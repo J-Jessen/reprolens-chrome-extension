@@ -9,12 +9,12 @@ Last updated: 6 September 2026 · Current extension version: `0.8.0`
 - Product name: `Behaviour Tracer`
 - Category: `Developer Tools`
 - Language: `English`
-- Summary: `Select an element, perform one interaction, and see a plain-language explanation with an optional technical trace.`
+- Summary: `Trace one interaction and get a diagnostic explanation of failed requests, page code, and visible results.`
 - Single purpose: Help a developer understand the observable browser behaviour caused by one user-started interaction.
 
 ### Detailed description
 
-Behaviour Tracer lets a developer select an element on a website, perform one click, and see a plain-language explanation of what followed. It organizes the result as the user's action, page code, data requests, page changes, navigation, and problems. Complete technical timing and source details remain available when needed.
+Behaviour Tracer lets a developer select an element on a website, perform one click, and see a plain-language explanation of what followed. For failed requests, it identifies the request method and destination, explains the HTTP or browser error, suggests the first relevant check, and connects the failure to the originating function and visible page result when browser evidence supports those links. Complete technical timing and source details remain available when needed.
 
 Tracing begins only after an explicit action in the extension side panel. Processing, source-map resolution, history, and export redaction happen locally in the browser. The extension has no backend, analytics, account system, advertising, or automatic upload.
 
@@ -80,5 +80,5 @@ Do not submit until each blocker is complete.
 
 ## Version history
 
-- `0.8.0` · 6 September 2026 — Added the default plain-language explanation, progressive technical disclosure, explicit uncertainty wording, and narrow-panel usability verification.
+- `0.8.0` · 6 September 2026 — Added diagnostic failed-request explanations, targeted first checks, progressive technical disclosure, explicit uncertainty wording, and narrow-panel usability verification.
 - `0.7.1` · 6 September 2026 — Added Modern Web Guidance alignment, accessibility checks, safe DOM rendering, and Manifest V3 session recovery.

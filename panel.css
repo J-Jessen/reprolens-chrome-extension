@@ -197,8 +197,8 @@ button.quiet { min-height: auto; padding: 5px 8px; background: transparent; font
 .hidden { display: none; }
 .explanation { padding: 1rem; }
 .explanation h2 { margin-block-start: .25rem; font-size: 1.125rem; }
-.explanation-headline { margin: .75rem 0 .25rem; color: var(--event-title); font-size: 1rem; font-weight: 750; line-height: 1.35; overflow-wrap: anywhere; }
-.explanation-overview { max-inline-size: 65ch; margin: 0; color: var(--muted); font-size: .8125rem; overflow-wrap: anywhere; }
+.explanation-headline { margin: .75rem 0 .25rem; color: var(--event-title); font-size: 1rem; font-weight: 750; line-height: 1.35; overflow-wrap: anywhere; text-wrap: balance; }
+.explanation-overview { max-inline-size: 65ch; margin: 0; color: var(--muted); font-size: .8125rem; overflow-wrap: anywhere; text-wrap: pretty; }
 .explanation-steps { display: grid; gap: .5rem; margin: 1rem 0 0; padding: 0; list-style: none; counter-reset: explanation-step; }
 .explanation-step {
   position: relative;
@@ -230,8 +230,8 @@ button.quiet { min-height: auto; padding: 5px 8px; background: transparent; font
 .relation { margin-inline-start: auto; border-radius: 999px; padding: .125rem .45rem; font-size: .625rem; font-weight: 750; }
 .relation.linked { background: var(--linked-bg); color: var(--green); }
 .relation.observed, .relation.limited { background: var(--observed-bg); color: var(--amber); }
-.explanation-step strong { display: block; margin-block-start: .25rem; overflow-wrap: anywhere; }
-.explanation-step-detail { margin: .25rem 0 0; color: var(--muted); font-size: .8125rem; overflow-wrap: anywhere; }
+.explanation-step strong { display: block; margin-block-start: .25rem; overflow-wrap: anywhere; text-wrap: balance; }
+.explanation-step-detail { margin: .25rem 0 0; color: var(--muted); font-size: .8125rem; overflow-wrap: anywhere; text-wrap: pretty; }
 .evidence-note { margin: .875rem 0 0; padding-block-start: .75rem; border-block-start: 1px solid var(--line); color: var(--subtle-text); font-size: .75rem; overflow-wrap: anywhere; }
 
 .disclosure > summary {

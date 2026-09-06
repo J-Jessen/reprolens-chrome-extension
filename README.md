@@ -2,7 +2,7 @@
 
 Current build: **0.8.0**
 
-Private beta: **v0.8.0-beta.3**
+Private beta: **v0.8.0-beta.4**
 
 A local-first Chrome Manifest V3 proof-of-concept for the product hypothesis:
 
@@ -31,7 +31,7 @@ This is a private-beta instrumentation experiment, not yet a production extensio
 17. Uses trace schema version 2 with explicit relationship, capture-method, and privacy metadata plus local migration of version 1 imports.
 18. Uses semantic, keyboard-accessible side-panel controls with light/dark color support and automated accessibility checks.
 19. Restores privacy-sanitized visible trace state from session storage if the extension service worker restarts.
-20. Presents a contextual plain-language explanation—covering the clicked control, request destination, request outcome, and most useful visible result—and keeps raw timing, confidence, and browser evidence behind an expandable technical trace.
+20. Presents a diagnostic plain-language explanation—covering the clicked control, exact failed request, HTTP or browser error, meaning, first check, source function, and visible result—and keeps raw timing, confidence, and browser evidence behind an expandable technical trace.
 
 All trace processing is local. The current build has no backend, analytics, login, or AI call.
 

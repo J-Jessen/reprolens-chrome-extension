@@ -1,10 +1,10 @@
-# Behaviour Tracer v0.8.0-beta.3
+# Behaviour Tracer v0.8.0-beta.4
 
 This private beta tests whether one-click behaviour traces save developers time on real local and staging applications.
 
 ## Install and test
 
-1. The owner downloads `behaviour-tracer-v0.8.0-beta.3.zip` from **Assets** below. Do not use GitHub's source-code archives.
+1. The owner downloads `behaviour-tracer-v0.8.0-beta.4.zip` from **Assets** below. Do not use GitHub's source-code archives.
 2. The owner sends the ZIP directly to each selected tester through a private, access-controlled channel.
 3. The tester begins with `START_HER.md` inside the ZIP and returns completed forms through the same private channel.
 
@@ -12,7 +12,7 @@ Testers do not need or receive GitHub repository access.
 
 ## Changes in this build
 
-- Makes the default explanation more specific by naming the clicked control, request destination, request outcome, and most useful visible result without expanding the technical trace.
+- Replaces generic failed-request wording with a diagnosis that names the method and endpoint, explains the HTTP or browser error, suggests the first relevant check, and connects the failure to source code and visible impact when evidence is available.
 - Keeps complete timings, confidence values, filters, and raw browser evidence available under **Technical trace**.
 - Uses explicit `Direct link`, `Observed after click`, and `Limited evidence` labels instead of implying causality from timing alone.
 - Reworks the layout for narrow side panels, progressive disclosure, keyboard navigation, 200% zoom, and reduced visual clutter.

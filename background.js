@@ -680,6 +680,7 @@ chrome.debugger.onEvent.addListener(async (source, method, params) => {
       at,
       requestId: params.requestId,
       status: params.response?.status,
+      statusText: params.response?.statusText,
       url: params.response?.url,
       type: params.type
     });

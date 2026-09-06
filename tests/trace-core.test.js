@@ -69,6 +69,9 @@ test("builds an ordered timeline with explicit confidence", () => {
   assert.equal(timeline[3].confidence, 0.92);
   assert.equal(timeline[3].parentId, timeline[2].id);
   assert.equal(timeline[3].durationMs, 30);
+  assert.equal(timeline[3].method, "GET");
+  assert.equal(timeline[3].status, 200);
+  assert.equal(timeline[3].url, "http://localhost:4173/order.json");
   assert.match(timeline[3].detail, /30ms/);
   assert.equal(timeline[0].confidence, 1);
   assert.deepEqual(timeline.slice(0, 4).map((event) => event.primaryChain), [true, true, true, true]);
@@ -110,10 +113,47 @@ test("explains minified handlers and failed responses honestly", () => {
     ]
   });
 
-  assert.equal(explanation.headline, "After clicking “Save”, a problem was observed while requesting /api/save");
+  assert.equal(explanation.headline, "POST /api/save returned 500 Internal Server Error — server-side code failed while processing the request");
   assert.equal(explanation.steps[1].title, "Page code handled the click");
   assert.match(explanation.steps[1].detail, /anonymous, framework-managed, bundled, or minified code/);
-  assert.match(explanation.steps[2].detail, /error response/);
+  assert.equal(explanation.steps[2].title, "POST /api/save returned 500 Internal Server Error");
+  assert.match(explanation.steps[2].detail, /server logs/);
+  assert.doesNotMatch(explanation.overview, /failed or returned an error/i);
+});
+
+test("turns a 404 response into an actionable diagnosis with source and visible impact", () => {
+  const explanation = TraceCore.explain({
+    pageUrl: "http://127.0.0.1:4173/failure.html",
+    interaction: { eventType: "click", element: { selector: "#fail-request", text: "Send failing request" } },
+    timeline: [
+      { id: "interaction", kind: "interaction", primaryChain: true, relationshipEvidence: "root" },
+      { id: "handler", kind: "handler", title: "runFailingFetch()", location: { url: "http://127.0.0.1:4173/failure.js", lineNumber: 5 }, primaryChain: true, relationshipEvidence: "explicit" },
+      { id: "request", kind: "request", method: "GET", url: "http://127.0.0.1:4173/missing-order.json?token=private", title: "GET http://127.0.0.1:4173/missing-order.json?token=private", parentId: "handler", primaryChain: true, relationshipEvidence: "explicit" },
+      { id: "response", kind: "response", method: "GET", status: 404, url: "http://127.0.0.1:4173/missing-order.json?token=private", title: "404 http://127.0.0.1:4173/missing-order.json?token=private", parentId: "request", primaryChain: true, relationshipEvidence: "explicit" },
+      { id: "result", kind: "mutation", title: "Text changed to “Handled expected failure: HTTP 404 response.”", detail: "#result", primaryChain: false, relationshipEvidence: "none" }
+    ]
+  });
+
+  assert.equal(explanation.headline, "GET /missing-order.json returned 404 Not Found — the server could not find a resource at that address");
+  assert.equal(explanation.overview, "runFailingFetch() started this request from failure.js:5. The trace later observed the page showing “Handled expected failure: HTTP 404 response.”");
+  assert.equal(explanation.steps[2].title, "GET /missing-order.json returned 404 Not Found");
+  assert.match(explanation.steps[2].detail, /backend route or file/);
+  assert.doesNotMatch(JSON.stringify(explanation), /private/);
+});
+
+test("explains a refused connection when no HTTP response arrived", () => {
+  const explanation = TraceCore.explain({
+    pageUrl: "https://app.example/",
+    interaction: { eventType: "click", element: { text: "Load account" } },
+    timeline: [
+      { id: "interaction", kind: "interaction", primaryChain: true, relationshipEvidence: "root" },
+      { id: "request", kind: "request", method: "GET", url: "https://api.example/account", title: "GET https://api.example/account", primaryChain: true, relationshipEvidence: "explicit" },
+      { id: "failure", kind: "network-failure", method: "GET", url: "https://api.example/account", errorText: "net::ERR_CONNECTION_REFUSED", title: "FAILED https://api.example/account", parentId: "request", primaryChain: true, relationshipEvidence: "explicit" }
+    ]
+  });
+
+  assert.equal(explanation.headline, "GET api.example/account did not receive a response (ERR_CONNECTION_REFUSED) — no server accepted the connection at that address");
+  assert.match(explanation.steps[2].detail, /backend is running/);
 });
 
 test("prefers a meaningful result over the clicked button's final label", () => {
