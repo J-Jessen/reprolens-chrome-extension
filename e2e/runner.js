@@ -268,6 +268,32 @@ async function main() {
     if (primaryFilterLabel !== "Primary chain") throw new Error("Primary-chain timeline filter is unavailable");
     process.stdout.write("Panel accessibility audit passed\n");
     const page = await browser.newPage();
+    for (const viewport of [{ width: 360, height: 800 }, { width: 1440, height: 1100 }]) {
+      await page.setViewport(viewport);
+      await page.goto(`http://127.0.0.1:${port}/demo/index.html`, { waitUntil: "domcontentloaded" });
+      for (const expectedPath of ["/demo/index.html", "/demo/failure.html", "/demo/index.html"]) {
+        if (new URL(page.url()).pathname !== expectedPath) {
+          await Promise.all([
+            page.waitForNavigation({ waitUntil: "domcontentloaded" }),
+            page.click(".demo-links a")
+          ]);
+        }
+        const coverage = await page.evaluate(() => ({
+          bodyBlockSize: document.body.getBoundingClientRect().height,
+          htmlBlockSize: document.documentElement.getBoundingClientRect().height,
+          viewportBlockSize: window.innerHeight,
+          canvasBackground: getComputedStyle(document.documentElement).backgroundImage
+        }));
+        if (coverage.bodyBlockSize < coverage.viewportBlockSize || coverage.htmlBlockSize < coverage.viewportBlockSize) {
+          throw new Error(`Demo background did not cover ${viewport.width}x${viewport.height} at ${expectedPath}`);
+        }
+        if (coverage.canvasBackground === "none") {
+          throw new Error(`Demo canvas background was missing at ${expectedPath}`);
+        }
+      }
+    }
+    await page.setViewport({ width: 1280, height: 800 });
+    process.stdout.write("Demo navigation background audit passed\n");
     const cases = [
       ["react-timer", "/demo-react/index.html", "button", 3500],
       ["native-success", "/demo/index.html", "#checkout"],

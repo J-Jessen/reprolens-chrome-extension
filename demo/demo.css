@@ -1,18 +1,23 @@
 :root {
   color-scheme: dark;
-  background: #0e1015;
   color: #f5f7fb;
   font-family: Inter, system-ui, sans-serif;
 }
 
 * { box-sizing: border-box; }
 
+html {
+  min-block-size: 100%;
+  background: radial-gradient(circle at 40% 30%, #24224c, transparent 40%), #0e1015;
+}
+
 body {
   display: grid;
   min-block-size: 100vh;
+  min-block-size: 100dvb;
   margin: 0;
   place-items: center;
-  background: radial-gradient(circle at 40% 30%, #24224c, transparent 40%), #0e1015;
+  background: transparent;
 }
 
 main {
