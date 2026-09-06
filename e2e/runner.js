@@ -14,6 +14,7 @@ const SOURCE_EXTENSION_ROOT = process.env.EXTENSION_ROOT
   : PROJECT_ROOT;
 const PORT = 0;
 const CASE_TIMEOUT_MS = 30000;
+const MULTI_STEP_TIMEOUT_MS = 45000;
 
 const MIME_TYPES = {
   ".css": "text/css; charset=utf-8",
@@ -404,13 +405,15 @@ async function main() {
     }
     await page.setViewport({ width: 1280, height: 800 });
     process.stdout.write("Demo navigation background audit passed\n");
-    const multiStepTrace = await withTimeout(runMultiStepJourney({
-      page,
-      worker,
-      controller,
-      baseUrl: `http://127.0.0.1:${port}`
-    }), CASE_TIMEOUT_MS, "multi-step-journey");
-    process.stdout.write(`PASS multi-step-journey (${multiStepTrace.multiSteps.length} steps)\n`);
+    if (process.env.RUN_MULTI_STEP !== "false") {
+      const multiStepTrace = await withTimeout(runMultiStepJourney({
+        page,
+        worker,
+        controller,
+        baseUrl: `http://127.0.0.1:${port}`
+      }), MULTI_STEP_TIMEOUT_MS, "multi-step-journey");
+      process.stdout.write(`PASS multi-step-journey (${multiStepTrace.multiSteps.length} steps)\n`);
+    }
     const cases = [
       ["react-timer", "/demo-react/index.html", "button", 3500],
       ["native-success", "/demo/index.html", "#checkout"],

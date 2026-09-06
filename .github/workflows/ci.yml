@@ -48,6 +48,7 @@ jobs:
         env:
           CORPUS_CASES: ${{ matrix.corpus }}
           HEADLESS: "false"
+          RUN_MULTI_STEP: ${{ startsWith(matrix.corpus, 'react-timer,') && 'true' || 'false' }}
 
   package:
     needs: test
