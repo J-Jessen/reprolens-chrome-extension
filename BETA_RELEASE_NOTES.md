@@ -1,10 +1,10 @@
-# Behaviour Tracer v0.8.0-beta.1
+# Behaviour Tracer v0.8.0-beta.2
 
 This private beta tests whether one-click behaviour traces save developers time on real local and staging applications.
 
 ## Install and test
 
-1. The owner downloads `behaviour-tracer-v0.8.0-beta.1.zip` from **Assets** below. Do not use GitHub's source-code archives.
+1. The owner downloads `behaviour-tracer-v0.8.0-beta.2.zip` from **Assets** below. Do not use GitHub's source-code archives.
 2. The owner sends the ZIP directly to each selected tester through a private, access-controlled channel.
 3. The tester begins with `START_HER.md` inside the ZIP and returns completed forms through the same private channel.
 
@@ -16,6 +16,7 @@ Testers do not need or receive GitHub repository access.
 - Keeps complete timings, confidence values, filters, and raw browser evidence available under **Technical trace**.
 - Uses explicit `Direct link`, `Observed after click`, and `Limited evidence` labels instead of implying causality from timing alone.
 - Reworks the layout for narrow side panels, progressive disclosure, keyboard navigation, 200% zoom, and reduced visual clutter.
+- Keeps the local-history action buttons at a consistent height.
 - Aligns the side panel with current Modern Web Guidance for semantics, keyboard use, focus, status announcements, color schemes, reduced motion, and safe DOM rendering.
 - Moves injected overlay presentation to a static stylesheet and keeps website access explicitly per origin.
 - Adds Chrome 118+ lifecycle handling and privacy-sanitized session-state recovery.

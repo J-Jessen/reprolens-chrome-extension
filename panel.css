@@ -315,9 +315,8 @@ dialog::backdrop { background: rgba(0, 0, 0, .72); }
 .history-open strong, .history-open span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .history-open span, .history-empty { margin: 3px 0 0; color: var(--muted); font-size: .625rem; }
 .history-delete { align-self: stretch; font-size: 1rem; }
-#clear-history { margin-top: 9px; }
 .history-actions { display: flex; gap: 5px; margin-top: 9px; }
-.history-actions button { margin-top: 0; }
+.history-actions button { align-self: stretch; }
 
 @media (prefers-reduced-motion: no-preference) {
   .status.recording::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-right: 7px; border-radius: 50%; background: var(--red); animation: blink 1s infinite; }

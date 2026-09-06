@@ -379,6 +379,13 @@ async function main() {
     await controller.keyboard.press("Enter");
     const technicalOpenedFromKeyboard = await controller.$eval("#technical-details", (node) => node.open);
     if (!technicalOpenedFromKeyboard) throw new Error("Technical trace could not be opened with the keyboard");
+    const historyActionHeights = await controller.$eval(".history", (node) => {
+      node.open = true;
+      return [...node.querySelectorAll(".history-actions button")].map((button) => button.getBoundingClientRect().height);
+    });
+    if (historyActionHeights.length !== 2 || Math.abs(historyActionHeights[0] - historyActionHeights[1]) > 0.5) {
+      throw new Error(`History action buttons have unequal heights: ${historyActionHeights.join(", ")}`);
+    }
     process.stdout.write(`\n${passed}/${results.length} useful traces (${rate}%)\n`);
     if (passed !== results.length) process.exitCode = 1;
   } finally {

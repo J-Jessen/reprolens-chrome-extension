@@ -2,7 +2,7 @@
 
 Current build: **0.8.0**
 
-Private beta: **v0.8.0-beta.1**
+Private beta: **v0.8.0-beta.2**
 
 A local-first Chrome Manifest V3 proof-of-concept for the product hypothesis:
 
