@@ -1,5 +1,5 @@
 name: Beta bug report
-description: Report one reproducible problem from the private beta
+description: Report one reproducible problem from the public beta
 title: "[Beta] "
 labels: ["beta-bug"]
 body:
@@ -12,7 +12,7 @@ body:
     attributes:
       label: Beta version
       description: Find this in the release name or manifest.
-      placeholder: v0.8.0-beta.4
+      placeholder: v0.11.0-beta.3
     validations:
       required: true
   - type: input

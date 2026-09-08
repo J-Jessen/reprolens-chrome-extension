@@ -1,5 +1,7 @@
 # Contributing
 
+External contributors should fork the public repository, create a focused branch, and open a pull request. Public visibility does not grant direct write access. By submitting a contribution, you confirm that you have the right to provide it for inclusion in ReproLens.
+
 ## Local verification
 
 Use Node.js 20 or newer, then run:

@@ -2,7 +2,7 @@
 
 ## Supported version
 
-Only the latest version on `main` is currently supported while the extension is in proof-of-concept and private-beta development.
+Only the latest public beta release and the latest version on `main` are currently supported while the extension remains in proof-of-concept development.
 
 ## Reporting a vulnerability
 

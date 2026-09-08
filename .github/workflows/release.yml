@@ -21,7 +21,7 @@ jobs:
       - run: npm run build
       - name: Verify tag matches extension version
         run: node scripts/check-release-tag.js "$GITHUB_REF_NAME"
-      - name: Add private beta tester materials
+      - name: Add public beta tester materials
         if: contains(github.ref_name, '-beta.')
         run: node scripts/package-beta-kit.js
       - name: Create installable archive

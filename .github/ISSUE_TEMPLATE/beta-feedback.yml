@@ -3,6 +3,10 @@ description: Submit the final structured evaluation after completing the test gu
 title: "[Beta feedback] "
 labels: ["beta-feedback"]
 body:
+  - type: markdown
+    attributes:
+      value: |
+        Keep this report public-safe. Never post credentials, customer data, private URLs, raw traces, or unreviewed exports. Use private vulnerability reporting for a security or privacy concern.
   - type: input
     id: profile
     attributes:

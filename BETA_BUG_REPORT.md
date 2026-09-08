@@ -1,6 +1,6 @@
 # ReproLens beta bug report
 
-Make one copy of this file per distinct problem and return it through the private channel used to deliver the beta.
+Make one copy of this file per distinct problem. Submit sanitized information through the repository's **Beta bug report** issue form, or send this file privately to the owner.
 
 Do not include credentials, tokens, cookies, customer data, private URLs, or a raw trace. A reviewed screenshot or redacted export is optional and never required.
 
@@ -10,7 +10,7 @@ Do not include credentials, tokens, cookies, customer data, private URLs, or a r
 
 ## Environment
 
-- Beta version: v0.11.0-beta.2
+- Beta version: v0.11.0-beta.3
 - Chrome version:
 - Operating system:
 - Framework:

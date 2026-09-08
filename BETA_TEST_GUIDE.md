@@ -1,4 +1,4 @@
-# ReproLens private beta test guide
+# ReproLens public beta test guide
 
 Thank you for testing ReproLens. Plan for 45–60 minutes. You do not need to change code or investigate failures for us.
 
@@ -14,7 +14,7 @@ Stop testing and contact the owner privately if the browser behaves abnormally o
 
 ## Install the beta
 
-1. Save the `reprolens-v0.11.0-beta.2.zip` file supplied directly by the owner.
+1. Open the official [v0.11.0-beta.3 GitHub release](https://github.com/J-Jessen/reprolens-chrome-extension/releases/tag/v0.11.0-beta.3) and download `reprolens-v0.11.0-beta.3.zip` from **Assets**. Do not use GitHub's automatic source archive.
 2. Extract the ZIP into a folder you will keep for the duration of the beta.
 3. Confirm that the folder contains `manifest.json`, `START_HERE.md`, and this guide.
 4. Open `chrome://extensions` in Chrome.
@@ -100,7 +100,7 @@ Note whether the generated report saved meaningful time, whether the steps were 
 
 ## Report a defect
 
-Make a copy of `BETA_BUG_REPORT.md`, complete it for one distinct problem, and return it through the same private channel that delivered the beta. Use a concise title such as:
+Open the repository's **Beta bug report** issue form for each distinct problem, or complete a copy of `BETA_BUG_REPORT.md` and send it privately to the owner. Use a concise title such as:
 
 `[Beta] Promise callback missing after search click`
 
@@ -108,7 +108,7 @@ Include the beta version, Chrome version, framework, safe reproduction steps, ex
 
 ## Complete the beta
 
-Complete `BETA_FEEDBACK_FORM.md` and return it through the same private channel. Submit it even if you found no defects. Report:
+Open the repository's **Beta feedback** issue form, or complete `BETA_FEEDBACK_FORM.md` and send it privately to the owner. Submit it even if you found no defects. Report:
 
 - number and type of interactions tested;
 - time to first useful trace;

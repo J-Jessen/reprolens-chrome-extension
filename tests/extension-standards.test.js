@@ -94,5 +94,28 @@ test("product and tester documentation stays English", () => {
   }
   assert.ok(fs.existsSync(path.join(root, "START_HERE.md")));
   assert.match(read("scripts/package-beta-kit.js"), /"START_HERE\.md"/);
+  assert.match(read("scripts/package-beta-kit.js"), /"LICENSE\.md"/);
   assert.doesNotMatch(read("scripts/package-beta-kit.js"), /START_HER\.md/);
+});
+
+test("public beta surfaces use the current release and safe reporting guidance", () => {
+  const panel = read("panel.html");
+  const publicBetaDocs = [
+    "README.md",
+    "START_HERE.md",
+    "BETA.md",
+    "BETA_TEST_GUIDE.md",
+    "BETA_FEEDBACK_FORM.md",
+    "BETA_RELEASE_NOTES.md",
+    "GITHUB_SHARING_GUIDE.md",
+    "TESTER_RECRUITMENT.md",
+    "CHROMEWEBSTORE.md",
+  ].map(read).join("\n");
+
+  assert.match(panel, /REPROLENS · PUBLIC BETA/);
+  assert.doesNotMatch(panel, /PRIVATE BETA/i);
+  assert.match(publicBetaDocs, /v0\.11\.0-beta\.3/);
+  assert.match(publicBetaDocs, /private vulnerability reporting/i);
+  assert.doesNotMatch(publicBetaDocs, /private[- ]beta/i);
+  assert.doesNotMatch(publicBetaDocs, /v0\.11\.0-beta\.2/);
 });

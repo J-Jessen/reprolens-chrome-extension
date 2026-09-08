@@ -108,7 +108,7 @@ The interaction happens on the normal page, while the result remains visible bes
 
 ## Security and privacy boundary
 
-- No data leaves the browser in the current private beta.
+- No data leaves the browser automatically in the current public beta.
 - No host is granted at install time and no content script runs until the user approves the active origin.
 - Captured HTML is capped at 2,000 characters.
 - Text is capped at 160 characters.
@@ -121,7 +121,7 @@ The optional Prompt API path is capability-detected, user-started, and local. It
 
 ## Version 0.7 foundations
 
-- Private beta distribution that does not require tester access to the source repository.
+- Public beta distribution through a versioned GitHub release, with source visibility but no public write access.
 - Semantic landmarks, native controls, visible focus, live status, dialog labelling, responsive light/dark color schemes, and reduced-motion handling.
 - Safe DOM construction for imported and captured trace content; no dynamic `innerHTML` rendering.
 - Static picker and badge styles in an injected stylesheet, with only geometry passed through CSS custom properties.

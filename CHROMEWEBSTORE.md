@@ -1,6 +1,6 @@
 # Chrome Web Store submission
 
-Status: **not submitted**. The extension is currently distributed as a private beta archive. This file is the source of truth for a future Chrome Web Store submission.
+Status: **not submitted**. The extension is currently distributed through a public, versioned GitHub beta release. This file is the source of truth for a future Chrome Web Store submission.
 
 Last updated: 8 September 2026 · Current extension version: `0.11.0`
 
@@ -18,7 +18,7 @@ ReproLens lets a developer trace one interaction or record a complete user journ
 
 React traces can show the owning component path plus capped prop names/types and state shape without capturing values. Supported Chrome versions can also attach related Worker and cross-origin iframe contexts to observe request/error/handler metadata without reading messages or frame content. Local history supports naming, search, quality/problem filters, and comparison of two traces.
 
-An optional second opinion uses Chrome's on-device language model on supported Chrome 148+ desktop devices. The user can review the complete redacted input first. Unsupported browsers and Chrome profiles receive a specific local troubleshooting message instead; there is no cloud AI fallback. Private-beta usefulness and clarity feedback is stored locally, redacted before storage, and downloaded only on request.
+An optional second opinion uses Chrome's on-device language model on supported Chrome 148+ desktop devices. The user can review the complete redacted input first. Unsupported browsers and Chrome profiles receive a specific local troubleshooting message instead; there is no cloud AI fallback. Public-beta usefulness and clarity feedback is stored locally, redacted before storage, and downloaded only on request.
 
 Completed traces can become locally redacted Markdown or JSON bug reports with reproducible steps and user-supplied expected/actual behaviour. A user may download the report, generate a Playwright test skeleton with privacy-safe placeholders, or open a prefilled GitHub issue draft. No GitHub token is requested or stored, and GitHub never receives the report unless the user explicitly opens the draft and then chooses whether to submit it.
 
@@ -91,7 +91,7 @@ Do not submit until each blocker is complete.
 
 ## Version history
 
-- `0.11.0` · 8 September 2026 — Renamed the product to ReproLens and updated extension, export, documentation, tester-package, and release branding; beta.2 also makes all tester materials consistently English.
+- `0.11.0` · 8 September 2026 — Renamed the product to ReproLens and updated extension, export, documentation, tester-package, and release branding; beta.2 made tester materials consistently English, and beta.3 opens the repository and release for public testing.
 - `0.10.0` · 6 September 2026 — Added bounded multi-step journey recording, redacted bug-report generation, review-first GitHub issue drafts without stored tokens, and Playwright regression-test generation with privacy-safe placeholders.
 - `0.9.0` · 6 September 2026 — Added five interaction types, expanded error diagnoses, privacy-safe React shape, deeper Worker/frame metadata, searchable/comparable history, optional on-device AI with browser/model diagnostics, clearer and more accessible local beta feedback controls, and a 31-scenario browser corpus.
 - `0.8.0` · 6 September 2026 — Added diagnostic failed-request explanations, targeted first checks, progressive technical disclosure, explicit uncertainty wording, and narrow-panel usability verification.

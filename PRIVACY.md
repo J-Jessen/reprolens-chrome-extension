@@ -38,6 +38,6 @@ No trace is sent anywhere automatically. Download and clipboard actions remain l
 
 The deterministic explanation works without AI. On supported Chrome 148+ desktop devices, the user may explicitly request an additional explanation from Chrome's on-device language model. The complete redacted input is shown for review before use. It contains a compact deterministic explanation, privacy-safe framework shape, and at most 40 normalized events. Model output is kept only in side-panel session storage for the current browser session. The extension has no cloud AI fallback and sends no AI prompt to the developer.
 
-## Private-beta feedback
+## Public-beta feedback
 
 Usefulness rating, clarity rating, selected useful area, an optional capped comment, trace ID, and timestamp are stored only in `chrome.storage.local`. Common email and credential patterns are redacted before storage. Feedback is not uploaded; downloading it is a separate user action, and all feedback can be cleared from the side panel.

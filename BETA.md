@@ -1,6 +1,6 @@
-# Private beta plan
+# Public beta plan
 
-This plan turns ReproLens into a small, controlled product test. The extension remains local-first: it does not upload traces, analytics, or tester activity.
+This plan turns ReproLens into a focused public product test. The extension remains local-first: it does not upload traces, analytics, or tester activity.
 
 ## Objective
 
@@ -53,11 +53,11 @@ Prefer people who can test on a local or staging application they are authorized
 ## Operating procedure
 
 1. Recruit testers using [TESTER_RECRUITMENT.md](TESTER_RECRUITMENT.md).
-2. Collect only name, email or preferred contact, role, primary framework, and test availability. Testers do not receive GitHub repository access in Round 1.
-3. Send the invitation message and the complete beta ZIP through a private, access-controlled channel.
-4. Give each tester the same beta ZIP. Never ask them to build from `main` or download from the private repository.
-5. Ask testers to return one copy of `BETA_BUG_REPORT.md` per defect and one completed `BETA_FEEDBACK_FORM.md` through the same private channel.
-6. Create sanitized GitHub issues internally and triage them daily using the labels `beta-bug`, `beta-feedback`, `privacy-review`, and `blocked`.
+2. Collect only name or preferred contact, role, primary framework, and test availability from testers who join the structured study. Anonymous public testers may participate without providing contact details.
+3. Direct every tester to the official `v0.11.0-beta.3` GitHub release and ask them to use the installable release asset, not a source archive or a development build from `main`.
+4. Ask testers to begin with `START_HERE.md` inside the extracted release package.
+5. Ask testers to submit one sanitized public issue per defect and one final feedback issue. They may use the included Markdown forms instead if they prefer to send feedback privately.
+6. Triage public reports daily using the labels `beta-bug`, `beta-feedback`, `privacy-review`, and `blocked`. Remove sensitive content immediately and move security or privacy reports to GitHub's private vulnerability-reporting flow.
 7. Stop a test immediately if a trace contains a secret or unauthorized personal/customer data. Remove the attachment and follow the privacy response below.
 8. At the end of each round, record totals in the scorecard below and publish the go/no-go decision in a GitHub issue.
 
@@ -70,7 +70,7 @@ Prefer people who can test on a local or staging application they are authorized
 | P2 | Trace is materially wrong, misleading, or misses common evidence | Fix or document before Round 2 ends |
 | P3 | Friction, wording, visual, or uncommon compatibility issue | Add to the prioritized backlog |
 
-Do not ask a tester to post a raw trace publicly. If a trace is required, they must use **Review safe export**, confirm the preview, and return only the redacted export through the agreed private channel.
+Do not ask a tester to post a raw trace publicly. If evidence is required, the tester must use **Review safe export**, confirm the complete preview, and share only the minimum redacted excerpt or file needed. Security and privacy concerns belong in [private vulnerability reporting](https://github.com/J-Jessen/reprolens-chrome-extension/security/advisories/new), never a normal issue.
 
 ## Privacy response
 

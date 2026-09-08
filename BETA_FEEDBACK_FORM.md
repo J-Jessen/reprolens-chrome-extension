@@ -1,6 +1,6 @@
-# ReproLens private beta feedback
+# ReproLens public beta feedback
 
-Complete this once after the test guide and return it through the private channel used to deliver the beta. Submit it even if you found no defects.
+Complete this once after the test guide. Submit sanitized feedback through the repository's **Beta feedback** issue form, or send this file privately to the owner. Submit it even if you found no defects.
 
 ## Tester profile
 

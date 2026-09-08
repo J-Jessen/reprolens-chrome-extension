@@ -8,6 +8,7 @@ const testerFiles = [
   "BETA_TEST_GUIDE.md",
   "BETA_BUG_REPORT.md",
   "BETA_FEEDBACK_FORM.md",
+  "LICENSE.md",
 ];
 
 if (!fs.existsSync(path.join(output, "manifest.json"))) {

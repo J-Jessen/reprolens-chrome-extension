@@ -1,18 +1,20 @@
-# ReproLens v0.11.0-beta.2
+# ReproLens v0.11.0-beta.3
 
-This private beta tests which parts of a more complete, local-first behaviour trace are most useful on real local and staging applications.
+This public beta tests which parts of a more complete, local-first behaviour trace are most useful on real local and staging applications.
 
 ## Install and test
 
-1. The owner downloads `reprolens-v0.11.0-beta.2.zip` from **Assets** below. Do not use GitHub's source-code archives.
-2. The owner sends the ZIP directly to each selected tester through a private, access-controlled channel.
-3. The tester begins with `START_HERE.md` inside the ZIP and returns completed forms through the same private channel.
+1. Download `reprolens-v0.11.0-beta.3.zip` from **Assets** below. Do not use GitHub's source-code archives.
+2. Extract the ZIP and begin with `START_HERE.md` inside the package.
+3. Submit sanitized bugs and feedback through the repository's issue forms, or contact the owner privately if a report contains a security or privacy concern.
 
-Testers do not need or receive GitHub repository access.
+No GitHub account is required to download the release. A GitHub account is required only to open a public issue or pull request.
 
 ## Changes in this build
 
-- Makes every tester-facing document, recruitment message, and repository access instruction consistently English.
+- Opens the repository and versioned release for public beta testing while retaining owner-only write access to `main`.
+- Adds public issue-based beta reporting, private security-reporting guidance, and explicit evaluation-only source terms.
+- Keeps every tester-facing document, recruitment message, and repository access instruction consistently English.
 - Renames the product to ReproLens across the extension, exports, documentation, tester package, and release archive.
 - Records a complete user journey of up to 30 supported interactions for up to two minutes on one approved website.
 - Turns completed evidence into a locally redacted Markdown/JSON bug report with reproduction steps and expected/actual behaviour.

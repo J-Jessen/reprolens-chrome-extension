@@ -2,7 +2,7 @@
 
 Current build: **0.11.0**
 
-Private beta: **v0.11.0-beta.2**
+Public beta: **v0.11.0-beta.3**
 
 > See what broke. Reproduce it. Fix it.
 
@@ -10,7 +10,7 @@ A local-first Chrome Manifest V3 proof-of-concept for the product hypothesis:
 
 > Record one interaction or a user journey → understand what happened → create a safe bug report and regression test.
 
-This is a private-beta instrumentation experiment, not yet a production extension. It tests whether a useful trace can be assembled from a selected DOM element, JavaScript event-listener pauses, network traffic, runtime exceptions, navigation, and DOM mutations. It supports desktop Chrome 118 and newer.
+This is a public-beta instrumentation experiment, not yet a production extension. It tests whether a useful trace can be assembled from a selected DOM element, JavaScript event-listener pauses, network traffic, runtime exceptions, navigation, and DOM mutations. It supports desktop Chrome 118 and newer.
 
 ## What the current build does
 
@@ -44,6 +44,16 @@ This is a private-beta instrumentation experiment, not yet a production extensio
 28. Generates a Playwright regression-test skeleton with stable captured selectors, safe placeholders for private input, and a user-visible assertion when evidence supports one.
 
 All trace processing is local. The current build has no backend, analytics, login, or remote AI call. The optional AI feature runs Chrome's local model and remains unavailable when that browser capability or device model is unavailable.
+
+## Public beta
+
+Download the installable archive from the [v0.11.0-beta.3 release](https://github.com/J-Jessen/reprolens-chrome-extension/releases/tag/v0.11.0-beta.3), extract it, and begin with `START_HERE.md`. Use the release asset named `reprolens-v0.11.0-beta.3.zip`, not GitHub's automatic source archive.
+
+The repository is public so testers can inspect the code, download the current release, report sanitized problems, and propose changes through pull requests. Public visibility does not give anyone write access to the repository.
+
+ReproLens is source-available for beta evaluation, but it is not currently open source. The public beta release may be downloaded and run for evaluation and feedback. No permission is granted to redistribute the code, publish modified versions, or reuse it in another product. See [LICENSE.md](LICENSE.md).
+
+Never post credentials, customer data, private URLs, raw traces, or unreviewed exports in a public issue. Use [private vulnerability reporting](https://github.com/J-Jessen/reprolens-chrome-extension/security/advisories/new) for a security or privacy exposure.
 
 ## Install
 
@@ -125,7 +135,7 @@ npm test
 GitHub Actions runs the same test suite and rebuilds the checked-in React demo on every push and pull request.
 After the tests pass, CI also creates an installable `reprolens-extension` artifact containing runtime files only. A matching `v*` tag creates a GitHub release archive automatically.
 
-The private beta plan, recruitment messages, tester instructions, and repository access guide are in `BETA.md`, `TESTER_RECRUITMENT.md`, `BETA_TEST_GUIDE.md`, and `GITHUB_SHARING_GUIDE.md`.
+The public beta plan, recruitment messages, tester instructions, and distribution guide are in `BETA.md`, `TESTER_RECRUITMENT.md`, `BETA_TEST_GUIDE.md`, and `GITHUB_SHARING_GUIDE.md`.
 Privacy and security details are documented in `PRIVACY.md` and `SECURITY.md`. Contribution and verification requirements are in `CONTRIBUTING.md`.
 The versioned export contract and migration rules are documented in `TRACE_SCHEMA.md`.
 

@@ -1,76 +1,61 @@
-# Beta distribution and future GitHub access
+# Public beta distribution and GitHub contribution guide
 
-The repository is private and owned by the personal account `J-Jessen`. The selected Round 1 distribution method is a beta ZIP sent directly to each tester. Testers do not receive repository access.
+The repository and its versioned beta releases are public. Anyone can inspect the source, download a release, and read public issues without being added as a collaborator. Public visibility does not give visitors write access.
 
-## Selected Round 1 method
+## Send testers the correct link
 
-1. Open the private [v0.11.0-beta.2 release](https://github.com/J-Jessen/reprolens-chrome-extension/releases/tag/v0.11.0-beta.2).
-2. Download `reprolens-v0.11.0-beta.2.zip` from **Assets**. Do not download GitHub's automatic source archive.
-3. Send the ZIP through an access-controlled channel already associated with the tester, such as a restricted cloud share, direct email, or encrypted messenger.
-4. Send the acceptance message from `TESTER_RECRUITMENT.md`.
-5. Ask the tester to return completed bug and feedback forms through the same channel.
-6. Revoke the shared-file link after the round and ask the tester to remove the extension and delete the ZIP and extracted folder.
+Share the official [v0.11.0-beta.3 release](https://github.com/J-Jessen/reprolens-chrome-extension/releases/tag/v0.11.0-beta.3).
 
-Do not create a public download link. The ZIP necessarily contains the JavaScript and other files Chrome executes, so it prevents repository/history access but does not make client-side extension code secret.
+Ask each tester to:
 
-## Important access limitation
+1. download `reprolens-v0.11.0-beta.3.zip` from **Assets**;
+2. avoid GitHub's automatically generated **Source code** archives;
+3. extract the ZIP and begin with `START_HERE.md`;
+4. test only on an authorized local or staging website;
+5. use the public issue forms only for sanitized bugs and feedback.
 
-GitHub personal-account repositories do not provide a read-only collaborator role. Invited collaborators can read the private repository, download private releases, create issues, and also push changes. Only invite identified testers you trust, ask them to use Issues rather than pushing code, and remove access when their beta participation ends.
+No GitHub account is needed to download the release. A GitHub account is needed to create an issue or pull request.
 
-If testers should not receive repository history or write access, do not invite them to this repository. Send the installable beta ZIP through a separate controlled channel, as selected for Round 1.
+## What public access allows
 
-## Information to collect for a future contributor
+Visitors can read and fork the repository, download releases, and suggest changes through pull requests. They cannot push to this repository, change settings, publish releases, or merge pull requests unless the owner explicitly grants collaborator access.
 
-Only if someone later becomes a code contributor, collect:
+ReproLens is source-available for beta evaluation and is not currently open source. The allowed evaluation use and restrictions are stated in `LICENSE.md`. Public source reduces distribution friction, but it cannot technically prevent someone from copying files they can view.
 
-- their exact GitHub username;
-- a contact method you already trust;
-- confirmation that the account belongs to the person you invited.
+## Safe public reporting
 
-Never ask for their password, personal access token, recovery codes, or SSH private key.
+Use the repository's **Beta bug report** and **Beta feedback** issue forms for ordinary sanitized reports.
 
-## Invite a future contributor
+Never put credentials, cookies, tokens, customer data, private URLs, raw traces, or unreviewed exports in a public issue. Use [private vulnerability reporting](https://github.com/J-Jessen/reprolens-chrome-extension/security/advisories/new) for an undisclosed vulnerability, a privacy failure, or accidental sensitive-data exposure.
 
-1. Sign in to GitHub and open `https://github.com/J-Jessen/reprolens-chrome-extension`.
-2. Select **Settings** under the repository name.
-3. In the left sidebar under **Access**, select **Collaborators**.
-4. Select **Add people**.
-5. Search for the contributor's exact GitHub username or verified email address.
-6. Confirm the correct profile and choose **Add [name] to this repository**.
-7. Tell the contributor to accept the invitation from GitHub's email or notification.
-8. After acceptance, ask them to confirm they can see the repository.
+## Accept changes without granting write access
 
-## Message to send to a future contributor
+An external contributor should:
 
-> You now have access to the private ReproLens repository.
+1. fork the public repository;
+2. create a branch in their fork;
+3. follow `CONTRIBUTING.md` and run the required checks;
+4. open a pull request against `J-Jessen/reprolens-chrome-extension:main`;
+5. wait for review and automated checks.
+
+The owner reviews and merges acceptable pull requests. Contributors do not need collaborator access for this workflow.
+
+## Grant collaborator access only when necessary
+
+Only add a trusted ongoing maintainer when they genuinely need direct repository access. Collect their exact GitHub username, confirm the account belongs to them, and require branch-plus-pull-request work. Never ask for a password, personal access token, recovery code, or SSH private key.
+
+To add a maintainer:
+
+1. Open the repository's **Settings**.
+2. Under **Access**, open **Collaborators**.
+3. Choose **Add people** and select the verified account.
+4. Ask the maintainer to accept GitHub's invitation.
+5. Remove access when the maintenance relationship ends.
+
+## Copy-ready tester message
+
+> Thanks for helping test ReproLens. Download the installable ZIP from the official v0.11.0-beta.3 release and begin with `START_HERE.md` inside the extracted folder:
 >
-> Start here: [CONTRIBUTING.md](https://github.com/J-Jessen/reprolens-chrome-extension/blob/main/CONTRIBUTING.md)
+> https://github.com/J-Jessen/reprolens-chrome-extension/releases/tag/v0.11.0-beta.3
 >
-> Use a separate branch and pull request for proposed changes. Do not push directly to `main` or change repository settings.
->
-> Never share credentials, cookies, tokens, private keys, customer data, or raw traces.
-
-## What a future contributor does
-
-1. Accept the GitHub invitation.
-2. Open the repository.
-3. Read `CONTRIBUTING.md`.
-4. Create a separate branch for each change.
-5. Run the required automated tests.
-6. Open a pull request for review instead of pushing to `main`.
-
-## Remove contributor access
-
-1. Open the repository's **Settings → Collaborators** page.
-2. Find the contributor.
-3. Choose **Remove** and confirm.
-4. Record only that access was removed; do not store unnecessary personal data in the repository.
-
-Removing access prevents future repository access, but it cannot delete source code or release files the collaborator already downloaded. Ask contributors to delete local copies when access ends.
-
-## Troubleshooting
-
-- **Invitation not received:** verify the username, ask the contributor to check GitHub notifications, then cancel and resend if necessary.
-- **Repository returns 404:** the invitation is probably not accepted or the contributor is signed into a different GitHub account.
-- **Contributor cannot open Issues:** confirm they are listed as an accepted collaborator and that repository Issues remain enabled.
-- **Wrong person invited:** remove access immediately, then invite the verified account.
+> Choose the file named `reprolens-v0.11.0-beta.3.zip` under Assets, not a Source code archive. Test only on a local or staging site you are authorized to inspect. Never post credentials, customer data, private URLs, raw traces, or unreviewed exports in a public issue.
