@@ -1,5 +1,11 @@
 # ReproLens
 
+![ReproLens turns an interaction into handler, network, bug-report, and Playwright-test evidence](assets/reprolens-social-preview.png)
+
+[![CI](https://github.com/J-Jessen/reprolens-chrome-extension/actions/workflows/ci.yml/badge.svg)](https://github.com/J-Jessen/reprolens-chrome-extension/actions/workflows/ci.yml)
+
+[Download the public beta](https://github.com/J-Jessen/reprolens-chrome-extension/releases/tag/v0.11.0-beta.3) · [Try it in 10 minutes](QUICK_TEST.md) · [Report a bug or share feedback](https://github.com/J-Jessen/reprolens-chrome-extension/issues/new/choose)
+
 Current build: **0.11.0**
 
 Public beta: **v0.11.0-beta.3**
@@ -11,6 +17,14 @@ A local-first Chrome Manifest V3 proof-of-concept for the product hypothesis:
 > Record one interaction or a user journey → understand what happened → create a safe bug report and regression test.
 
 This is a public-beta instrumentation experiment, not yet a production extension. It tests whether a useful trace can be assembled from a selected DOM element, JavaScript event-listener pauses, network traffic, runtime exceptions, navigation, and DOM mutations. It supports desktop Chrome 118 and newer.
+
+## Why try it
+
+- Follow one interaction from the page into handlers, requests, asynchronous work, navigation, and visible page changes.
+- Understand a failed request or JavaScript error before opening the full technical trace.
+- Turn a short user journey into a privacy-reviewed Markdown or JSON bug report.
+- Generate a Playwright regression-test starting point from the recorded steps.
+- Keep traces local unless you explicitly copy, download, or open a reviewed GitHub draft.
 
 ## What the current build does
 

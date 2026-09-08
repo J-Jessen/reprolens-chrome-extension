@@ -96,6 +96,9 @@ test("product and tester documentation stays English", () => {
   assert.match(read("scripts/package-beta-kit.js"), /"START_HERE\.md"/);
   assert.match(read("scripts/package-beta-kit.js"), /"LICENSE\.md"/);
   assert.doesNotMatch(read("scripts/package-beta-kit.js"), /START_HER\.md/);
+  assert.ok(fs.existsSync(path.join(root, "QUICK_TEST.md")));
+  assert.ok(fs.existsSync(path.join(root, "PROMOTION_KIT.md")));
+  assert.ok(fs.existsSync(path.join(root, "assets", "reprolens-social-preview.png")));
 });
 
 test("public beta surfaces use the current release and safe reporting guidance", () => {
