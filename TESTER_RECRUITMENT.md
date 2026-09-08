@@ -6,7 +6,7 @@ Use warm, relevant contacts first. The objective is useful observation, not a la
 
 1. Ask 3–5 frontend or full-stack developers you already know from work, former projects, study, meetups, or professional groups.
 2. Ask each suitable contact for one introduction to a developer who regularly debugs browser behaviour.
-3. Post a short request in relevant Danish or local frontend, React, JavaScript, QA, or test-automation communities where recruitment posts are allowed.
+3. Post a short request in relevant frontend, React, JavaScript, QA, or test-automation communities where recruitment posts are allowed.
 4. Use LinkedIn to contact people whose current role clearly matches the tester profile. Personalize the first sentence and do not mass-message.
 5. Recruit the second round only after the first three testers can install and complete the core flow without a call.
 
@@ -27,39 +27,39 @@ Qualify testers who answer yes to questions 3–6 and fit at least one role in [
 
 ## Copy-ready personal invitation
 
-> Hej [navn] — jeg tester et nyt Chrome-værktøj til frontend-debugging. Man vælger et element, udfører én interaktion, og får en lokal forklaring og tidslinje over handlers, netværk, async-kald og DOM-ændringer.
+> Hi [name] — I am testing a new Chrome tool for frontend debugging. You select an element, perform one interaction, and receive a local explanation and timeline covering handlers, network activity, asynchronous work, and page changes.
 >
-> Jeg leder efter få udviklere/QA-profiler, der vil bruge 45–60 minutter på en privat beta på en lokal eller staging-side, de selv må inspicere. Værktøjet uploader ikke traces eller analytics. Hvis du vælger at dele et trace, skal du først gennemgå den redigerede eksport.
+> I am looking for a small group of developers and QA engineers who can spend 45–60 minutes testing a private beta on a local or staging website they are authorized to inspect. The tool does not upload traces or analytics. If you choose to share a trace, you must review the redacted export first.
 >
-> Testen består af installation, et kort demo-flow, 3–5 interaktioner i et rigtigt projekt og en struktureret feedbackformular. Du behøver ikke rette kode eller have GitHub-adgang.
+> The test covers installation, a short demo flow, 3–5 interactions in a real project, and a structured feedback form. You do not need to fix code or have GitHub access.
 >
-> Har du lyst til at deltage inden [dato]? Hvis ja, sender jeg en samlet beta-ZIP gennem en privat kanal.
+> Would you like to participate by [date]? If so, I will send you a complete beta ZIP through a private channel.
 
 ## Copy-ready community post
 
-> **Søger 3–5 frontend/QA-testere til privat Chrome-extension-beta**
+> **Looking for 3–5 frontend or QA testers for a private Chrome extension beta**
 >
-> Jeg bygger ReproLens: optag én interaktion eller et kort brugerforløb, forstå den observerede kæde af JavaScript-handlers, requests, async-grænser, navigation og DOM-ændringer, og lav derefter en sikker bug report samt en Playwright-testskabelon. Alt behandles lokalt; der er ingen automatisk upload eller analytics. GitHub åbnes kun som et uindsendt udkast. Vi vil især lære hvilke dele der faktisk sparer tid.
+> I am building ReproLens: record one interaction or a short user journey, understand the observed chain of JavaScript handlers, requests, asynchronous boundaries, navigation, and page changes, then create a privacy-reviewed bug report and Playwright test skeleton. Everything is processed locally; there is no automatic upload or analytics. GitHub opens only as an unsubmitted draft. We especially want to learn which parts genuinely save developers time.
 >
-> Jeg søger især React/JavaScript/frontend/full-stack/QA-profiler med adgang til en lokal eller staging-webapp. Testen tager 45–60 minutter. Du modtager en beta-ZIP direkte, og repositoryet deles ikke. Ingen produktions- eller kundedata må bruges.
+> I am particularly looking for React, JavaScript, frontend, full-stack, and QA professionals with access to a local or staging web application. Testing takes 45–60 minutes. You receive the beta ZIP directly; repository access is not required. Production or customer data must not be used.
 >
-> Skriv en privat besked med din rolle, primære framework og om du kan teste inden [dato].
+> Send me a private message with your role, primary framework, and whether you can test by [date].
 
 ## Acceptance message
 
-> Tak — du passer godt til testen. Jeg sender dig nu beta-ZIP-filen gennem vores private kanal. Pak den ud, og begynd med `START_HER.md`.
+> Thank you — you are a good fit for this test. I am sending the beta ZIP through our private channel. Extract it and begin with `START_HERE.md`.
 >
-> Brug kun den vedlagte beta-version v0.11.0-beta.1. Repositoryet og udviklingsbranchen skal ikke bruges.
+> Use only the supplied beta version, v0.11.0-beta.2. Do not use the repository or development branch.
 >
-> Vigtigt: test kun på lokale eller staging-systemer, du har tilladelse til at inspicere. Del aldrig rå credentials, cookies, tokens, kundedata eller en eksport, du ikke selv har gennemgået.
+> Important: test only on local or staging systems that you are authorized to inspect. Never share raw credentials, cookies, tokens, customer data, or an export that you have not reviewed yourself.
 
 ## Follow-up after three days
 
-> Hej [navn] — en kort opfølgning på ReproLens-betaen. Er du kommet i gang, eller er installation blokeret? Hvis noget stopper dig, kan du udfylde `BETA_BUG_REPORT.md` og sende den tilbage gennem samme private kanal. Der er ingen forventning om, at du sender et trace, hvis du er i tvivl om indholdet.
+> Hi [name] — a quick follow-up on the ReproLens beta. Have you been able to begin, or is installation blocked? If something stops you, complete `BETA_BUG_REPORT.md` and return it through the same private channel. You are not expected to share a trace if you are uncertain about its contents.
 
 ## Completion message
 
-> Tak for testen. Husk at sende den udfyldte `BETA_FEEDBACK_FORM.md` tilbage, også hvis alt fungerede. Når betaen slutter, kan du slette den udpakkede mappe og fjerne udvidelsen via `chrome://extensions`.
+> Thank you for testing. Please return the completed `BETA_FEEDBACK_FORM.md`, even if everything worked. When the beta ends, delete the extracted folder and remove the extension through `chrome://extensions`.
 
 ## Outreach tracker
 

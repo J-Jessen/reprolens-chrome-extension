@@ -85,3 +85,14 @@ test("Web Store and privacy documentation cover every requested capability", () 
   }
   assert.match(read("PRIVACY.md"), /chrome\.storage\.session/);
 });
+
+test("product and tester documentation stays English", () => {
+  const markdownFiles = fs.readdirSync(root).filter((filename) => filename.endsWith(".md"));
+  const danishMarkers = /[æøå]|\b(?:hej|tak|søger|vigtigt|du har|du skal|jeg søger|start her)\b/i;
+  for (const filename of markdownFiles) {
+    assert.doesNotMatch(read(filename), danishMarkers, `${filename} contains Danish product-facing text`);
+  }
+  assert.ok(fs.existsSync(path.join(root, "START_HERE.md")));
+  assert.match(read("scripts/package-beta-kit.js"), /"START_HERE\.md"/);
+  assert.doesNotMatch(read("scripts/package-beta-kit.js"), /START_HER\.md/);
+});

@@ -2,7 +2,7 @@
 
 Current build: **0.11.0**
 
-Private beta: **v0.11.0-beta.1**
+Private beta: **v0.11.0-beta.2**
 
 > See what broke. Reproduce it. Fix it.
 

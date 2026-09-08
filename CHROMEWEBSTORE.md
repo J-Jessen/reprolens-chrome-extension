@@ -2,7 +2,7 @@
 
 Status: **not submitted**. The extension is currently distributed as a private beta archive. This file is the source of truth for a future Chrome Web Store submission.
 
-Last updated: 6 September 2026 · Current extension version: `0.11.0`
+Last updated: 8 September 2026 · Current extension version: `0.11.0`
 
 ## Listing
 
@@ -91,7 +91,7 @@ Do not submit until each blocker is complete.
 
 ## Version history
 
-- `0.11.0` · 6 September 2026 — Renamed the product to ReproLens and updated extension, export, documentation, tester-package, and release branding.
+- `0.11.0` · 8 September 2026 — Renamed the product to ReproLens and updated extension, export, documentation, tester-package, and release branding; beta.2 also makes all tester materials consistently English.
 - `0.10.0` · 6 September 2026 — Added bounded multi-step journey recording, redacted bug-report generation, review-first GitHub issue drafts without stored tokens, and Playwright regression-test generation with privacy-safe placeholders.
 - `0.9.0` · 6 September 2026 — Added five interaction types, expanded error diagnoses, privacy-safe React shape, deeper Worker/frame metadata, searchable/comparable history, optional on-device AI with browser/model diagnostics, clearer and more accessible local beta feedback controls, and a 31-scenario browser corpus.
 - `0.8.0` · 6 September 2026 — Added diagnostic failed-request explanations, targeted first checks, progressive technical disclosure, explicit uncertainty wording, and narrow-panel usability verification.

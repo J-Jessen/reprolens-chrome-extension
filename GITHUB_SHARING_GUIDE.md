@@ -4,8 +4,8 @@ The repository is private and owned by the personal account `J-Jessen`. The sele
 
 ## Selected Round 1 method
 
-1. Open the private [v0.11.0-beta.1 release](https://github.com/J-Jessen/reprolens-chrome-extension/releases/tag/v0.11.0-beta.1).
-2. Download `reprolens-v0.11.0-beta.1.zip` from **Assets**. Do not download GitHub's automatic source archive.
+1. Open the private [v0.11.0-beta.2 release](https://github.com/J-Jessen/reprolens-chrome-extension/releases/tag/v0.11.0-beta.2).
+2. Download `reprolens-v0.11.0-beta.2.zip` from **Assets**. Do not download GitHub's automatic source archive.
 3. Send the ZIP through an access-controlled channel already associated with the tester, such as a restricted cloud share, direct email, or encrypted messenger.
 4. Send the acceptance message from `TESTER_RECRUITMENT.md`.
 5. Ask the tester to return completed bug and feedback forms through the same channel.
@@ -42,13 +42,13 @@ Never ask for their password, personal access token, recovery codes, or SSH priv
 
 ## Message to send to a future contributor
 
-> Du har nu adgang til det private ReproLens-repository.
+> You now have access to the private ReproLens repository.
 >
-> Start her: [CONTRIBUTING.md](https://github.com/J-Jessen/reprolens-chrome-extension/blob/main/CONTRIBUTING.md)
+> Start here: [CONTRIBUTING.md](https://github.com/J-Jessen/reprolens-chrome-extension/blob/main/CONTRIBUTING.md)
 >
-> Brug en separat branch og pull request til foreslåede ændringer. Undlad at pushe direkte til `main` eller ændre repository-indstillinger.
+> Use a separate branch and pull request for proposed changes. Do not push directly to `main` or change repository settings.
 >
-> Del aldrig credentials, cookies, tokens, private keys, kundedata eller rå traces.
+> Never share credentials, cookies, tokens, private keys, customer data, or raw traces.
 
 ## What a future contributor does
 

@@ -4,7 +4,7 @@ const path = require("node:path");
 const root = path.resolve(__dirname, "..");
 const output = path.join(root, "dist");
 const testerFiles = [
-  "START_HER.md",
+  "START_HERE.md",
   "BETA_TEST_GUIDE.md",
   "BETA_BUG_REPORT.md",
   "BETA_FEEDBACK_FORM.md",

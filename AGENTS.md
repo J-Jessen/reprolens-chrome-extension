@@ -1,5 +1,10 @@
 # Project instructions
 
+## Project language
+
+- Use English for all product UI, documentation, tester materials, release notes, issue templates, and repository-facing text.
+- Treat non-English product-facing text as a release blocker.
+
 ## Browser policy
 
 - Target desktop Chrome 118 and newer. The minimum exists because an active `chrome.debugger` session keeps the Manifest V3 service worker alive from Chrome 118 onward.
