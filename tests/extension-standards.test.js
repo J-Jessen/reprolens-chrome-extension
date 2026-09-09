@@ -7,6 +7,15 @@ const root = path.resolve(__dirname, "..");
 const read = (relative) => fs.readFileSync(path.join(root, relative), "utf8");
 const manifest = JSON.parse(read("manifest.json"));
 
+function pngDimensions(relative) {
+  const contents = fs.readFileSync(path.join(root, relative));
+  assert.equal(contents.toString("ascii", 1, 4), "PNG", `${relative} is not a PNG file`);
+  return {
+    width: contents.readUInt32BE(16),
+    height: contents.readUInt32BE(20)
+  };
+}
+
 test("manifest follows the extension's Chrome 118+ permission policy", () => {
   assert.equal(manifest.manifest_version, 3);
   assert.ok(Number.parseInt(manifest.minimum_chrome_version, 10) >= 118);
@@ -27,6 +36,22 @@ test("every manifest and panel runtime reference exists locally", () => {
   ];
   for (const relative of references) {
     assert.ok(fs.existsSync(path.join(root, relative)), `Missing runtime file: ${relative}`);
+  }
+});
+
+test("manifest icons exist at the exact Chrome-required dimensions", () => {
+  const expected = { 16: 16, 32: 32, 48: 48, 128: 128 };
+  assert.deepEqual(Object.keys(manifest.icons).sort(), Object.keys(expected).sort());
+  for (const [size, relative] of Object.entries(manifest.icons)) {
+    assert.ok(fs.existsSync(path.join(root, relative)), `Missing manifest icon: ${relative}`);
+    assert.deepEqual(pngDimensions(relative), { width: expected[size], height: expected[size] });
+  }
+  for (const [size, relative] of Object.entries(manifest.action.default_icon)) {
+    assert.equal(relative, manifest.icons[size]);
+  }
+  const packageScript = read("scripts/package-extension.js");
+  for (const relative of Object.values(manifest.icons)) {
+    assert.match(packageScript, new RegExp(relative.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   }
 });
 
@@ -86,6 +111,36 @@ test("Web Store and privacy documentation cover every requested capability", () 
   assert.match(read("PRIVACY.md"), /chrome\.storage\.session/);
 });
 
+test("public beta site is accessible, CSP-safe, and ships complete media", () => {
+  const landing = read("beta-site/index.html");
+  const privacy = read("beta-site/privacy.html");
+  const css = read("beta-site/styles.css");
+
+  for (const page of [landing, privacy]) {
+    assert.match(page, /<html\s+lang="en">/);
+    assert.match(page, /<meta\s+name="viewport"/);
+    assert.match(page, /<main\b/);
+    assert.doesNotMatch(page, /<script\b(?![^>]*\bsrc=)/);
+    assert.doesNotMatch(page, /\son[a-z]+\s*=/i);
+    assert.doesNotMatch(page, /\sstyle\s*=/i);
+  }
+  assert.match(landing, /class="skip-link"/);
+  assert.match(landing, /<video\b[^>]*\bcontrols\b[^>]*\bwidth="1280"[^>]*\bheight="720"[^>]*\bpreload="none"/);
+  assert.match(landing, /<track\b[^>]*kind="captions"[^>]*\bdefault/);
+  assert.match(css, /:focus-visible/);
+  assert.match(css, /prefers-reduced-motion:\s*reduce/);
+  assert.match(css, /forced-colors:\s*active/);
+
+  assert.deepEqual(pngDimensions("store-assets/store-screenshot-failure.png"), { width: 1280, height: 800 });
+  assert.deepEqual(pngDimensions("store-assets/store-screenshot-success.png"), { width: 1280, height: 800 });
+  assert.deepEqual(pngDimensions("store-assets/store-screenshot-report.png"), { width: 1280, height: 800 });
+  assert.deepEqual(pngDimensions("store-assets/small-promo-tile.png"), { width: 440, height: 280 });
+  assert.ok(fs.statSync(path.join(root, "beta-site/assets/reprolens-walkthrough.webm")).size > 100_000);
+  assert.ok(fs.existsSync(path.join(root, ".github/ISSUE_TEMPLATE/guided-beta-session.yml")));
+  assert.ok(fs.existsSync(path.join(root, "BETA_STUDY_PROTOCOL.md")));
+  assert.ok(fs.existsSync(path.join(root, "OUTREACH_SCORECARD.md")));
+});
+
 test("product and tester documentation stays English", () => {
   const markdownFiles = fs.readdirSync(root).filter((filename) => filename.endsWith(".md"));
   const danishMarkers = /[æøå]|\b(?:hej|tak|søger|vigtigt|du har|du skal|jeg søger|start her)\b/i;
@@ -117,10 +172,10 @@ test("public beta surfaces use the current release and safe reporting guidance",
 
   assert.match(panel, /REPROLENS · PUBLIC BETA/);
   assert.doesNotMatch(panel, /PRIVATE BETA/i);
-  assert.match(publicBetaDocs, /v0\.11\.0-beta\.3/);
+  assert.match(publicBetaDocs, /v0\.11\.0-beta\.4/);
   assert.match(publicBetaDocs, /private vulnerability reporting/i);
   assert.doesNotMatch(publicBetaDocs, /private[- ]beta/i);
-  assert.doesNotMatch(publicBetaDocs, /v0\.11\.0-beta\.2/);
+  assert.doesNotMatch(publicBetaDocs, /v0\.11\.0-beta\.[123]/);
 });
 
 test("beta study separates installation friction and measures understanding before and after the trace", () => {

@@ -1,6 +1,8 @@
 # Privacy
 
-Last updated: 6 September 2026
+Last updated: 9 September 2026
+
+The public version of this policy is available at `https://j-jessen.github.io/reprolens-chrome-extension/privacy.html`.
 
 ReproLens is local-first. Trace collection, source-map resolution, quality scoring, history, and export redaction run inside the browser extension. The project has no backend, analytics, account system, or automatic upload.
 
@@ -41,3 +43,7 @@ The deterministic explanation works without AI. On supported Chrome 148+ desktop
 ## Public-beta feedback
 
 Usefulness rating, clarity rating, selected useful area, an optional capped comment, trace ID, and timestamp are stored only in `chrome.storage.local`. Common email and credential patterns are redacted before storage. Feedback is not uploaded; downloading it is a separate user action, and all feedback can be cleared from the side panel.
+
+## Data sharing, sale, and contact
+
+ReproLens does not sell user data, share it with advertisers, or use it for creditworthiness, lending, advertising, or purposes unrelated to its browser-debugging function. Privacy questions can be raised through the project's [public support page](https://github.com/J-Jessen/reprolens-chrome-extension/issues/new/choose). A possible security or privacy exposure should be reported through [GitHub private vulnerability reporting](https://github.com/J-Jessen/reprolens-chrome-extension/security/advisories/new) rather than a public issue.

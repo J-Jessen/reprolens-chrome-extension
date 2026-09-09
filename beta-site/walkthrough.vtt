@@ -1,0 +1,13 @@
+WEBVTT
+
+00:00.000 --> 00:12.000
+Trigger a deliberate failure on the supplied safe demo.
+
+00:12.000 --> 00:24.000
+ReproLens connects the selected click to the page handler and exact failed request.
+
+00:24.000 --> 00:36.000
+Read what the failure means and the first useful debugging check.
+
+00:36.000 --> 00:48.000
+Review a redacted bug report and generate a Playwright test starting point.

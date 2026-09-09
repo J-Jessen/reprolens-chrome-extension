@@ -7,9 +7,13 @@
     "test": "node --test tests/*.test.js",
     "test:e2e": "node e2e/runner.js",
     "build:react": "npm --prefix demo-react run build",
+    "build:site": "node scripts/build-beta-site.js",
+    "test:site": "npm run build:site && node scripts/test-beta-site.js",
+    "capture:marketing": "node scripts/capture-marketing-assets.js",
     "check:version": "node scripts/check-version.js",
     "build": "npm run check:version && node scripts/package-extension.js",
-    "check": "node --check background.js && node --check content.js && node --check trace-core.js && node --check corpus-evaluator.js && node --check e2e/runner.js && node --check panel.js && node --check scripts/check-version.js && node --check scripts/check-release-tag.js && node --check scripts/package-extension.js && node --check scripts/package-beta-kit.js && npm run check:version && npm test"
+    "package:cws": "npm run build && node scripts/create-cws-package.js",
+    "check": "node --check background.js && node --check content.js && node --check trace-core.js && node --check corpus-evaluator.js && node --check e2e/runner.js && node --check panel.js && node --check scripts/check-version.js && node --check scripts/check-release-tag.js && node --check scripts/package-extension.js && node --check scripts/package-beta-kit.js && node --check scripts/build-beta-site.js && node --check scripts/test-beta-site.js && node --check scripts/create-cws-package.js && node --check scripts/capture-marketing-assets.js && npm run check:version && npm test"
   },
   "engines": {
     "node": ">=20"

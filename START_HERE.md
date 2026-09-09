@@ -1,6 +1,8 @@
 # Start here – ReproLens public beta
 
-Download `reprolens-v0.11.0-beta.3.zip` from the [official GitHub release](https://github.com/J-Jessen/reprolens-chrome-extension/releases/tag/v0.11.0-beta.3). Do not use GitHub's automatic source archive. You do not need to change any code.
+Download `reprolens-v0.11.0-beta.4.zip` from the [official GitHub release](https://github.com/J-Jessen/reprolens-chrome-extension/releases/tag/v0.11.0-beta.4). Do not use GitHub's automatic source archive. You do not need to change any code.
+
+Before installing, you can see the product, watch the walkthrough, and open the safe demo on the [public beta page](https://j-jessen.github.io/reprolens-chrome-extension/).
 
 The package is provided for evaluation and feedback under the terms in `LICENSE.md`.
 

@@ -1,77 +1,80 @@
 # Tester recruitment kit
 
-## Where to find the first testers
+The first objective is five observed sessions, not broad awareness. Public posts remain useful background credibility, but the first participants should be recruited manually and offered a guided 15-minute test with no project preparation.
 
-Use warm, relevant contacts first. The objective is useful observation, not a large mailing list.
+## Narrow tester profile
 
-1. Ask 3–5 frontend or full-stack developers you already know from work, former projects, study, meetups, or professional groups.
-2. Ask each suitable contact for one introduction to a developer who regularly debugs browser behaviour.
-3. Post a short request in relevant frontend, React, JavaScript, QA, or test-automation communities where recruitment posts are allowed.
-4. Use LinkedIn to contact people whose current role clearly matches the tester profile. Personalize the first sentence and do not mass-message.
-5. Recruit the second structured round only after the first three testers can install and complete the core flow without a call.
+Prioritize people who meet both conditions:
 
-Stop active recruitment when 6–8 qualified testers have accepted. Additional people may still use the public beta and submit sanitized feedback.
+1. They currently work as a frontend developer, full-stack developer, QA/test automation engineer, or engineering lead.
+2. They investigate JavaScript failures, failed browser requests, difficult reproduction steps, or Playwright regressions at least occasionally.
 
-## Screening questions
+For the first session, they need only desktop Chrome 118 or newer. Do not require access to a work application. The supplied public demo is the safest first experience.
 
-Ask structured-study participants these questions before they begin:
+## Five-day sourcing plan
 
-1. What is your current development or QA role?
-2. Which browser frameworks do you work with most often?
-3. Do you have a local or staging web application you are authorized to inspect?
-4. Can you spend 45–60 minutes testing within the next seven days?
-5. Are you comfortable installing an unpacked Chrome extension from an official GitHub release ZIP?
-6. Will you avoid production customer data and review every exported trace before sharing it?
+Find eight relevant people per day, in this order:
 
-Qualify testers who answer yes to questions 3–6 and fit at least one role in [BETA.md](BETA.md#tester-profile).
+1. Former colleagues, classmates, clients, meetup contacts, and friends who write or test frontend code.
+2. One introduction from every suitable warm contact.
+3. Active participants in frontend, JavaScript, React, QA, and Playwright Discord communities where direct messages are permitted.
+4. People publicly discussing a concrete frontend request, JavaScript, or reproduction problem on GitHub, LinkedIn, Indie Hackers, or developer forums.
+5. Local developer and testing meetups whose organizers allow a short testing request.
 
-## Copy-ready personal invitation
+Personalize the opening sentence around the person's role or the problem they discussed. Do not automate direct messages, scrape private contact data, or send the same unsolicited pitch repeatedly.
 
-> Hi [name] — I am testing a new Chrome tool for frontend debugging. You select an element, perform one interaction, and receive a local explanation and timeline covering handlers, network activity, asynchronous work, and page changes.
+Track only aggregate totals in `OUTREACH_SCORECARD.md`. Keep names and contact details in a private system controlled by the project owner.
+
+## Primary invitation — guided test
+
+> Hi [name] — I noticed that you work with [specific frontend or testing context]. I am testing whether a Chrome extension can help developers identify the cause of a browser failure faster than DevTools alone.
 >
-> I am looking for developers and QA engineers who can spend 45–60 minutes testing the public beta on a local or staging website they are authorized to inspect. The tool does not upload traces or analytics. If you choose to share evidence, you must review the redacted export first.
+> Would you be open to a focused 15-minute screen-share test? You will use a supplied safe demo, so there is no project setup, production access, or private data involved. I am looking for honest evidence about where the tool helps, confuses, or adds no value.
 >
-> The test covers installation, a short demo flow, 3–5 interactions in a real project, and structured feedback. You do not need to fix code.
->
-> Would you like to participate by [date]? The release and complete test guide are available here: https://github.com/J-Jessen/reprolens-chrome-extension/releases/tag/v0.11.0-beta.3
+> You can see the product first here: https://j-jessen.github.io/reprolens-chrome-extension/
 
-## Copy-ready community post
+Do not include the founding-tester benefit in the first paragraph. If the person asks what they receive, say:
 
-> **Looking for frontend and QA testers for a public Chrome extension beta**
->
-> I am building ReproLens: record one interaction or a short user journey, understand the observed chain of JavaScript handlers, requests, asynchronous boundaries, navigation, and page changes, then create a privacy-reviewed bug report and Playwright test skeleton. Everything is processed locally; there is no automatic upload or analytics. GitHub opens only as an unsubmitted draft. I especially want to learn which parts genuinely save developers time.
->
-> I am looking for React, JavaScript, frontend, full-stack, and QA professionals with access to a local or staging web application. Testing takes 45–60 minutes. Production or customer data must not be used.
->
-> Download the public beta and begin with `START_HERE.md`: https://github.com/J-Jessen/reprolens-chrome-extension/releases/tag/v0.11.0-beta.3
->
-> If you join the structured test, send me your role, primary framework, and whether you can test by [date]. Sanitized public feedback is also welcome through the repository's issue forms.
+> Participants who complete the structured test will receive 12 months of free access if ReproLens launches as a paid product. The benefit is for completed, honest testing—not positive feedback.
 
-## Acceptance message
+## Short Discord message
 
-> Thank you — you are a good fit for this test. Download `reprolens-v0.11.0-beta.3.zip` from Assets on the official release page, extract it, and begin with `START_HERE.md`:
+> I am looking for frontend or QA developers for a 15-minute screen-share test of ReproLens. It follows one browser interaction into the relevant handler, request/error, page result, safe bug report, and Playwright test starting point.
 >
-> https://github.com/J-Jessen/reprolens-chrome-extension/releases/tag/v0.11.0-beta.3
+> The session uses a supplied demo—no work project, production data, or preparation. I specifically want to learn whether it finds the likely cause faster than DevTools alone.
 >
-> Do not use GitHub's Source code archive or a development build from `main`.
+> Overview and volunteer link: https://j-jessen.github.io/reprolens-chrome-extension/
+
+## Message for someone discussing a relevant bug
+
+> Hi [name] — I saw your note about [specific publicly discussed browser problem]. I am not contacting you to sell anything. I am testing a local-first Chrome tool that tries to connect one failing interaction to its handler, request/error, and visible result.
 >
-> Important: test only on local or staging systems that you are authorized to inspect. Never share raw credentials, cookies, tokens, customer data, private URLs, or an export that you have not reviewed yourself.
+> I would value a 15-minute comparison against normal DevTools using a supplied demo. No private application or data is needed. Would that be useful enough to try?
+
+## Positive-response message
+
+> Thank you. The test takes about 15 minutes and uses only the supplied safe demo. Nothing needs to be installed before the call. Please use the public volunteer form so we can coordinate without posting personal contact details:
+>
+> https://github.com/J-Jessen/reprolens-chrome-extension/issues/new?template=guided-beta-session.yml
 
 ## Follow-up after three days
 
-> Hi [name] — a quick follow-up on the ReproLens beta. Have you been able to begin, or is installation blocked? If something stops you, use the repository's Beta bug report form or complete `BETA_BUG_REPORT.md`. You are not expected to share a trace if you are uncertain about its contents.
+> Hi [name] — one quick follow-up in case the earlier message was buried. The ReproLens test is 15 minutes, uses a supplied demo, and requires no access to your project. If it is not relevant, no reply is needed.
 
-## Completion message
+Send only one follow-up. Do not pressure non-responders.
 
-> Thank you for testing. Please submit the Beta feedback issue form or return a completed `BETA_FEEDBACK_FORM.md`, even if everything worked. When you finish, delete the extracted folder and remove the extension through `chrome://extensions` if you no longer need it.
+## Session and completion
 
-## Outreach tracker
+Run the call using `BETA_STUDY_PROTOCOL.md`. Afterward, ask for the structured beta feedback only if the participant is comfortable submitting public-safe results.
 
-Keep personal contact data outside the repository. Track only aggregate progress here or in a private system:
+> Thank you—your observations were genuinely useful. If you are comfortable doing so, you can submit sanitized feedback here. Never include credentials, customer data, private URLs, raw traces, or an export you have not reviewed:
+>
+> https://github.com/J-Jessen/reprolens-chrome-extension/issues/new?template=beta-feedback.yml
 
-| Stage | Target |
-|---|---:|
-| Personalized invitations sent | 10–15 |
-| Qualified acceptances | 6–8 |
-| Round 1 completions | 3 |
-| Total completions | 4+ |
+## Stop and change rules
+
+- After 40 relevant invitations with fewer than 8 replies, change the target or promise before sending more.
+- If people reply but will not book, reduce perceived risk and commitment.
+- If sessions book but installation repeatedly fails, prioritize Web Store distribution and onboarding.
+- If participants understand the explanation but do not save time, test bug-report and Playwright value separately before building more tracing features.
+- If at least two of the first five ask to use ReproLens again on an authorized local or staging project, recruit the next five from the most enthusiastic role/profile.

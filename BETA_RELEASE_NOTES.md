@@ -1,10 +1,10 @@
-# ReproLens v0.11.0-beta.3
+# ReproLens v0.11.0-beta.4
 
 This public beta tests which parts of a more complete, local-first behaviour trace are most useful on real local and staging applications.
 
 ## Install and test
 
-1. Download `reprolens-v0.11.0-beta.3.zip` from **Assets** below. Do not use GitHub's source-code archives.
+1. Download `reprolens-v0.11.0-beta.4.zip` from **Assets** below. Do not use GitHub's source-code archives.
 2. Extract the ZIP and begin with `START_HERE.md` inside the package.
 3. Submit sanitized bugs and feedback through the repository's issue forms, or contact the owner privately if a report contains a security or privacy concern.
 
@@ -12,6 +12,10 @@ No GitHub account is required to download the release. A GitHub account is requi
 
 ## Changes in this build
 
+- Adds a responsive public beta page with a hosted safe demo, actual product screenshots, a captioned 48-second walkthrough, privacy policy, and focused call to action.
+- Adds a 15-minute moderated comparison, guided-session signup, five-day recruitment sequence, and an acquisition scorecard so response rate is measured separately from product value.
+- Prepares a Chrome Web Store package, exact-size extension icons, current listing copy, permission justifications, privacy disclosures, reviewer steps, and compliant store images.
+- Adds automated desktop, mobile, accessibility, missing-resource, link, and video checks for the public beta site.
 - Opens the repository and versioned release for public beta testing while retaining owner-only write access to `main`.
 - Adds public issue-based beta reporting, private security-reporting guidance, and explicit evaluation-only source terms.
 - Keeps every tester-facing document, recruitment message, and repository access instruction consistently English.

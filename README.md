@@ -4,11 +4,11 @@
 
 [![CI](https://github.com/J-Jessen/reprolens-chrome-extension/actions/workflows/ci.yml/badge.svg)](https://github.com/J-Jessen/reprolens-chrome-extension/actions/workflows/ci.yml)
 
-[Download the public beta](https://github.com/J-Jessen/reprolens-chrome-extension/releases/tag/v0.11.0-beta.3) · [Try it in 10 minutes](QUICK_TEST.md) · [Report a bug or share feedback](https://github.com/J-Jessen/reprolens-chrome-extension/issues/new/choose)
+[See the public beta](https://j-jessen.github.io/reprolens-chrome-extension/) · [Download the extension](https://github.com/J-Jessen/reprolens-chrome-extension/releases/tag/v0.11.0-beta.4) · [Try it in 10 minutes](QUICK_TEST.md) · [Volunteer for a guided test](https://github.com/J-Jessen/reprolens-chrome-extension/issues/new?template=guided-beta-session.yml)
 
 Current build: **0.11.0**
 
-Public beta: **v0.11.0-beta.3**
+Public beta: **v0.11.0-beta.4**
 
 > See what broke. Reproduce it. Fix it.
 
@@ -61,7 +61,9 @@ All trace processing is local. The current build has no backend, analytics, logi
 
 ## Public beta
 
-Download the installable archive from the [v0.11.0-beta.3 release](https://github.com/J-Jessen/reprolens-chrome-extension/releases/tag/v0.11.0-beta.3), extract it, and begin with `START_HERE.md`. Use the release asset named `reprolens-v0.11.0-beta.3.zip`, not GitHub's automatic source archive.
+Begin with the [public beta page](https://j-jessen.github.io/reprolens-chrome-extension/), which includes an actual product walkthrough, hosted safe demos, and a 15-minute guided-test option. Download the installable archive from the [v0.11.0-beta.4 release](https://github.com/J-Jessen/reprolens-chrome-extension/releases/tag/v0.11.0-beta.4), extract it, and begin with `START_HERE.md`. Use the release asset named `reprolens-v0.11.0-beta.4.zip`, not GitHub's automatic source archive.
+
+The unlisted Chrome Web Store beta is being prepared to replace the temporary developer-mode installation with a one-click install. The current Web Store copy, permission justifications, privacy disclosures, reviewer steps, and submission checklist are in `CHROMEWEBSTORE.md`.
 
 The repository is public so testers can inspect the code, download the current release, report sanitized problems, and propose changes through pull requests. Public visibility does not give anyone write access to the repository.
 
@@ -82,6 +84,8 @@ For a complete flow, choose **Record a user journey**, perform the relevant step
 Chrome will show a debugging banner while a 3.5-second trace is active. This is expected: deep runtime tracing requires the `debugger` permission.
 
 ## Run the deterministic demo
+
+The zero-setup version is hosted at `https://j-jessen.github.io/reprolens-chrome-extension/demo/`. Use the local command below only when developing or when GitHub Pages is unavailable.
 
 Run this command from the project root:
 

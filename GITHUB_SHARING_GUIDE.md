@@ -4,11 +4,11 @@ The repository and its versioned beta releases are public. Anyone can inspect th
 
 ## Send testers the correct link
 
-Share the official [v0.11.0-beta.3 release](https://github.com/J-Jessen/reprolens-chrome-extension/releases/tag/v0.11.0-beta.3).
+Share the official [v0.11.0-beta.4 release](https://github.com/J-Jessen/reprolens-chrome-extension/releases/tag/v0.11.0-beta.4).
 
 Ask each tester to:
 
-1. download `reprolens-v0.11.0-beta.3.zip` from **Assets**;
+1. download `reprolens-v0.11.0-beta.4.zip` from **Assets**;
 2. avoid GitHub's automatically generated **Source code** archives;
 3. extract the ZIP and begin with `START_HERE.md`;
 4. test only on an authorized local or staging website;
@@ -54,8 +54,8 @@ To add a maintainer:
 
 ## Copy-ready tester message
 
-> Thanks for helping test ReproLens. Download the installable ZIP from the official v0.11.0-beta.3 release and begin with `START_HERE.md` inside the extracted folder:
+> Thanks for helping test ReproLens. Download the installable ZIP from the official v0.11.0-beta.4 release and begin with `START_HERE.md` inside the extracted folder:
 >
-> https://github.com/J-Jessen/reprolens-chrome-extension/releases/tag/v0.11.0-beta.3
+> https://github.com/J-Jessen/reprolens-chrome-extension/releases/tag/v0.11.0-beta.4
 >
-> Choose the file named `reprolens-v0.11.0-beta.3.zip` under Assets, not a Source code archive. Test only on a local or staging site you are authorized to inspect. Never post credentials, customer data, private URLs, raw traces, or unreviewed exports in a public issue.
+> Choose the file named `reprolens-v0.11.0-beta.4.zip` under Assets, not a Source code archive. Test only on a local or staging site you are authorized to inspect. Never post credentials, customer data, private URLs, raw traces, or unreviewed exports in a public issue.

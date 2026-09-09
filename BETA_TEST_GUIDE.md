@@ -16,7 +16,7 @@ Stop testing and contact the owner privately if the browser behaves abnormally o
 
 Start an installation timer before step 1. Stop it when ReproLens opens successfully from the toolbar after step 7. Record the total time and every instruction, permission prompt, or browser message that made you hesitate. Keep this installation feedback separate from your opinion of the trace explanation.
 
-1. Open the official [v0.11.0-beta.3 GitHub release](https://github.com/J-Jessen/reprolens-chrome-extension/releases/tag/v0.11.0-beta.3) and download `reprolens-v0.11.0-beta.3.zip` from **Assets**. Do not use GitHub's automatic source archive.
+1. Open the official [v0.11.0-beta.4 GitHub release](https://github.com/J-Jessen/reprolens-chrome-extension/releases/tag/v0.11.0-beta.4) and download `reprolens-v0.11.0-beta.4.zip` from **Assets**. Do not use GitHub's automatic source archive.
 2. Extract the ZIP into a folder you will keep for the duration of the beta.
 3. Confirm that the folder contains `manifest.json`, `START_HERE.md`, and this guide.
 4. Open `chrome://extensions` in Chrome.
@@ -32,7 +32,9 @@ When you choose **Select element for one-step trace** or **Record a user journey
 
 ## Part A: first trace
 
-1. Open a local or staging page with a button or link that has a visible result.
+Use the hosted [failed-request demo](https://j-jessen.github.io/reprolens-chrome-extension/demo/failure.html) for the first trace. It uses dummy data and deliberately requests a missing local file. You can use a local or staging page that you are authorized to inspect after completing this comparable first test.
+
+1. Open the hosted failed-request demo and, before installing or opening ReproLens, choose **Send failing request** once.
 2. Open ReproLens from the toolbar.
 3. Choose **Select element for one-step trace** and approve access to this website if Chrome asks.
 4. Move over the page and click the chosen element.
@@ -46,6 +48,8 @@ When you choose **Select element for one-step trace** or **Record a user journey
 12. Open **Technical trace** and note whether it confirmed or changed your understanding again.
 
 Check whether the result shows the correct interaction and whether the default explanation is understandable without inspecting source code or the technical trace first.
+
+For the focused 15-minute moderated version of this comparison, use [BETA_STUDY_PROTOCOL.md](BETA_STUDY_PROTOCOL.md).
 
 ## Part B: real-project scenarios
 

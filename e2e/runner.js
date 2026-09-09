@@ -27,7 +27,9 @@ const MIME_TYPES = {
 function createTestExtensionRoot() {
   const runtimeFiles = [
     "manifest.json", "background.js", "content.js", "content.css", "trace-core.js", "source-map.js", "framework-adapter.js",
-    "panel.html", "panel.js", "panel.css", "vendor/trace-mapping.js", "vendor/TRACE_MAPPING_LICENSE.txt"
+    "panel.html", "panel.js", "panel.css",
+    "icons/reprolens-icon-16.png", "icons/reprolens-icon-32.png", "icons/reprolens-icon-48.png", "icons/reprolens-icon-128.png",
+    "vendor/trace-mapping.js", "vendor/TRACE_MAPPING_LICENSE.txt"
   ];
   const manifestPath = path.join(SOURCE_EXTENSION_ROOT, "manifest.json");
   const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));

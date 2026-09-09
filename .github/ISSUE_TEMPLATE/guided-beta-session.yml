@@ -1,0 +1,53 @@
+name: Volunteer for a guided beta test
+description: Request a focused 15-minute ReproLens test using only the supplied safe demo
+title: "[Guided beta test] "
+labels: ["beta-session"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for helping. The session uses ReproLens's supplied demo and does not require a work project, production access, or private data. This issue is public, so do not include an email address, customer name, private URL, or other personal information. The project owner will reply here to coordinate the next step.
+  - type: dropdown
+    id: role
+    attributes:
+      label: Which role best describes your work?
+      options:
+        - Frontend developer
+        - Full-stack developer
+        - QA or test automation engineer
+        - Engineering lead
+        - Other software role
+    validations:
+      required: true
+  - type: input
+    id: tools
+    attributes:
+      label: Primary frontend or testing tools
+      description: Use generic product names only.
+      placeholder: React and Playwright
+    validations:
+      required: true
+  - type: input
+    id: timezone
+    attributes:
+      label: Time zone
+      placeholder: UTC+1
+    validations:
+      required: true
+  - type: textarea
+    id: availability
+    attributes:
+      label: General availability during the next seven days
+      description: Give broad windows only, such as weekday evenings. Do not post calendar links or contact details.
+      placeholder: Weekdays after 17:00 UTC
+    validations:
+      required: true
+  - type: checkboxes
+    id: agreement
+    attributes:
+      label: Test conditions
+      options:
+        - label: I can use desktop Chrome 118 or newer for approximately 15 minutes.
+          required: true
+        - label: I will use only the supplied safe demo and will not share private or customer data.
+          required: true

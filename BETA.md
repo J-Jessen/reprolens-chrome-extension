@@ -8,6 +8,8 @@ Determine whether ReproLens reliably saves developers time when they need to und
 
 The expanded `0.11.0` beta also compares feature-level usefulness. Testers rate the deterministic explanation, technical evidence, React context, Worker/frame context, history comparison, multi-step recording, safe bug report, GitHub draft, Playwright output, optional local AI, and feedback flow separately so the next roadmap is based on observed value rather than feature count.
 
+The first acquisition milestone is 40 relevant personal invitations, 8 replies, and 5 completed guided sessions. The product milestone is evaluated after those sessions; lack of response before the acquisition milestone is not treated as evidence that the product lacks value.
+
 The beta is successful when all of these are true:
 
 - at least 6 testers are recruited and at least 4 complete the test;
@@ -36,12 +38,13 @@ Prefer people who can test on a local or staging application they are authorized
 
 ## Two-round schedule
 
-### Round 1: usability and correctness
+### Round 1: observed acquisition, usability, and correctness
 
 - Duration: 7 days.
-- Testers: 3 people from the founder's direct network.
-- Goal: find installation, permission, comprehension, and critical trace-quality problems.
-- Exit: no known blocker prevents a tester from installing, selecting an element, recording, reviewing, and reporting feedback.
+- Testers: 5 people recruited through 40 personalized invitations, beginning with the founder's direct network.
+- Format: focused 15-minute screen-share sessions using only the supplied public demo.
+- Goal: measure response, installation, time to a correct likely cause, explanation trust, and critical trace-quality problems.
+- Exit: complete five sessions using `BETA_STUDY_PROTOCOL.md` and apply the decision rules in `OUTREACH_SCORECARD.md`.
 
 ### Round 2: product value
 
@@ -52,12 +55,12 @@ Prefer people who can test on a local or staging application they are authorized
 
 ## Operating procedure
 
-1. Recruit testers using [TESTER_RECRUITMENT.md](TESTER_RECRUITMENT.md).
-2. Collect only name or preferred contact, role, primary framework, and test availability from testers who join the structured study. Anonymous public testers may participate without providing contact details.
-3. Direct every tester to the official `v0.11.0-beta.3` GitHub release and ask them to use the installable release asset, not a source archive or a development build from `main`.
-4. Ask testers to begin with `START_HERE.md` inside the extracted release package.
+1. Recruit testers using [TESTER_RECRUITMENT.md](TESTER_RECRUITMENT.md) and record aggregate progress in [OUTREACH_SCORECARD.md](OUTREACH_SCORECARD.md).
+2. Run the first five calls using [BETA_STUDY_PROTOCOL.md](BETA_STUDY_PROTOCOL.md).
+3. Collect only name or preferred contact, role, primary framework, and test availability from testers who join the structured study. Anonymous public testers may participate without providing contact details.
+4. Direct every tester to the hosted safe demo. Until the Web Store beta is approved, use the official `v0.11.0-beta.4` release asset rather than a source archive or development build from `main`.
 5. Ask testers to submit one sanitized public issue per defect and one final feedback issue. They may use the included Markdown forms instead if they prefer to send feedback privately.
-6. Triage public reports daily using the labels `beta-bug`, `beta-feedback`, `privacy-review`, and `blocked`. Remove sensitive content immediately and move security or privacy reports to GitHub's private vulnerability-reporting flow.
+6. Triage public reports daily using the labels `beta-bug`, `beta-feedback`, `beta-session`, `privacy-review`, and `blocked`. Remove sensitive content immediately and move security or privacy reports to GitHub's private vulnerability-reporting flow.
 7. Stop a test immediately if a trace contains a secret or unauthorized personal/customer data. Remove the attachment and follow the privacy response below.
 8. At the end of each round, record totals in the scorecard below and publish the go/no-go decision in a GitHub issue.
 

@@ -1,98 +1,215 @@
-# Chrome Web Store submission
+# Chrome Web Store listing — ReproLens Beta
 
-Status: **not submitted**. The extension is currently distributed through a public, versioned GitHub beta release. This file is the source of truth for a future Chrome Web Store submission.
+> Last updated: 9 September 2026
 
-Last updated: 8 September 2026 · Current extension version: `0.11.0`
+Status: **ready for developer-account setup and final clean-profile review; not submitted**.
 
-## Listing
+This is the single source of truth for the first unlisted Chrome Web Store beta. Copy the relevant fields into the Chrome Developer Dashboard without adding claims that are not present here.
 
-- Product name: `ReproLens`
-- Category: `Developer Tools`
-- Language: `English`
-- Summary: `Record browser behaviour, explain failures, and create a safe bug report, GitHub draft, and Playwright test.`
-- Single purpose: Help a developer turn user-started browser behaviour into reproducible, privacy-reviewed debugging evidence.
+## Store listing
 
-### Detailed description
+**Extension name**
 
-ReproLens lets a developer trace one interaction or record a complete user journey of clicks/taps, named control keys, input changes, form submissions, and drops. It then explains what followed. For failures, it identifies the request method and destination or JavaScript error, explains the HTTP, browser-network, CORS, cancellation, or runtime problem, suggests the first relevant check, and connects the failure to source code and a visible page result when browser evidence supports those links. Complete technical timing and source details remain available when needed.
+`ReproLens Beta`
 
-React traces can show the owning component path plus capped prop names/types and state shape without capturing values. Supported Chrome versions can also attach related Worker and cross-origin iframe contexts to observe request/error/handler metadata without reading messages or frame content. Local history supports naming, search, quality/problem filters, and comparison of two traces.
+**Short description**
 
-An optional second opinion uses Chrome's on-device language model on supported Chrome 148+ desktop devices. The user can review the complete redacted input first. Unsupported browsers and Chrome profiles receive a specific local troubleshooting message instead; there is no cloud AI fallback. Public-beta usefulness and clarity feedback is stored locally, redacted before storage, and downloaded only on request.
+`Trace a browser interaction, explain the failure, and create a privacy-reviewed bug report and Playwright test.`
 
-Completed traces can become locally redacted Markdown or JSON bug reports with reproducible steps and user-supplied expected/actual behaviour. A user may download the report, generate a Playwright test skeleton with privacy-safe placeholders, or open a prefilled GitHub issue draft. No GitHub token is requested or stored, and GitHub never receives the report unless the user explicitly opens the draft and then chooses whether to submit it.
+**Detailed description**
 
-Tracing begins only after an explicit action in the extension side panel. Processing, source-map resolution, history, and export redaction happen locally in the browser. The extension has no backend, analytics, account system, advertising, or automatic upload.
+```text
+ReproLens Beta follows one browser interaction or short user journey and turns the observed evidence into a clear explanation, privacy-reviewed bug report, and Playwright test starting point.
 
-Chrome displays its standard debugging banner during the short trace because deep runtime observation uses the `chrome.debugger` API. The debugger detaches automatically when capture ends.
+THIS EXTENSION IS FOR BETA TESTING.
+
+FEATURES
+• Connect a selected click, keyboard action, input change, form submission, or drop to relevant page code, requests, errors, navigation, and visible page changes.
+• Explain an exact failed request or JavaScript error, what it means, and the first relevant debugging check.
+• Separate directly connected evidence from events that were only observed afterward.
+• Record a short journey and build ordered reproduction steps.
+• Review a locally redacted Markdown or JSON bug report before copying or downloading it.
+• Open a prefilled GitHub issue draft without storing a GitHub token or submitting the issue automatically.
+• Generate a Playwright regression-test starting point with placeholders for uncaptured private input.
+• Keep, name, search, compare, import, and delete a bounded local trace history.
+
+HOW TO USE
+1. Click ReproLens in the Chrome toolbar to open the side panel.
+2. Choose a one-step trace or user journey.
+3. Approve access to the current website when Chrome asks.
+4. Select the relevant element and perform the interaction once.
+5. Read What happened, then open the technical trace only when you need deeper evidence.
+6. Review every report or test before copying, downloading, or opening a GitHub draft.
+
+PRIVACY
+ReproLens has no backend, analytics, advertising, account system, or automatic upload. Trace processing, history, feedback, and redaction stay in the browser. Website access is requested one origin at a time after a direct user action and can be revoked in Chrome settings. Request and response bodies, headers, cookies, typed characters, form values, and debugger scopes are not intentionally captured.
+
+WHY CHROME SHOWS A DEBUGGING BANNER
+Chrome displays its standard debugging banner during a short user-started trace. This temporary access is needed to connect runtime errors, request metadata, source locations, and navigation to the selected interaction. Capture stops automatically.
+
+SUPPORT
+Report a public-safe beta problem or request a guided test at:
+https://github.com/J-Jessen/reprolens-chrome-extension/issues/new/choose
+
+Never post credentials, private URLs, customer data, raw traces, or unreviewed exports. Use GitHub private vulnerability reporting for a possible security or privacy exposure.
+
+Version 0.11.0 — Public beta with single- and multi-step tracing, diagnostic explanations, local history, reviewed reports, GitHub drafts, and Playwright test generation.
+```
+
+**Category**
+
+`Developer Tools`
+
+**Single purpose**
+
+`Turn a user-started browser interaction into reproducible, privacy-reviewed debugging evidence.`
+
+**Primary language**
+
+`English`
+
+## Graphics and assets
+
+| Asset | Dimensions | Status | Filename |
+|---|---:|---|---|
+| Store icon | 128×128 PNG | Ready | `icons/reprolens-icon-128.png` |
+| Screenshot 1 | 1280×800 PNG | Ready | `store-assets/store-screenshot-failure.png` |
+| Screenshot 2 | 1280×800 PNG | Ready | `store-assets/store-screenshot-success.png` |
+| Screenshot 3 | 1280×800 PNG | Ready | `store-assets/store-screenshot-report.png` |
+| Small promo tile | 440×280 PNG | Ready | `store-assets/small-promo-tile.png` |
+| Marquee promo tile | 1400×560 | Not required for beta | — |
+
+### Screenshot notes
+
+1. The supplied demo beside the actual explanation for an intentional `404 Not Found` request.
+2. The supplied demo beside an actual successful request trace.
+3. The same failed trace scrolled to the evidence chain and safe-report workflow.
+
+The screenshots contain no promotional overlays, private websites, customer data, credentials, or unsupported feature claims. Recreate them with `npm run capture:marketing` whenever the side-panel interface changes.
 
 ## Permission justifications
 
-- `alarms`: Enforces automatic safety limits for short traces and multi-step recordings even if Chrome suspends and restarts the extension's background process.
-- `debugger`: Observes call frames, asynchronous events, request metadata, runtime errors, navigation, and supported related Worker/frame contexts during a short user-started trace. It detaches automatically.
-- `scripting`: Injects the element picker and its static stylesheet after the user grants access to the active website.
-- `sidePanel`: Hosts the extension controls and trace results in Chrome's side panel.
-- `storage`: Stores user preferences (including the last repository name, never a token), a bounded local history, optional local beta feedback, and a safe public snapshot of the current tab's trace state.
-- `tabs`: Reads the active tab ID and URL so the extension can request access to exactly that website and associate a trace with the correct tab.
-- Optional `http://*/*` and `https://*/*`: Allows Chrome to offer per-website access. The extension requests only the active page's exact origin after the user chooses **Select element for one-step trace**, **Record selected interaction**, or **Record a user journey**; it has no required host access and no always-on content script.
+| Permission | Type | Justification |
+|---|---|---|
+| `alarms` | permissions | Enforces automatic time limits for short traces and user journeys even if Chrome suspends and restarts the extension between actions. |
+| `debugger` | permissions | During a short user-started trace, observes source locations, runtime errors, request metadata, navigation, and supported asynchronous execution needed to explain what followed the selected interaction. ReproLens detaches automatically when capture ends. |
+| `scripting` | permissions | Adds the element selector and its stylesheet only after the user starts a trace and grants the current website access. |
+| `sidePanel` | permissions | Displays trace controls, explanations, local history, reviewed reports, and generated test output in Chrome's side panel. |
+| `storage` | permissions | Keeps preferences, bounded trace history, optional beta feedback, and privacy-sanitized current-session state locally in the extension. |
+| `tabs` | permissions | Identifies the active tab and its URL so ReproLens can ask for the exact website origin and associate evidence with the correct tab. |
+| `http://*/*` | optional host permission | Lets the user grant one explicitly selected HTTP origin for a local or authorized test site. There is no required host access or always-on page recorder. |
+| `https://*/*` | optional host permission | Lets the user grant one explicitly selected HTTPS origin for an authorized website. ReproLens does not silently expand access to other origins. |
 
-## Data-use disclosure
+## Privacy and data use
 
-The Web Store privacy questionnaire must disclose local handling of:
+**Does the extension handle user data?** Yes. It handles the minimum website and interaction evidence needed for a user-started trace. The developer does not receive this data.
 
-- website content: selected-element text and capped HTML plus DOM mutation summaries;
-- user activity: the single interaction or bounded multi-step journey the user explicitly asks the extension to trace, excluding typed characters, input values, submitted values, and dropped data;
-- web history: page, navigation, request, WebSocket, and source-map URLs observed during that trace;
-- diagnostics: console warnings, runtime errors, source locations, and trace-quality diagnostics.
+| Data type | Handled? | Automatically transmitted off-device? | Purpose | Shared with third parties? |
+|---|---|---|---|---|
+| Personally identifiable information | No | No | Not used | No |
+| Health information | No | No | Not used | No |
+| Financial information | No | No | Not used | No |
+| Authentication information | No | No | Intentionally excluded and redacted from exports | No |
+| Personal communications | No | No | Message contents are not captured | No |
+| Location | No | No | Not used | No |
+| Web history | Yes | No | Page, navigation, request, WebSocket, and source-map URLs observed only during a user-started trace | Only if the user explicitly opens a reviewed GitHub draft containing a URL |
+| User activity | Yes | No | Record the selected interaction or bounded journey without typed or submitted values | Only through an explicit reviewed export action |
+| Website content | Yes | No | Selected-element context and summaries of visible changes needed to explain the result | Only through an explicit reviewed export action |
 
-None of this data is sold, used for advertising, used for credit decisions, or transferred to the developer. Exports happen only after an explicit copy or download action. If the user chooses **Open draft GitHub issue**, the reviewed report is placed in a GitHub issue-draft URL and is therefore transmitted to GitHub when that tab loads; the extension does not submit the issue. The complete disclosure must remain consistent with `PRIVACY.md` and the shipped code.
+### Data-use certification
+
+- [x] Data is not sold to third parties.
+- [x] Data is not used for purposes unrelated to the extension's single purpose.
+- [x] Data is not used for creditworthiness or lending purposes.
+- [x] Data is not transferred to the developer automatically.
+- [x] There is no analytics, advertising, account system, or cloud AI fallback.
+
+The dashboard disclosure must match [PRIVACY.md](PRIVACY.md) and the live privacy page exactly.
+
+## Privacy policy
+
+**Privacy policy URL**
+
+`https://j-jessen.github.io/reprolens-chrome-extension/privacy.html`
+
+## Distribution
+
+- Visibility: `Unlisted`
+- Regions: `All regions`
+- Testing label: The manifest name ends in `Beta`, and the detailed description states that the extension is for beta testing.
+
+An unlisted item can be installed by anyone with its Chrome Web Store URL but does not appear in store search results.
+
+## Developer information
+
+- Publisher name: `Johnny Jessen`
+- Contact email: **Developer must choose and verify a monitored public support address in the dashboard.**
+- Support URL: `https://github.com/J-Jessen/reprolens-chrome-extension/issues/new/choose`
+- Homepage URL: `https://j-jessen.github.io/reprolens-chrome-extension/`
 
 ## Reviewer test instructions
 
 1. Install the submitted package in desktop Chrome 118 or newer.
-2. Open a normal HTTP or HTTPS test page and click the extension action to open the side panel.
-3. Choose **Select element for one-step trace**, approve access to that website, and click a page element.
-4. Leave **Detect automatically** selected or choose a specific interaction, choose **Record selected interaction**, then perform that interaction again.
-5. Expect Chrome's debugging banner for approximately 3.5 seconds.
-6. Confirm that **What happened** gives a step-by-step explanation while **Technical trace** is closed by default.
-7. Open **Technical trace** and confirm that complete timings, source locations, filters, and evidence labels remain available.
-8. Confirm that **Review safe export** opens a redacted preview.
-9. Choose **Record a user journey**, perform two or more interactions, stop the journey, and confirm the captured steps appear in order.
-10. Add expected/actual behaviour, build the safe bug report, and confirm Markdown, JSON, and Playwright downloads are available only after preview.
-11. Enter a test repository as `owner/repository`; confirm a prefilled GitHub draft opens in a background tab and no issue is submitted automatically.
-12. Confirm under extension site settings that access can be revoked per website.
-13. Optionally review the exact AI input and try the local explanation on a supported Chrome 148+ device; the normal explanation must remain available without it.
+2. Open `https://j-jessen.github.io/reprolens-chrome-extension/demo/failure.html`.
+3. Click the extension action to open the side panel.
+4. Choose **Select element for one-step trace**, approve access to that website, and select **Send failing request**.
+5. Leave **Detect automatically** selected, choose **Record selected interaction**, and select the page button once.
+6. Expect Chrome's standard debugging banner for approximately 3.5 seconds.
+7. Confirm that **What happened** identifies the `404 Not Found` request, explains its meaning, names a first check, and separates directly connected evidence from later observations.
+8. Open **Technical trace** and confirm that timing, source locations, evidence labels, and filters remain available.
+9. Open `https://j-jessen.github.io/reprolens-chrome-extension/demo/multi-step.html`, start a user journey, and perform the three instructed interactions.
+10. Stop the journey, add dummy expected and actual behaviour, and build the safe report.
+11. Confirm that the Markdown, JSON, GitHub-draft, and Playwright controls remain disabled until the report preview is built.
+12. Review the report, download the Playwright test, and confirm that the dummy input value is replaced with a visible placeholder.
+13. Enter `J-Jessen/reprolens-chrome-extension` as the test repository and confirm that GitHub opens an unsubmitted issue draft without requesting a token.
+14. Confirm under Chrome's extension settings that access can be revoked for the demo origin.
 
-No account, payment, external service, or special hardware is required.
+No account, payment, customer data, production website, or special hardware is needed. The deterministic explanation works without the optional on-device model.
 
 ## Packaging and verification
 
-Run:
+Create the exact upload package with:
 
 ```bash
 npm run check
 npm run test:e2e
-npm run build
+npm run package:cws
+unzip -t artifacts/reprolens-cws-v0.11.0.zip
 ```
 
-Upload only the ZIP produced from `dist/`. It contains extension runtime files and third-party license notices, not demos, tests, beta documents, repository metadata, or development dependencies. Verify the ZIP in a clean Chrome profile before submission.
+Upload `artifacts/reprolens-cws-v0.11.0.zip`. The package contains only the files explicitly listed in `scripts/package-extension.js`. It excludes repository metadata, demos, tests, source maps, documentation, development dependencies, and this submission file.
 
-## Submission blockers
+## Final submission checklist
 
-- [ ] Choose and monitor a public support email address.
-- [ ] Publish `PRIVACY.md` at a stable public HTTPS URL and enter that URL in the listing.
-- [ ] Create final 16, 32, 48, and 128 px extension icons and declare them in `manifest.json`.
-- [ ] Create at least one accurate 1280×800 or 640×400 screenshot; avoid unsupported claims and promotional overlays.
-- [ ] Decide whether the first Web Store release is private, unlisted, or public.
-- [ ] Complete the Web Store privacy questionnaire using the disclosures above.
-- [ ] Run the reviewer workflow against the exact upload ZIP in a clean Chrome profile.
-
-Do not submit until each blocker is complete.
+- [x] Manifest V3 with a narrow single purpose.
+- [x] Extension name matches the listing.
+- [x] All permissions and optional host access are individually justified.
+- [x] Website access is optional and granted per origin.
+- [x] Runtime icons exist at every declared size.
+- [x] Three current 1280×800 screenshots and a 440×280 promo tile exist.
+- [x] Public beta site and privacy-policy source are ready for deployment.
+- [x] Reviewer test steps use a safe, public demo.
+- [x] Reproducible runtime-only Web Store package command exists.
+- [ ] Register or select the permanent Chrome Web Store developer account.
+- [ ] Enable two-step verification on that Google account.
+- [ ] Choose and verify the monitored public support email.
+- [ ] Confirm the public beta site and privacy URL after GitHub Pages deployment.
+- [ ] Run the reviewer workflow against the exact ZIP in a clean Chrome profile.
+- [ ] Complete the privacy questionnaire with the table above and submit for review.
 
 ## Version history
 
-- `0.11.0` · 8 September 2026 — Renamed the product to ReproLens and updated extension, export, documentation, tester-package, and release branding; beta.2 made tester materials consistently English, and beta.3 opens the repository and release for public testing.
-- `0.10.0` · 6 September 2026 — Added bounded multi-step journey recording, redacted bug-report generation, review-first GitHub issue drafts without stored tokens, and Playwright regression-test generation with privacy-safe placeholders.
-- `0.9.0` · 6 September 2026 — Added five interaction types, expanded error diagnoses, privacy-safe React shape, deeper Worker/frame metadata, searchable/comparable history, optional on-device AI with browser/model diagnostics, clearer and more accessible local beta feedback controls, and a 31-scenario browser corpus.
-- `0.8.0` · 6 September 2026 — Added diagnostic failed-request explanations, targeted first checks, progressive technical disclosure, explicit uncertainty wording, and narrow-panel usability verification.
-- `0.7.1` · 6 September 2026 — Added Modern Web Guidance alignment, accessibility checks, safe DOM rendering, and Manifest V3 session recovery.
+| Version | Date | Changes | Status |
+|---|---|---|---|
+| `0.11.0` | 9 September 2026 | Prepared the unlisted beta listing, per-site permission explanation, current store media, hosted safe demo, and runtime-only submission package. | Draft |
+| `0.10.0` | 6 September 2026 | Added multi-step recording, reviewed bug reports, GitHub drafts, and Playwright test generation. | GitHub beta |
+| `0.9.0` | 6 September 2026 | Added expanded diagnostics, local feedback, history comparison, and optional on-device explanation. | GitHub beta |
+
+## Known limitations and review notes
+
+- Chrome displays its standard debugging banner during a trace.
+- Opening DevTools on the same tab detaches ReproLens's temporary debugging session.
+- Browser evidence can prove some relationships directly; events observed only in the same short time window remain labelled as observations.
+- Source locations depend on what the page and its source maps expose.
+- The optional on-device explanation is unavailable on unsupported Chrome versions, devices, profiles, and other Chromium browsers. The deterministic explanation remains available.
+- There is no rejection history because the item has not been submitted.

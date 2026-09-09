@@ -1,21 +1,25 @@
 # Try ReproLens in 10 minutes
 
-This short test uses ReproLens's safe local demo. It does not require a production website or customer data.
+This short test uses ReproLens's safe public demo. It does not require a repository clone, terminal command, production website, or customer data.
+
+Prefer a guided first test? [Volunteer for a focused 15-minute session](https://github.com/J-Jessen/reprolens-chrome-extension/issues/new?template=guided-beta-session.yml). Nothing needs to be installed before the call.
 
 ## 1. Install the public beta
 
 Start a timer before downloading the ZIP. Stop it when ReproLens opens successfully from the Chrome toolbar. Keep the installation time and any unclear instruction or permission prompt separate from your feedback about the trace itself.
 
-1. Download `reprolens-v0.11.0-beta.3.zip` from the [official release](https://github.com/J-Jessen/reprolens-chrome-extension/releases/tag/v0.11.0-beta.3). Do not use GitHub's automatic source archive.
+1. Download `reprolens-v0.11.0-beta.4.zip` from the [official release](https://github.com/J-Jessen/reprolens-chrome-extension/releases/tag/v0.11.0-beta.4). Do not use GitHub's automatic source archive.
 2. Extract the ZIP.
 3. Open `chrome://extensions` in desktop Chrome 118 or newer.
 4. Enable **Developer mode**.
 5. Choose **Load unpacked** and select the extracted folder containing `manifest.json`.
 6. Pin **ReproLens Beta** from Chrome's Extensions menu.
 
-## 2. Start the safe demo
+## 2. Open the safe demo
 
-Clone the repository and run its static demo server:
+Open the hosted [successful-request demo](https://j-jessen.github.io/reprolens-chrome-extension/demo/) in Chrome.
+
+If GitHub Pages is unavailable, use this local fallback from a clone of the repository:
 
 ```bash
 git clone https://github.com/J-Jessen/reprolens-chrome-extension.git
@@ -25,12 +29,12 @@ python3 -m http.server 4173 --bind 127.0.0.1 --directory demo
 
 If port 4173 is already in use, replace `4173` with `4174` in both the command and browser address.
 
-Open `http://127.0.0.1:4173/index.html`.
+Open `http://127.0.0.1:4173/index.html` only when using the fallback.
 
 ## 3. Record one successful request
 
 1. Open ReproLens from the Chrome toolbar.
-2. Choose **Select element for one-step trace** and approve access to `http://127.0.0.1:4173` if Chrome asks.
+2. Choose **Select element for one-step trace** and approve access to the demo website if Chrome asks.
 3. Select **Complete order** on the demo page.
 4. Leave **Detect automatically** selected.
 5. Choose **Record selected interaction**.
@@ -48,7 +52,7 @@ Read **What happened** without opening **Technical trace**, then answer:
 3. Did it make your first debugging check more specific?
 4. Would this have saved time compared with your normal debugging workflow, or mainly added another artifact?
 
-If you have another three minutes, repeat the same before/after exercise on `http://127.0.0.1:4173/failure.html` using **Send failing request**. Before reading ReproLens, record your likely cause and first DevTools check. The explanation should identify the deliberate `404 Not Found` request and suggest a concrete first check; note exactly what it changed or clarified.
+If you have another three minutes, repeat the same before/after exercise on the hosted [failed-request demo](https://j-jessen.github.io/reprolens-chrome-extension/demo/failure.html) using **Send failing request**. Use `http://127.0.0.1:4173/failure.html` when running locally. Before reading ReproLens, record your likely cause and first DevTools check. The explanation should identify the deliberate `404 Not Found` request and suggest a concrete first check; note exactly what it changed or clarified.
 
 ## 5. Send safe feedback
 
