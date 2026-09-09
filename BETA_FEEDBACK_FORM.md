@@ -10,6 +10,8 @@ Complete this once after the test guide. Submit sanitized feedback through the r
 
 ## Results
 
+- Installation time:
+- Installation-only friction or unclear instructions:
 - Total interactions tested:
 - Useful traces:
 - Time to first useful trace:
@@ -35,6 +37,9 @@ Rate each area from 1 (not useful) to 5 (very useful), or write “not available
 
 ## Experience
 
+- Successful trace before/after: what did you think caused the result before reading **What happened**, and what changed afterward?
+- Failed trace before/after: what did you think caused the result before reading **What happened**, and what changed afterward?
+- Did ReproLens make your first debugging check more specific, or mainly add another artifact?
 - Most valuable part:
 - Most confusing or frustrating part:
 - A trace you understood differently after opening Technical trace:

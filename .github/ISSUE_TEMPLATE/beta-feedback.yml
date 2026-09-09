@@ -23,6 +23,21 @@ body:
     validations:
       required: true
   - type: input
+    id: installation_time
+    attributes:
+      label: Installation time
+      description: Measure from starting the ZIP download until ReproLens opens successfully from the toolbar.
+      placeholder: 6 minutes
+    validations:
+      required: true
+  - type: textarea
+    id: installation_friction
+    attributes:
+      label: Installation-only friction
+      description: List unclear instructions, permission prompts, or browser messages separately from trace feedback. Write "None" if installation was clear.
+    validations:
+      required: true
+  - type: input
     id: first_trace
     attributes:
       label: Time to first useful trace
@@ -41,6 +56,20 @@ body:
     attributes:
       label: Trust in the trace's certainty labels
       options: ["5 - Very high", "4 - High", "3 - Mixed", "2 - Low", "1 - Very low"]
+    validations:
+      required: true
+  - type: textarea
+    id: before_after
+    attributes:
+      label: Before and after reading What happened
+      description: For one successful and one failed trace, summarize your likely cause and first DevTools check before reading the explanation, then what changed afterward.
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostic_value
+    attributes:
+      label: Diagnostic value
+      description: Did ReproLens make your first debugging check more specific, save time, or mainly add another artifact?
     validations:
       required: true
   - type: textarea

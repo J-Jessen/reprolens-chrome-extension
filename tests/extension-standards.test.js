@@ -122,3 +122,19 @@ test("public beta surfaces use the current release and safe reporting guidance",
   assert.doesNotMatch(publicBetaDocs, /private[- ]beta/i);
   assert.doesNotMatch(publicBetaDocs, /v0\.11\.0-beta\.2/);
 });
+
+test("beta study separates installation friction and measures understanding before and after the trace", () => {
+  const guide = read("BETA_TEST_GUIDE.md");
+  const quickTest = read("QUICK_TEST.md");
+  const feedbackForm = read("BETA_FEEDBACK_FORM.md");
+  const issueForm = read(".github/ISSUE_TEMPLATE/beta-feedback.yml");
+
+  for (const document of [guide, quickTest, feedbackForm, issueForm]) {
+    assert.match(document, /installation/i);
+    assert.match(document, /before.*after|before versus after/i);
+  }
+  assert.match(guide, /what you would inspect first in DevTools/i);
+  assert.match(quickTest, /mainly added another artifact/i);
+  assert.match(issueForm, /id: installation_friction/);
+  assert.match(issueForm, /id: before_after/);
+});

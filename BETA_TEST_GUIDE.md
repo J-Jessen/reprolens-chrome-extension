@@ -14,6 +14,8 @@ Stop testing and contact the owner privately if the browser behaves abnormally o
 
 ## Install the beta
 
+Start an installation timer before step 1. Stop it when ReproLens opens successfully from the toolbar after step 7. Record the total time and every instruction, permission prompt, or browser message that made you hesitate. Keep this installation feedback separate from your opinion of the trace explanation.
+
 1. Open the official [v0.11.0-beta.3 GitHub release](https://github.com/J-Jessen/reprolens-chrome-extension/releases/tag/v0.11.0-beta.3) and download `reprolens-v0.11.0-beta.3.zip` from **Assets**. Do not use GitHub's automatic source archive.
 2. Extract the ZIP into a folder you will keep for the duration of the beta.
 3. Confirm that the folder contains `manifest.json`, `START_HERE.md`, and this guide.
@@ -37,9 +39,11 @@ When you choose **Select element for one-step trace** or **Record a user journey
 5. Leave **Detect automatically** selected and choose **Record selected interaction**.
 6. Perform the same interaction once.
 7. Wait for the trace to complete.
-8. Read **What happened** without opening **Technical trace**. In one sentence, write what you believe the interaction did.
-9. Record how long it took from step 2 until you understood the result.
-10. Open **Technical trace** and note whether it confirmed or changed your understanding.
+8. Before reading ReproLens, look only at the tested page and write three short answers: what happened, what you think caused it, and what you would inspect first in DevTools.
+9. Read **What happened** without opening **Technical trace**, then answer the same three questions again.
+10. Record what became clearer, what changed, and whether the suggested first check became more specific.
+11. Record how long it took from step 2 until you understood the result.
+12. Open **Technical trace** and note whether it confirmed or changed your understanding again.
 
 Check whether the result shows the correct interaction and whether the default explanation is understandable without inspecting source code or the technical trace first.
 
@@ -61,13 +65,15 @@ Test 3–5 safe interactions. Choose as many of these shapes as your application
 For every interaction, answer:
 
 1. Did the trace show the behaviour you expected?
-2. Could you explain the result after reading only **What happened**?
-3. Were `Direct link`, `Observed after interaction`, and `Limited evidence` understandable and trustworthy?
-4. Did **Primary chain** contain only evidence you considered explicitly connected?
-5. Was important evidence missing?
-6. Did any event look unrelated or more certain than the evidence justified?
-7. Were source locations usable and source-mapped when your project supplies maps?
-8. Did this save time compared with your normal DevTools workflow?
+2. Before reading **What happened**, what did you believe caused the result and what would you inspect first?
+3. After reading **What happened**, did your explanation or first check change?
+4. Could you explain the result after reading only **What happened**?
+5. Were `Direct link`, `Observed after interaction`, and `Limited evidence` understandable and trustworthy?
+6. Did **Primary chain** contain only evidence you considered explicitly connected?
+7. Was important evidence missing?
+8. Did any event look unrelated or more certain than the evidence justified?
+9. Were source locations usable and source-mapped when your project supplies maps?
+10. Did this save time compared with your normal DevTools workflow, or mainly create an additional artifact?
 
 ## Part C: product controls
 
@@ -111,8 +117,10 @@ Include the beta version, Chrome version, framework, safe reproduction steps, ex
 Open the repository's **Beta feedback** issue form, or complete `BETA_FEEDBACK_FORM.md` and send it privately to the owner. Submit it even if you found no defects. Report:
 
 - number and type of interactions tested;
+- installation time and installation-only friction;
 - time to first useful trace;
 - median time to understand the default explanation;
+- the diagnosis and first DevTools check before versus after reading **What happened** for at least one successful and one failed trace;
 - explanations understood without opening **Technical trace**;
 - explanation clarity;
 - useful traces versus total traces;
