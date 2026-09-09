@@ -2,8 +2,10 @@ ReproLens is now available as a public beta for frontend developers, full-stack 
 
 ## Start here
 
-- [Download v0.11.0-beta.3](https://github.com/J-Jessen/reprolens-chrome-extension/releases/tag/v0.11.0-beta.3)
-- [Run the 10-minute local test](https://github.com/J-Jessen/reprolens-chrome-extension/blob/main/QUICK_TEST.md)
+- [See the product, walkthrough, and safe demo](https://j-jessen.github.io/reprolens-chrome-extension/)
+- [Download v0.11.0-beta.4](https://github.com/J-Jessen/reprolens-chrome-extension/releases/tag/v0.11.0-beta.4)
+- [Volunteer for a focused 15-minute guided test](https://github.com/J-Jessen/reprolens-chrome-extension/issues/new?template=guided-beta-session.yml)
+- [Run the 10-minute self-guided test](https://github.com/J-Jessen/reprolens-chrome-extension/blob/main/QUICK_TEST.md)
 - [Run the complete 45–60 minute evaluation](https://github.com/J-Jessen/reprolens-chrome-extension/blob/main/BETA_TEST_GUIDE.md)
 - [Report a sanitized bug or submit feedback](https://github.com/J-Jessen/reprolens-chrome-extension/issues/new/choose)
 
@@ -19,14 +21,12 @@ ReproLens is now available as a public beta for frontend developers, full-stack 
 
 Test only on the supplied local demo or a local/staging website you are authorized to inspect. Never post credentials, cookies, tokens, customer data, private URLs, raw traces, or unreviewed exports. Use [private vulnerability reporting](https://github.com/J-Jessen/reprolens-chrome-extension/security/advisories/new) for a security or privacy concern.
 
-## Tester incentive
-
-People who complete the full evaluation and provide honest feedback will receive 12 months of free access if ReproLens launches as a paid product. The reward is for completed testing, not positive feedback.
-
 ## Public scorecard
 
 - Personalized invitations sent: 0
-- 10-minute tests completed: 0
+- Relevant replies received: 0
+- Guided 15-minute sessions completed: 0
+- Self-guided tests completed: 0
 - Full evaluations completed: 0
 - Real interactions tested: 0
 - Useful traces: 0 / 0
@@ -34,3 +34,5 @@ People who complete the full evaluation and provide honest feedback will receive
 - Open P1 blockers: 0
 
 No names, email addresses, private URLs, or other tester contact details belong in this issue.
+
+The first acquisition checkpoint is 40 relevant personal invitations, 8 replies, and 5 completed guided sessions. We evaluate product value after that checkpoint instead of treating early post impressions as a product verdict.
