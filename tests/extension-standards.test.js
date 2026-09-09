@@ -127,6 +127,8 @@ test("public beta site is accessible, CSP-safe, and ships complete media", () =>
   assert.match(landing, /class="skip-link"/);
   assert.match(landing, /<video\b[^>]*\bcontrols\b[^>]*\bwidth="1280"[^>]*\bheight="720"[^>]*\bpreload="none"/);
   assert.match(landing, /<track\b[^>]*kind="captions"[^>]*\bdefault/);
+  assert.match(landing, /<details\s+class="transcript">/);
+  assert.match(landing, /concise English narration/);
   assert.match(css, /:focus-visible/);
   assert.match(css, /prefers-reduced-motion:\s*reduce/);
   assert.match(css, /forced-colors:\s*active/);

@@ -75,6 +75,10 @@ async function main() {
       const primary = document.querySelector(".actions .primary");
       const demo = document.querySelector('.actions a[href="demo/failure.html"]');
       const video = document.querySelector("video");
+      const guided = document.querySelector('.test-invite .button');
+      const selfGuided = document.querySelector('.test-invite .text-link');
+      const guidedBox = guided.getBoundingClientRect();
+      const selfGuidedBox = selfGuided.getBoundingClientRect();
       video.preload = "metadata";
       video.load();
       await new Promise((resolve, reject) => {
@@ -87,7 +91,10 @@ async function main() {
         demo: demo?.href || "",
         videoDuration: video.duration,
         videoType: video.canPlayType("video/webm"),
-        captions: Boolean(video.querySelector('track[kind="captions"][default]'))
+        captions: Boolean(video.querySelector('track[kind="captions"][default]')),
+        transcript: document.querySelector(".transcript")?.textContent || "",
+        guidedCenter: guidedBox.left + guidedBox.width / 2,
+        selfGuidedCenter: selfGuidedBox.left + selfGuidedBox.width / 2
       };
     });
     assert.match(productChecks.download, /releases\/tag\/v0\.11\.0-beta\.4$/);
@@ -95,6 +102,18 @@ async function main() {
     assert.ok(productChecks.videoDuration >= 45 && productChecks.videoDuration <= 55);
     assert.notEqual(productChecks.videoType, "");
     assert.equal(productChecks.captions, true);
+    assert.match(productChecks.transcript, /Traces stay on your device unless you export them/);
+    assert.ok(Math.abs(productChecks.guidedCenter - productChecks.selfGuidedCenter) <= 1, "The self-guided link is not centered under the guided-test button.");
+
+    const decodedAudioBytes = await page.evaluate(async () => {
+      const video = document.querySelector("video");
+      video.muted = true;
+      await video.play();
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      video.pause();
+      return video.webkitAudioDecodedByteCount;
+    });
+    assert.ok(decodedAudioBytes > 0, "The walkthrough has no decodable narration track.");
     await page.close();
   } finally {
     await browser.close();

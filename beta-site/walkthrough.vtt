@@ -1,13 +1,13 @@
 WEBVTT
 
 00:00.000 --> 00:12.000
-Trigger a deliberate failure on the supplied safe demo.
+Start with the supplied safe demo. It deliberately requests a missing file and returns a 404, so no account, project, or real customer data is needed.
 
 00:12.000 --> 00:24.000
-ReproLens connects the selected click to the page handler and exact failed request.
+Select the failing button, then record the interaction once. ReproLens connects your click to the page handler and identifies the exact request that failed.
 
 00:24.000 --> 00:36.000
-Read what the failure means and the first useful debugging check.
+The explanation tells you what the error means and suggests the first useful debugging check. Direct browser evidence stays separate from events observed afterward.
 
 00:36.000 --> 00:48.000
-Review a redacted bug report and generate a Playwright test starting point.
+Finally, review the locally redacted bug report before sharing anything, and download a Playwright test starting point. Traces stay on your device unless you export them.

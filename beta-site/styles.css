@@ -126,7 +126,7 @@
   .hero-lede { color: var(--muted); font-size: clamp(1.1rem, 2vw, 1.35rem); }
 
   .actions { display: flex; flex-wrap: wrap; gap: .75rem; }
-  .actions.vertical { align-items: start; flex-direction: column; }
+  .actions.vertical { align-items: center; flex-direction: column; }
 
   .button {
     display: inline-flex;
@@ -239,6 +239,23 @@
     gap: 1rem;
     padding-inline-start: 1.3rem;
     color: var(--muted);
+  }
+
+  .transcript {
+    max-inline-size: 52rem;
+    color: var(--muted);
+  }
+
+  .transcript summary {
+    color: var(--accent-strong);
+    font-weight: 750;
+    cursor: pointer;
+  }
+
+  .transcript > div {
+    display: grid;
+    gap: 1rem;
+    padding-block-start: 1rem;
   }
 
   .test-invite {
