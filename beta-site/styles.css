@@ -241,23 +241,6 @@
     color: var(--muted);
   }
 
-  .transcript {
-    max-inline-size: 52rem;
-    color: var(--muted);
-  }
-
-  .transcript summary {
-    color: var(--accent-strong);
-    font-weight: 750;
-    cursor: pointer;
-  }
-
-  .transcript > div {
-    display: grid;
-    gap: 1rem;
-    padding-block-start: 1rem;
-  }
-
   .test-invite {
     display: grid;
     grid-template-columns: 1fr auto;

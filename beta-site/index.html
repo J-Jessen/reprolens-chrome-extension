@@ -67,22 +67,13 @@
         <div class="section-heading">
           <p class="eyebrow">UNDER ONE MINUTE</p>
           <h2 id="walkthrough-title">Watch the complete debugging flow.</h2>
-          <p>The video includes concise English narration. Every step also appears as on-screen text and synchronized captions.</p>
+          <p>The video has no narration. Every step is shown as on-screen text and synchronized captions.</p>
         </div>
         <video controls width="1280" height="720" poster="assets/store-screenshot-failure.png" preload="none">
           <source src="assets/reprolens-walkthrough.webm" type="video/webm">
           <track src="walkthrough.vtt" kind="captions" srclang="en" label="English" default>
           Your browser cannot play this walkthrough. The same steps are listed below.
         </video>
-        <details class="transcript">
-          <summary>Read the video transcript</summary>
-          <div>
-            <p>Start with the supplied safe demo. It deliberately requests a missing file and returns a 404, so no account, project, or real customer data is needed.</p>
-            <p>Select the failing button, then record the interaction once. ReproLens connects your click to the page handler and identifies the exact request that failed.</p>
-            <p>The explanation tells you what the error means and suggests the first useful debugging check. Direct browser evidence stays separate from events observed afterward.</p>
-            <p>Finally, review the locally redacted bug report before sharing anything, and download a Playwright test starting point. Traces stay on your device unless you export them.</p>
-          </div>
-        </details>
         <ol class="walkthrough-steps">
           <li>Install ReproLens and open the supplied safe demo.</li>
           <li>Select the failing action and record it once.</li>

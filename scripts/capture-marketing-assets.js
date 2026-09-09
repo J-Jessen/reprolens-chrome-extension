@@ -9,7 +9,6 @@ const root = path.resolve(__dirname, "..");
 const storeDirectory = path.join(root, "store-assets");
 const siteAssetDirectory = path.join(root, "beta-site", "assets");
 const temporaryDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "reprolens-marketing-"));
-const narration = "Start with the supplied safe demo. It deliberately requests a missing file and returns a four-oh-four, so no account, project, or real customer data is needed. Select the failing button, then record the interaction once. ReproLens connects your click to the page handler and identifies the exact request that failed. The explanation tells you what the error means and suggests the first useful debugging check. Direct browser evidence stays separate from events observed afterward. Finally, review the locally redacted bug report before sharing anything, and download a Playwright test starting point. Traces stay on your device unless you export them.";
 
 function runPanelCapture(caseId, filename) {
   const result = spawnSync(process.execPath, [path.join(root, "e2e", "runner.js")], {
@@ -205,37 +204,21 @@ async function createWalkthrough(page, screenshots, output) {
   }
   if (!fs.existsSync(output)) throw new Error("The walkthrough video was not downloaded.");
 
-  const narrationFile = path.join(temporaryDirectory, "reprolens-narration.wav");
-  const speech = spawnSync("espeak-ng", [
-    "-v", "en-gb",
-    "-s", "142",
-    "-p", "45",
-    "-a", "160",
-    "-w", narrationFile,
-    narration
-  ], { encoding: "utf8" });
-  if (speech.status !== 0 || !fs.existsSync(narrationFile)) {
-    throw new Error(speech.error?.code === "ENOENT"
-      ? "eSpeak NG is required to generate the walkthrough narration."
-      : speech.stderr || "Could not generate the walkthrough narration.");
-  }
-
-  const narrated = `${output}.narrated.webm`;
-  fs.rmSync(narrated, { force: true });
-  const mux = spawnSync("gst-launch-1.0", [
+  const remuxed = `${output}.remuxed.webm`;
+  fs.rmSync(remuxed, { force: true });
+  const remux = spawnSync("gst-launch-1.0", [
     "-q",
-    "webmmux", "name=mux", "streamable=false", "!", "filesink", `location=${narrated}`,
-    "filesrc", `location=${output}`, "!", "matroskademux", "name=demux",
-    "demux.video_0", "!", "queue", "!", "mux.video_0",
-    "filesrc", `location=${narrationFile}`, "!", "wavparse", "!", "audioconvert", "!", "audioresample",
-    "!", "opusenc", "bitrate=72000", "!", "queue", "!", "mux.audio_0"
+    "filesrc", `location=${output}`,
+    "!", "matroskademux",
+    "!", "webmmux", "streamable=false",
+    "!", "filesink", `location=${remuxed}`
   ], { encoding: "utf8" });
-  if (mux.status !== 0 || !fs.existsSync(narrated)) {
-    throw new Error(mux.error?.code === "ENOENT"
-      ? "GStreamer is required to add narration and finalize the walkthrough."
-      : mux.stderr || "Could not add narration to the walkthrough video.");
+  if (remux.status !== 0 || !fs.existsSync(remuxed)) {
+    throw new Error(remux.error?.code === "ENOENT"
+      ? "GStreamer is required to finalize the walkthrough duration metadata."
+      : remux.stderr || "Could not finalize the walkthrough video.");
   }
-  fs.renameSync(narrated, output);
+  fs.renameSync(remuxed, output);
 }
 
 async function main() {
