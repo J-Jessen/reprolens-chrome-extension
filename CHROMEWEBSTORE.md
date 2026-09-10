@@ -2,7 +2,7 @@
 
 > Last updated: 10 September 2026
 
-Status: **Chrome Web Store draft complete and ready to submit for review; version 0.11.0, listing, required media, privacy, distribution, and reviewer instructions are saved; not submitted**.
+Status: **version 0.11.0 submitted on 10 September 2026 and pending Chrome Web Store review; configured to publish automatically as an unlisted item after approval**.
 
 Chrome Web Store draft ID: `hieconkaeihojdnoplogdcfilklglglf`
 
@@ -201,13 +201,13 @@ Upload `artifacts/reprolens-cws-v0.11.0.zip`. The package contains only the file
 - [x] Complete and save the privacy questionnaire.
 - [x] Save the unlisted distribution settings and reviewer test instructions.
 - [x] Upload the required 128×128 store icon and all three current screenshots.
-- [ ] Review the final draft and submit it for review.
+- [x] Review the final draft and submit it for review.
 
 ## Version history
 
 | Version | Date | Changes | Status |
 |---|---|---|---|
-| `0.11.0` | 10 September 2026 | Completed the unlisted Chrome Web Store draft with the verified runtime-only package, listing, required store media, privacy disclosures, distribution settings, and reviewer instructions. | Draft — ready to submit |
+| `0.11.0` | 10 September 2026 | Submitted the verified runtime-only package, listing, required store media, privacy disclosures, unlisted distribution settings, and reviewer instructions to the Chrome Web Store. | Pending review |
 | `0.10.0` | 6 September 2026 | Added multi-step recording, reviewed bug reports, GitHub drafts, and Playwright test generation. | GitHub beta |
 | `0.9.0` | 6 September 2026 | Added expanded diagnostics, local feedback, history comparison, and optional on-device explanation. | GitHub beta |
 
