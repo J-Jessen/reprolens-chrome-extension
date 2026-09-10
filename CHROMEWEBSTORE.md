@@ -1,8 +1,10 @@
 # Chrome Web Store listing — ReproLens Beta
 
-> Last updated: 9 September 2026
+> Last updated: 10 September 2026
 
-Status: **ready for developer-account setup and final clean-profile review; not submitted**.
+Status: **Chrome Web Store draft created; version 0.11.0 uploaded; listing, privacy, distribution, and reviewer instructions saved; required store icon and screenshot pending; not submitted**.
+
+Chrome Web Store draft ID: `hieconkaeihojdnoplogdcfilklglglf`
 
 This is the single source of truth for the first unlisted Chrome Web Store beta. Copy the relevant fields into the Chrome Developer Dashboard without adding claims that are not present here.
 
@@ -142,8 +144,8 @@ An unlisted item can be installed by anyone with its Chrome Web Store URL but do
 
 ## Developer information
 
-- Publisher name: `Johnny Jessen`
-- Contact email: **Developer must choose and verify a monitored public support address in the dashboard.**
+- Publisher name: `ReproLens`
+- Contact email: `CPHAutomations@gmail.com` (verified in the dashboard)
 - Support URL: `https://github.com/J-Jessen/reprolens-chrome-extension/issues/new/choose`
 - Homepage URL: `https://j-jessen.github.io/reprolens-chrome-extension/`
 
@@ -190,18 +192,22 @@ Upload `artifacts/reprolens-cws-v0.11.0.zip`. The package contains only the file
 - [x] Public beta site and privacy-policy source are ready for deployment.
 - [x] Reviewer test steps use a safe, public demo.
 - [x] Reproducible runtime-only Web Store package command exists.
-- [ ] Register or select the permanent Chrome Web Store developer account.
-- [ ] Enable two-step verification on that Google account.
-- [ ] Choose and verify the monitored public support email.
-- [ ] Confirm the public beta site and privacy URL after GitHub Pages deployment.
-- [ ] Run the reviewer workflow against the exact ZIP in a clean Chrome profile.
-- [ ] Complete the privacy questionnaire with the table above and submit for review.
+- [x] Register or select the permanent Chrome Web Store developer account (`ReproLens`).
+- [x] Enable two-step verification on that Google account.
+- [x] Choose and verify the monitored public support email.
+- [x] Confirm the public beta site and privacy URL after GitHub Pages deployment.
+- [x] Run the reviewer workflow against the exact ZIP in a clean Chrome profile.
+- [x] Upload the exact version 0.11.0 ZIP to the Chrome Web Store draft.
+- [x] Complete and save the privacy questionnaire.
+- [x] Save the unlisted distribution settings and reviewer test instructions.
+- [ ] Upload the required 128×128 store icon and at least one screenshot.
+- [ ] Review the final draft and submit it for review.
 
 ## Version history
 
 | Version | Date | Changes | Status |
 |---|---|---|---|
-| `0.11.0` | 9 September 2026 | Prepared the unlisted beta listing, per-site permission explanation, current store media, hosted safe demo, and runtime-only submission package. | Draft |
+| `0.11.0` | 10 September 2026 | Created the unlisted Chrome Web Store draft, uploaded the verified runtime-only package, and saved the listing, privacy disclosures, distribution settings, and reviewer instructions. | Draft — media pending |
 | `0.10.0` | 6 September 2026 | Added multi-step recording, reviewed bug reports, GitHub drafts, and Playwright test generation. | GitHub beta |
 | `0.9.0` | 6 September 2026 | Added expanded diagnostics, local feedback, history comparison, and optional on-device explanation. | GitHub beta |
 
