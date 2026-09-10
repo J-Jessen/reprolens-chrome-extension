@@ -927,6 +927,13 @@ chrome.debugger.onEvent.addListener(async (source, method, params) => {
   }
 
   if (method === "Debugger.paused") {
+    // Resume before analysing the pause payload so page interaction is never
+    // blocked by trace processing or an unexpected frame shape.
+    try {
+      await command(source, "Debugger.resume");
+    } catch (_) {
+      // The target may detach between the pause event and this resume request.
+    }
     const eventName = params.data?.eventName || "";
     if (["setTimeout", "setInterval", "requestAnimationFrame"].some((name) => eventName.startsWith(`instrumentation:${name}`))) {
       const asyncEvent = {
@@ -953,11 +960,6 @@ chrome.debugger.onEvent.addListener(async (source, method, params) => {
         });
         publish(session);
       }
-    }
-    try {
-      await command(source, "Debugger.resume");
-    } catch (_) {
-      // The target may detach between the pause event and this resume request.
     }
     return;
   }

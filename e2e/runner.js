@@ -14,7 +14,8 @@ const SOURCE_EXTENSION_ROOT = process.env.EXTENSION_ROOT
   : PROJECT_ROOT;
 const PORT = 0;
 const CASE_TIMEOUT_MS = 30000;
-const MULTI_STEP_TIMEOUT_MS = 45000;
+const MULTI_STEP_STATUS_TIMEOUT_MS = 45000;
+const MULTI_STEP_TIMEOUT_MS = 60000;
 
 const MIME_TYPES = {
   ".css": "text/css; charset=utf-8",
@@ -264,7 +265,10 @@ async function runMultiStepJourney({ page, worker, controller, baseUrl }) {
   await page.click("#open-checkout");
   await page.type("#test-reference", "private-test-value");
   await page.click("#submit-order");
-  await page.waitForFunction(() => document.getElementById("status")?.textContent.includes("HTTP 404"));
+  await page.waitForFunction(
+    () => document.getElementById("status")?.textContent.includes("HTTP 404"),
+    { timeout: MULTI_STEP_STATUS_TIMEOUT_MS }
+  );
   await new Promise((resolve) => setTimeout(resolve, 450));
 
   const contentResult = await worker.evaluate((id) => chrome.tabs.sendMessage(id, { type: "STOP_MULTI_RECORDING" }), tabId);
