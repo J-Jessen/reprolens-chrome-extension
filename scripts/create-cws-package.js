@@ -6,7 +6,7 @@ const root = path.resolve(__dirname, "..");
 const manifest = JSON.parse(fs.readFileSync(path.join(root, "manifest.json"), "utf8"));
 const dist = path.join(root, "dist");
 const outputDirectory = path.join(root, "artifacts");
-const output = path.join(outputDirectory, `reprolens-cws-v${manifest.version}.zip`);
+const output = path.join(outputDirectory, `consolehawk-cws-v${manifest.version}.zip`);
 
 if (!fs.existsSync(path.join(dist, "manifest.json"))) {
   throw new Error("Build the extension before creating the Chrome Web Store package.");

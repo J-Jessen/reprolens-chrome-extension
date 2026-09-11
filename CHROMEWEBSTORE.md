@@ -1,8 +1,8 @@
-# Chrome Web Store listing — ReproLens Beta
+# Chrome Web Store listing — ConsoleHawk Beta
 
-> Last updated: 10 September 2026
+> Last updated: 11 September 2026
 
-Status: **version 0.11.0 submitted on 10 September 2026 and pending Chrome Web Store review; configured to publish automatically as an unlisted item after approval**.
+Status: **version 0.11.0 is published as an unlisted item under the previous ReproLens Beta name. Version 0.11.1 is ready for upload as the ConsoleHawk Beta rename and stability update.**
 
 Chrome Web Store draft ID: `hieconkaeihojdnoplogdcfilklglglf`
 
@@ -12,7 +12,7 @@ This is the single source of truth for the first unlisted Chrome Web Store beta.
 
 **Extension name**
 
-`ReproLens Beta`
+`ConsoleHawk Beta`
 
 **Short description**
 
@@ -21,7 +21,7 @@ This is the single source of truth for the first unlisted Chrome Web Store beta.
 **Detailed description**
 
 ```text
-ReproLens Beta follows one browser interaction or short user journey and turns the observed evidence into a clear explanation, privacy-reviewed bug report, and Playwright test starting point.
+ConsoleHawk Beta follows one browser interaction or short user journey and turns the observed evidence into a clear explanation, privacy-reviewed bug report, and Playwright test starting point.
 
 THIS EXTENSION IS FOR BETA TESTING.
 
@@ -36,7 +36,7 @@ FEATURES
 • Keep, name, search, compare, import, and delete a bounded local trace history.
 
 HOW TO USE
-1. Click ReproLens in the Chrome toolbar to open the side panel.
+1. Click ConsoleHawk in the Chrome toolbar to open the side panel.
 2. Choose a one-step trace or user journey.
 3. Approve access to the current website when Chrome asks.
 4. Select the relevant element and perform the interaction once.
@@ -44,18 +44,18 @@ HOW TO USE
 6. Review every report or test before copying, downloading, or opening a GitHub draft.
 
 PRIVACY
-ReproLens has no backend, analytics, advertising, account system, or automatic upload. Trace processing, history, feedback, and redaction stay in the browser. Website access is requested one origin at a time after a direct user action and can be revoked in Chrome settings. Request and response bodies, headers, cookies, typed characters, form values, and debugger scopes are not intentionally captured.
+ConsoleHawk has no backend, analytics, advertising, account system, or automatic upload. Trace processing, history, feedback, and redaction stay in the browser. Website access is requested one origin at a time after a direct user action and can be revoked in Chrome settings. Request and response bodies, headers, cookies, typed characters, form values, and debugger scopes are not intentionally captured.
 
 WHY CHROME SHOWS A DEBUGGING BANNER
 Chrome displays its standard debugging banner during a short user-started trace. This temporary access is needed to connect runtime errors, request metadata, source locations, and navigation to the selected interaction. Capture stops automatically.
 
 SUPPORT
 Report a public-safe beta problem or request a guided test at:
-https://github.com/J-Jessen/reprolens-chrome-extension/issues/new/choose
+https://github.com/J-Jessen/consolehawk-chrome-extension/issues/new/choose
 
 Never post credentials, private URLs, customer data, raw traces, or unreviewed exports. Use GitHub private vulnerability reporting for a possible security or privacy exposure.
 
-Version 0.11.0 — Public beta with single- and multi-step tracing, diagnostic explanations, local history, reviewed reports, GitHub drafts, and Playwright test generation.
+Version 0.11.1 — Renamed to ConsoleHawk Beta and stabilized multi-step interaction tracing.
 ```
 
 **Category**
@@ -74,7 +74,7 @@ Version 0.11.0 — Public beta with single- and multi-step tracing, diagnostic e
 
 | Asset | Dimensions | Status | Filename |
 |---|---:|---|---|
-| Store icon | 128×128 PNG | Ready | `icons/reprolens-icon-128.png` |
+| Store icon | 128×128 PNG | Ready | `icons/consolehawk-icon-128.png` |
 | Screenshot 1 | 1280×800 PNG | Ready | `store-assets/store-screenshot-failure.png` |
 | Screenshot 2 | 1280×800 PNG | Ready | `store-assets/store-screenshot-success.png` |
 | Screenshot 3 | 1280×800 PNG | Ready | `store-assets/store-screenshot-report.png` |
@@ -94,13 +94,13 @@ The screenshots contain no promotional overlays, private websites, customer data
 | Permission | Type | Justification |
 |---|---|---|
 | `alarms` | permissions | Enforces automatic time limits for short traces and user journeys even if Chrome suspends and restarts the extension between actions. |
-| `debugger` | permissions | During a short user-started trace, observes source locations, runtime errors, request metadata, navigation, and supported asynchronous execution needed to explain what followed the selected interaction. ReproLens detaches automatically when capture ends. |
+| `debugger` | permissions | During a short user-started trace, observes source locations, runtime errors, request metadata, navigation, and supported asynchronous execution needed to explain what followed the selected interaction. ConsoleHawk detaches automatically when capture ends. |
 | `scripting` | permissions | Adds the element selector and its stylesheet only after the user starts a trace and grants the current website access. |
 | `sidePanel` | permissions | Displays trace controls, explanations, local history, reviewed reports, and generated test output in Chrome's side panel. |
 | `storage` | permissions | Keeps preferences, bounded trace history, optional beta feedback, and privacy-sanitized current-session state locally in the extension. |
-| `tabs` | permissions | Identifies the active tab and its URL so ReproLens can ask for the exact website origin and associate evidence with the correct tab. |
+| `tabs` | permissions | Identifies the active tab and its URL so ConsoleHawk can ask for the exact website origin and associate evidence with the correct tab. |
 | `http://*/*` | optional host permission | Lets the user grant one explicitly selected HTTP origin for a local or authorized test site. There is no required host access or always-on page recorder. |
-| `https://*/*` | optional host permission | Lets the user grant one explicitly selected HTTPS origin for an authorized website. ReproLens does not silently expand access to other origins. |
+| `https://*/*` | optional host permission | Lets the user grant one explicitly selected HTTPS origin for an authorized website. ConsoleHawk does not silently expand access to other origins. |
 
 ## Privacy and data use
 
@@ -132,7 +132,7 @@ The dashboard disclosure must match [PRIVACY.md](PRIVACY.md) and the live privac
 
 **Privacy policy URL**
 
-`https://j-jessen.github.io/reprolens-chrome-extension/privacy.html`
+`https://j-jessen.github.io/consolehawk-chrome-extension/privacy.html`
 
 ## Distribution
 
@@ -144,26 +144,26 @@ An unlisted item can be installed by anyone with its Chrome Web Store URL but do
 
 ## Developer information
 
-- Publisher name: `ReproLens`
+- Publisher name: `ConsoleHawk`
 - Contact email: `CPHAutomations@gmail.com` (verified in the dashboard)
-- Support URL: `https://github.com/J-Jessen/reprolens-chrome-extension/issues/new/choose`
-- Homepage URL: `https://j-jessen.github.io/reprolens-chrome-extension/`
+- Support URL: `https://github.com/J-Jessen/consolehawk-chrome-extension/issues/new/choose`
+- Homepage URL: `https://j-jessen.github.io/consolehawk-chrome-extension/`
 
 ## Reviewer test instructions
 
 1. Install the submitted package in desktop Chrome 118 or newer.
-2. Open `https://j-jessen.github.io/reprolens-chrome-extension/demo/failure.html`.
+2. Open `https://j-jessen.github.io/consolehawk-chrome-extension/demo/failure.html`.
 3. Click the extension action to open the side panel.
 4. Choose **Select element for one-step trace**, approve access to that website, and select **Send failing request**.
 5. Leave **Detect automatically** selected, choose **Record selected interaction**, and select the page button once.
 6. Expect Chrome's standard debugging banner for approximately 3.5 seconds.
 7. Confirm that **What happened** identifies the `404 Not Found` request, explains its meaning, names a first check, and separates directly connected evidence from later observations.
 8. Open **Technical trace** and confirm that timing, source locations, evidence labels, and filters remain available.
-9. Open `https://j-jessen.github.io/reprolens-chrome-extension/demo/multi-step.html`, start a user journey, and perform the three instructed interactions.
+9. Open `https://j-jessen.github.io/consolehawk-chrome-extension/demo/multi-step.html`, start a user journey, and perform the three instructed interactions.
 10. Stop the journey, add dummy expected and actual behaviour, and build the safe report.
 11. Confirm that the Markdown, JSON, GitHub-draft, and Playwright controls remain disabled until the report preview is built.
 12. Review the report, download the Playwright test, and confirm that the dummy input value is replaced with a visible placeholder.
-13. Enter `J-Jessen/reprolens-chrome-extension` as the test repository and confirm that GitHub opens an unsubmitted issue draft without requesting a token.
+13. Enter `J-Jessen/consolehawk-chrome-extension` as the test repository and confirm that GitHub opens an unsubmitted issue draft without requesting a token.
 14. Confirm under Chrome's extension settings that access can be revoked for the demo origin.
 
 No account, payment, customer data, production website, or special hardware is needed. The deterministic explanation works without the optional on-device model.
@@ -176,10 +176,10 @@ Create the exact upload package with:
 npm run check
 npm run test:e2e
 npm run package:cws
-unzip -t artifacts/reprolens-cws-v0.11.0.zip
+unzip -t artifacts/consolehawk-cws-v0.11.1.zip
 ```
 
-Upload `artifacts/reprolens-cws-v0.11.0.zip`. The package contains only the files explicitly listed in `scripts/package-extension.js`. It excludes repository metadata, demos, tests, source maps, documentation, development dependencies, and this submission file.
+Upload `artifacts/consolehawk-cws-v0.11.1.zip`. The package contains only the files explicitly listed in `scripts/package-extension.js`. It excludes repository metadata, demos, tests, source maps, documentation, development dependencies, and this submission file.
 
 ## Final submission checklist
 
@@ -192,12 +192,15 @@ Upload `artifacts/reprolens-cws-v0.11.0.zip`. The package contains only the file
 - [x] Public beta site and privacy-policy source are ready for deployment.
 - [x] Reviewer test steps use a safe, public demo.
 - [x] Reproducible runtime-only Web Store package command exists.
-- [x] Register or select the permanent Chrome Web Store developer account (`ReproLens`).
+- [x] Register or select the permanent Chrome Web Store developer account.
 - [x] Enable two-step verification on that Google account.
 - [x] Choose and verify the monitored public support email.
 - [x] Confirm the public beta site and privacy URL after GitHub Pages deployment.
 - [x] Run the reviewer workflow against the exact ZIP in a clean Chrome profile.
-- [x] Upload the exact version 0.11.0 ZIP to the Chrome Web Store draft.
+- [x] Publish version 0.11.0 as an unlisted beta under the previous ReproLens Beta name.
+- [ ] Upload the exact version 0.11.1 ZIP to the existing Chrome Web Store item.
+- [ ] Replace the listing name and publisher-facing branding with ConsoleHawk.
+- [ ] Replace the store screenshots, icon, and promo tile with the regenerated ConsoleHawk assets.
 - [x] Complete and save the privacy questionnaire.
 - [x] Save the unlisted distribution settings and reviewer test instructions.
 - [x] Upload the required 128×128 store icon and all three current screenshots.
@@ -207,15 +210,16 @@ Upload `artifacts/reprolens-cws-v0.11.0.zip`. The package contains only the file
 
 | Version | Date | Changes | Status |
 |---|---|---|---|
-| `0.11.0` | 10 September 2026 | Submitted the verified runtime-only package, listing, required store media, privacy disclosures, unlisted distribution settings, and reviewer instructions to the Chrome Web Store. | Pending review |
+| `0.11.1` | 11 September 2026 | Renamed the product to ConsoleHawk and included the multi-step debugger-resume stability fix. | Ready to upload |
+| `0.11.0` | 10 September 2026 | Published the verified runtime-only package, listing, required store media, privacy disclosures, unlisted distribution settings, and reviewer instructions under the previous ReproLens Beta name. | Published unlisted |
 | `0.10.0` | 6 September 2026 | Added multi-step recording, reviewed bug reports, GitHub drafts, and Playwright test generation. | GitHub beta |
 | `0.9.0` | 6 September 2026 | Added expanded diagnostics, local feedback, history comparison, and optional on-device explanation. | GitHub beta |
 
 ## Known limitations and review notes
 
 - Chrome displays its standard debugging banner during a trace.
-- Opening DevTools on the same tab detaches ReproLens's temporary debugging session.
+- Opening DevTools on the same tab detaches ConsoleHawk's temporary debugging session.
 - Browser evidence can prove some relationships directly; events observed only in the same short time window remain labelled as observations.
 - Source locations depend on what the page and its source maps expose.
 - The optional on-device explanation is unavailable on unsupported Chrome versions, devices, profiles, and other Chromium browsers. The deterministic explanation remains available.
-- There is no rejection history because the item has not been submitted.
+- Version 0.11.0 completed review without a reported rejection. The rename update requires a new review after upload.

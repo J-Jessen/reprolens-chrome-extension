@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "ReproLens Beta",
-  "version": "0.11.0",
+  "name": "ConsoleHawk Beta",
+  "version": "0.11.1",
   "minimum_chrome_version": "118",
   "description": "BETA: Record browser behaviour, create a safe bug report, open a GitHub issue, and generate a Playwright test.",
   "permissions": [
@@ -20,17 +20,17 @@
     "service_worker": "background.js"
   },
   "icons": {
-    "16": "icons/reprolens-icon-16.png",
-    "32": "icons/reprolens-icon-32.png",
-    "48": "icons/reprolens-icon-48.png",
-    "128": "icons/reprolens-icon-128.png"
+    "16": "icons/consolehawk-icon-16.png",
+    "32": "icons/consolehawk-icon-32.png",
+    "48": "icons/consolehawk-icon-48.png",
+    "128": "icons/consolehawk-icon-128.png"
   },
   "action": {
-    "default_title": "Open ReproLens",
+    "default_title": "Open ConsoleHawk",
     "default_icon": {
-      "16": "icons/reprolens-icon-16.png",
-      "32": "icons/reprolens-icon-32.png",
-      "48": "icons/reprolens-icon-48.png"
+      "16": "icons/consolehawk-icon-16.png",
+      "32": "icons/consolehawk-icon-32.png",
+      "48": "icons/consolehawk-icon-48.png"
     }
   },
   "side_panel": {

@@ -1,4 +1,4 @@
-# ReproLens architecture
+# ConsoleHawk architecture
 
 ## Product boundary
 

@@ -31,19 +31,19 @@ Track only aggregate totals in `OUTREACH_SCORECARD.md`. Keep names and contact d
 >
 > Would you be open to a focused 15-minute screen-share test? You will use a supplied safe demo, so there is no project setup, production access, or private data involved. I am looking for honest evidence about where the tool helps, confuses, or adds no value.
 >
-> You can see the product first here: https://j-jessen.github.io/reprolens-chrome-extension/
+> You can see the product first here: https://j-jessen.github.io/consolehawk-chrome-extension/
 
 Do not include the founding-tester benefit in the first paragraph. If the person asks what they receive, say:
 
-> Participants who complete the structured test will receive 12 months of free access if ReproLens launches as a paid product. The benefit is for completed, honest testing—not positive feedback.
+> Participants who complete the structured test will receive 12 months of free access if ConsoleHawk launches as a paid product. The benefit is for completed, honest testing—not positive feedback.
 
 ## Short Discord message
 
-> I am looking for frontend or QA developers for a 15-minute screen-share test of ReproLens. It follows one browser interaction into the relevant handler, request/error, page result, safe bug report, and Playwright test starting point.
+> I am looking for frontend or QA developers for a 15-minute screen-share test of ConsoleHawk. It follows one browser interaction into the relevant handler, request/error, page result, safe bug report, and Playwright test starting point.
 >
 > The session uses a supplied demo—no work project, production data, or preparation. I specifically want to learn whether it finds the likely cause faster than DevTools alone.
 >
-> Overview and volunteer link: https://j-jessen.github.io/reprolens-chrome-extension/
+> Overview and volunteer link: https://j-jessen.github.io/consolehawk-chrome-extension/
 
 ## Message for someone discussing a relevant bug
 
@@ -55,11 +55,11 @@ Do not include the founding-tester benefit in the first paragraph. If the person
 
 > Thank you. The test takes about 15 minutes and uses only the supplied safe demo. Nothing needs to be installed before the call. Please use the public volunteer form so we can coordinate without posting personal contact details:
 >
-> https://github.com/J-Jessen/reprolens-chrome-extension/issues/new?template=guided-beta-session.yml
+> https://github.com/J-Jessen/consolehawk-chrome-extension/issues/new?template=guided-beta-session.yml
 
 ## Follow-up after three days
 
-> Hi [name] — one quick follow-up in case the earlier message was buried. The ReproLens test is 15 minutes, uses a supplied demo, and requires no access to your project. If it is not relevant, no reply is needed.
+> Hi [name] — one quick follow-up in case the earlier message was buried. The ConsoleHawk test is 15 minutes, uses a supplied demo, and requires no access to your project. If it is not relevant, no reply is needed.
 
 Send only one follow-up. Do not pressure non-responders.
 
@@ -69,7 +69,7 @@ Run the call using `BETA_STUDY_PROTOCOL.md`. Afterward, ask for the structured b
 
 > Thank you—your observations were genuinely useful. If you are comfortable doing so, you can submit sanitized feedback here. Never include credentials, customer data, private URLs, raw traces, or an export you have not reviewed:
 >
-> https://github.com/J-Jessen/reprolens-chrome-extension/issues/new?template=beta-feedback.yml
+> https://github.com/J-Jessen/consolehawk-chrome-extension/issues/new?template=beta-feedback.yml
 
 ## Stop and change rules
 
@@ -77,4 +77,4 @@ Run the call using `BETA_STUDY_PROTOCOL.md`. Afterward, ask for the structured b
 - If people reply but will not book, reduce perceived risk and commitment.
 - If sessions book but installation repeatedly fails, prioritize Web Store distribution and onboarding.
 - If participants understand the explanation but do not save time, test bug-report and Playwright value separately before building more tracing features.
-- If at least two of the first five ask to use ReproLens again on an authorized local or staging project, recruit the next five from the most enthusiastic role/profile.
+- If at least two of the first five ask to use ConsoleHawk again on an authorized local or staging project, recruit the next five from the most enthusiastic role/profile.

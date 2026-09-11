@@ -26,7 +26,7 @@ body:
     id: installation_time
     attributes:
       label: Installation time
-      description: Measure from starting the ZIP download until ReproLens opens successfully from the toolbar.
+      description: Measure from starting the ZIP download until ConsoleHawk opens successfully from the toolbar.
       placeholder: 6 minutes
     validations:
       required: true
@@ -69,7 +69,7 @@ body:
     id: diagnostic_value
     attributes:
       label: Diagnostic value
-      description: Did ReproLens make your first debugging check more specific, save time, or mainly add another artifact?
+      description: Did ConsoleHawk make your first debugging check more specific, save time, or mainly add another artifact?
     validations:
       required: true
   - type: textarea

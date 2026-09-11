@@ -4,7 +4,7 @@ WEBVTT
 Trigger a deliberate failure on the supplied safe demo.
 
 00:12.000 --> 00:24.000
-ReproLens connects the selected click to the page handler and exact failed request.
+ConsoleHawk connects the selected click to the page handler and exact failed request.
 
 00:24.000 --> 00:36.000
 Read what the failure means and the first useful debugging check.

@@ -129,7 +129,7 @@ async function browserName() {
 
 function unavailableAiMessage(name) {
   if (name === "Brave") {
-    return "On-device AI is not exposed by this Brave version. To test the optional AI explanation, open ReproLens in Google Chrome 148+ on a supported desktop device. The deterministic explanation above remains fully available.";
+    return "On-device AI is not exposed by this Brave version. To test the optional AI explanation, open ConsoleHawk in Google Chrome 148+ on a supported desktop device. The deterministic explanation above remains fully available.";
   }
   if (name === "Google Chrome") {
     return "On-device AI is not enabled in this Chrome profile. Confirm Chrome 148+ and check chrome://on-device-internals. The deterministic explanation above remains fully available.";
@@ -638,11 +638,11 @@ function downloadText(filename, text, mimeType) {
 }
 
 function reportFilename(extension) {
-  const title = (currentBugArtifact?.report?.title || "reprolens-bug-report")
+  const title = (currentBugArtifact?.report?.title || "consolehawk-bug-report")
     .toLocaleLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "")
-    .slice(0, 60) || "reprolens-bug-report";
+    .slice(0, 60) || "consolehawk-bug-report";
   return `${title}.${extension}`;
 }
 
@@ -937,7 +937,7 @@ downloadFeedbackButton.addEventListener("click", async () => {
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = `reprolens-feedback-${Date.now()}.json`;
+    anchor.download = `consolehawk-feedback-${Date.now()}.json`;
     anchor.click();
     URL.revokeObjectURL(url);
     feedbackStatus.textContent = `${response.feedback.length} feedback entr${response.feedback.length === 1 ? "y" : "ies"} downloaded.`;

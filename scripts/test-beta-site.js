@@ -96,7 +96,7 @@ async function main() {
         selfGuidedCenter: selfGuidedBox.left + selfGuidedBox.width / 2
       };
     });
-    assert.match(productChecks.download, /releases\/tag\/v0\.11\.0-beta\.4$/);
+    assert.match(productChecks.download, /releases\/tag\/v0\.11\.1-beta\.1$/);
     assert.equal(productChecks.demo, `${origin}/demo/failure.html`);
     assert.ok(productChecks.videoDuration >= 45 && productChecks.videoDuration <= 55);
     assert.notEqual(productChecks.videoType, "");

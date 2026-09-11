@@ -71,6 +71,6 @@ jobs:
           RUN_MULTI_STEP: "false"
       - uses: actions/upload-artifact@v7
         with:
-          name: reprolens-extension
+          name: consolehawk-extension
           path: dist/
           if-no-files-found: error

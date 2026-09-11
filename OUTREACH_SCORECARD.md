@@ -1,4 +1,4 @@
-# First five ReproLens testers — aggregate scorecard
+# First five ConsoleHawk testers — aggregate scorecard
 
 Keep personal names, profiles, email addresses, direct-message history, and calendar details outside this public repository. This file contains aggregate acquisition and product-learning signals only.
 

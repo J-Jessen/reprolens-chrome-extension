@@ -3,26 +3,26 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="ReproLens turns one browser interaction into a clear explanation, safe bug report, and Playwright test starting point.">
-    <meta property="og:title" content="ReproLens public beta">
+    <meta name="description" content="ConsoleHawk turns one browser interaction into a clear explanation, safe bug report, and Playwright test starting point.">
+    <meta property="og:title" content="ConsoleHawk public beta">
     <meta property="og:description" content="See what happened after a browser interaction, then turn the evidence into a reproducible bug report.">
-    <meta property="og:image" content="https://j-jessen.github.io/reprolens-chrome-extension/assets/store-screenshot-failure.png">
-    <title>ReproLens public beta | Explain browser failures</title>
-    <link rel="icon" href="assets/reprolens-icon-32.png" sizes="32x32">
+    <meta property="og:image" content="https://j-jessen.github.io/consolehawk-chrome-extension/assets/store-screenshot-failure.png">
+    <title>ConsoleHawk public beta | Explain browser failures</title>
+    <link rel="icon" href="assets/consolehawk-icon-32.png" sizes="32x32">
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to main content</a>
     <header class="site-header">
-      <a class="brand" href="./" aria-label="ReproLens home">
-        <img src="assets/reprolens-icon-48.png" alt="" width="48" height="48">
-        <span>ReproLens</span>
+      <a class="brand" href="./" aria-label="ConsoleHawk home">
+        <img src="assets/consolehawk-icon-48.png" alt="" width="48" height="48">
+        <span>ConsoleHawk</span>
       </a>
       <nav aria-label="Primary">
         <ul>
           <li><a href="#walkthrough">Walkthrough</a></li>
           <li><a href="#privacy">Privacy</a></li>
-          <li><a href="https://github.com/J-Jessen/reprolens-chrome-extension">GitHub</a></li>
+          <li><a href="https://github.com/J-Jessen/consolehawk-chrome-extension">GitHub</a></li>
         </ul>
       </nav>
     </header>
@@ -31,10 +31,10 @@
       <section class="hero" aria-labelledby="hero-title">
         <div class="hero-copy">
           <p class="eyebrow">PUBLIC BETA · FOR FRONTEND AND QA TEAMS</p>
-          <h1 id="hero-title">Find the cause of one browser bug faster.</h1>
+          <h1 id="hero-title">See what happened after a click.</h1>
           <p class="hero-lede">Select an element, perform the failing interaction, and get a plain-language explanation connecting the relevant page code, request, error, and visible result.</p>
           <div class="actions">
-            <a class="button primary" href="https://github.com/J-Jessen/reprolens-chrome-extension/releases/tag/v0.11.0-beta.4">Download the beta</a>
+            <a class="button primary" href="https://github.com/J-Jessen/consolehawk-chrome-extension/releases/tag/v0.11.1-beta.1">Download the beta</a>
             <a class="button secondary" href="demo/failure.html">Open the safe demo</a>
           </div>
           <p class="availability">The current ZIP uses Chrome's temporary developer-mode installation while the one-click Web Store beta is prepared.</p>
@@ -46,8 +46,8 @@
           </ul>
         </div>
         <figure class="hero-visual">
-          <img src="assets/store-screenshot-failure.png" alt="ReproLens showing the selected click, page handler, failed 404 request, and visible error result beside the safe demo page." width="1280" height="800" fetchpriority="high">
-          <figcaption>An actual ReproLens trace of the supplied failed-request demo.</figcaption>
+          <img src="assets/store-screenshot-failure.png" alt="ConsoleHawk showing the selected click, page handler, failed 404 request, and visible error result beside the safe demo page." width="1280" height="800" fetchpriority="high">
+          <figcaption>An actual ConsoleHawk trace of the supplied failed-request demo.</figcaption>
         </figure>
       </section>
 
@@ -70,14 +70,14 @@
           <p>The video has no narration. Every step is shown as on-screen text and synchronized captions.</p>
         </div>
         <video controls width="1280" height="720" poster="assets/store-screenshot-failure.png" preload="none">
-          <source src="assets/reprolens-walkthrough.webm" type="video/webm">
+          <source src="assets/consolehawk-walkthrough.webm" type="video/webm">
           <track src="walkthrough.vtt" kind="captions" srclang="en" label="English" default>
           Your browser cannot play this walkthrough. The same steps are listed below.
         </video>
         <ol class="walkthrough-steps">
-          <li>Install ReproLens and open the supplied safe demo.</li>
+          <li>Install ConsoleHawk and open the supplied safe demo.</li>
           <li>Select the failing action and record it once.</li>
-          <li>Read the cause and first suggested debugging check.</li>
+          <li>Read the evidence and first suggested debugging check.</li>
           <li>Review the safe bug report and Playwright test starting point.</li>
         </ol>
       </section>
@@ -86,11 +86,11 @@
         <div>
           <p class="eyebrow">HELP SHAPE THE PRODUCT</p>
           <h2 id="test-title">Try one focused 15-minute session.</h2>
-          <p>You do not need to prepare a project or share private data. We compare a safe demo diagnosis with and without ReproLens and measure whether it improves the first debugging decision.</p>
+          <p>You do not need to prepare a project or share private data. We compare a safe demo diagnosis with and without ConsoleHawk and measure whether it improves the first debugging decision.</p>
         </div>
         <div class="actions vertical">
-          <a class="button primary" href="https://github.com/J-Jessen/reprolens-chrome-extension/issues/new?template=guided-beta-session.yml">Volunteer for a guided test</a>
-          <a class="text-link" href="https://github.com/J-Jessen/reprolens-chrome-extension/blob/main/QUICK_TEST.md">Or run the self-guided test</a>
+          <a class="button primary" href="https://github.com/J-Jessen/consolehawk-chrome-extension/issues/new?template=guided-beta-session.yml">Volunteer for a guided test</a>
+          <a class="text-link" href="https://github.com/J-Jessen/consolehawk-chrome-extension/blob/main/QUICK_TEST.md">Or run the self-guided test</a>
         </div>
       </section>
 
@@ -100,7 +100,7 @@
           <h2 id="privacy-title">Deep evidence, deliberately limited access.</h2>
         </div>
         <div class="privacy-copy">
-          <p>Chrome displays its standard debugging banner while ReproLens observes the short interaction. Capture stops automatically, and the extension requests access only to the website you explicitly choose.</p>
+          <p>Chrome displays its standard debugging banner while ConsoleHawk observes the short interaction. Capture stops automatically, and the extension requests access only to the website you explicitly choose.</p>
           <p>Request and response bodies, headers, cookies, form values, typed characters, debugger scopes, and remote runtime objects are not intentionally captured.</p>
           <a class="text-link" href="privacy.html">Read the complete privacy policy</a>
         </div>
@@ -108,8 +108,8 @@
     </main>
 
     <footer>
-      <p>ReproLens is an early public beta. Use only the supplied demo or local and staging websites you are authorized to inspect.</p>
-      <p><a href="https://github.com/J-Jessen/reprolens-chrome-extension/issues/new/choose">Support and feedback</a> · <a href="https://github.com/J-Jessen/reprolens-chrome-extension/security/advisories/new">Private security report</a></p>
+      <p>ConsoleHawk is an early public beta. Use only the supplied demo or local and staging websites you are authorized to inspect.</p>
+      <p><a href="https://github.com/J-Jessen/consolehawk-chrome-extension/issues/new/choose">Support and feedback</a> · <a href="https://github.com/J-Jessen/consolehawk-chrome-extension/security/advisories/new">Private security report</a></p>
     </footer>
   </body>
 </html>

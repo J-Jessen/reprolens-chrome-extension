@@ -1,12 +1,12 @@
 # Public beta plan
 
-This plan turns ReproLens into a focused public product test. The extension remains local-first: it does not upload traces, analytics, or tester activity.
+This plan turns ConsoleHawk into a focused public product test. The extension remains local-first: it does not upload traces, analytics, or tester activity.
 
 ## Objective
 
-Determine whether ReproLens reliably saves developers time when they need to understand what one browser interaction caused.
+Determine whether ConsoleHawk reliably saves developers time when they need to understand what one browser interaction caused.
 
-The expanded `0.11.0` beta also compares feature-level usefulness. Testers rate the deterministic explanation, technical evidence, React context, Worker/frame context, history comparison, multi-step recording, safe bug report, GitHub draft, Playwright output, optional local AI, and feedback flow separately so the next roadmap is based on observed value rather than feature count.
+The expanded `0.11.1` beta also compares feature-level usefulness. Testers rate the deterministic explanation, technical evidence, React context, Worker/frame context, history comparison, multi-step recording, safe bug report, GitHub draft, Playwright output, optional local AI, and feedback flow separately so the next roadmap is based on observed value rather than feature count.
 
 The first acquisition milestone is 40 relevant personal invitations, 8 replies, and 5 completed guided sessions. The product milestone is evaluated after those sessions; lack of response before the acquisition milestone is not treated as evidence that the product lacks value.
 
@@ -58,7 +58,7 @@ Prefer people who can test on a local or staging application they are authorized
 1. Recruit testers using [TESTER_RECRUITMENT.md](TESTER_RECRUITMENT.md) and record aggregate progress in [OUTREACH_SCORECARD.md](OUTREACH_SCORECARD.md).
 2. Run the first five calls using [BETA_STUDY_PROTOCOL.md](BETA_STUDY_PROTOCOL.md).
 3. Collect only name or preferred contact, role, primary framework, and test availability from testers who join the structured study. Anonymous public testers may participate without providing contact details.
-4. Direct every tester to the hosted safe demo. Until the Web Store beta is approved, use the official `v0.11.0-beta.4` release asset rather than a source archive or development build from `main`.
+4. Direct every tester to the hosted safe demo. Until the Web Store beta is approved, use the official `v0.11.1-beta.1` release asset rather than a source archive or development build from `main`.
 5. Ask testers to submit one sanitized public issue per defect and one final feedback issue. They may use the included Markdown forms instead if they prefer to send feedback privately.
 6. Triage public reports daily using the labels `beta-bug`, `beta-feedback`, `beta-session`, `privacy-review`, and `blocked`. Remove sensitive content immediately and move security or privacy reports to GitHub's private vulnerability-reporting flow.
 7. Stop a test immediately if a trace contains a secret or unauthorized personal/customer data. Remove the attachment and follow the privacy response below.
@@ -73,7 +73,7 @@ Prefer people who can test on a local or staging application they are authorized
 | P2 | Trace is materially wrong, misleading, or misses common evidence | Fix or document before Round 2 ends |
 | P3 | Friction, wording, visual, or uncommon compatibility issue | Add to the prioritized backlog |
 
-Do not ask a tester to post a raw trace publicly. If evidence is required, the tester must use **Review safe export**, confirm the complete preview, and share only the minimum redacted excerpt or file needed. Security and privacy concerns belong in [private vulnerability reporting](https://github.com/J-Jessen/reprolens-chrome-extension/security/advisories/new), never a normal issue.
+Do not ask a tester to post a raw trace publicly. If evidence is required, the tester must use **Review safe export**, confirm the complete preview, and share only the minimum redacted excerpt or file needed. Security and privacy concerns belong in [private vulnerability reporting](https://github.com/J-Jessen/consolehawk-chrome-extension/security/advisories/new), never a normal issue.
 
 ## Privacy response
 

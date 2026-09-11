@@ -1,12 +1,12 @@
 #__behaviour_tracer_overlay {
   all: initial !important;
   position: fixed !important;
-  inset-block-start: var(--reprolens-top, 0) !important;
-  inset-inline-start: var(--reprolens-left, 0) !important;
+  inset-block-start: var(--consolehawk-top, 0) !important;
+  inset-inline-start: var(--consolehawk-left, 0) !important;
   z-index: 2147483646 !important;
   display: none !important;
-  inline-size: var(--reprolens-width, 0) !important;
-  block-size: var(--reprolens-height, 0) !important;
+  inline-size: var(--consolehawk-width, 0) !important;
+  block-size: var(--consolehawk-height, 0) !important;
   box-sizing: border-box !important;
   border: 2px solid #6d5efc !important;
   border-radius: 4px !important;

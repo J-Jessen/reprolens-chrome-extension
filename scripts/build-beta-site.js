@@ -15,10 +15,10 @@ const assetDestination = path.join(destination, "assets");
 const iconDestination = path.join(destination, "icons");
 fs.mkdirSync(assetDestination, { recursive: true });
 fs.mkdirSync(iconDestination, { recursive: true });
-for (const filename of ["reprolens-icon-32.png", "reprolens-icon-48.png"]) {
+for (const filename of ["consolehawk-icon-32.png", "consolehawk-icon-48.png"]) {
   fs.copyFileSync(path.join(root, "icons", filename), path.join(assetDestination, filename));
 }
-fs.copyFileSync(path.join(root, "icons", "reprolens-icon-32.png"), path.join(iconDestination, "reprolens-icon-32.png"));
+fs.copyFileSync(path.join(root, "icons", "consolehawk-icon-32.png"), path.join(iconDestination, "consolehawk-icon-32.png"));
 for (const filename of ["store-screenshot-failure.png", "store-screenshot-report.png"]) {
   fs.copyFileSync(path.join(storeAssets, filename), path.join(assetDestination, filename));
 }
@@ -28,9 +28,9 @@ const required = [
   "privacy.html",
   "styles.css",
   "walkthrough.vtt",
-  "assets/reprolens-walkthrough.webm",
+  "assets/consolehawk-walkthrough.webm",
   "assets/store-screenshot-failure.png",
-  "icons/reprolens-icon-32.png",
+  "icons/consolehawk-icon-32.png",
   "demo/index.html",
   "demo/failure.html",
   "demo/multi-step.html"

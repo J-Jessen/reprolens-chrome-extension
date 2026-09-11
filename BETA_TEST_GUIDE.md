@@ -1,6 +1,6 @@
-# ReproLens public beta test guide
+# ConsoleHawk public beta test guide
 
-Thank you for testing ReproLens. Plan for 45–60 minutes. You do not need to change code or investigate failures for us.
+Thank you for testing ConsoleHawk. Plan for 45–60 minutes. You do not need to change code or investigate failures for us.
 
 ## Safety first
 
@@ -14,17 +14,17 @@ Stop testing and contact the owner privately if the browser behaves abnormally o
 
 ## Install the beta
 
-Start an installation timer before step 1. Stop it when ReproLens opens successfully from the toolbar after step 7. Record the total time and every instruction, permission prompt, or browser message that made you hesitate. Keep this installation feedback separate from your opinion of the trace explanation.
+Start an installation timer before step 1. Stop it when ConsoleHawk opens successfully from the toolbar after step 7. Record the total time and every instruction, permission prompt, or browser message that made you hesitate. Keep this installation feedback separate from your opinion of the trace explanation.
 
-1. Open the official [v0.11.0-beta.4 GitHub release](https://github.com/J-Jessen/reprolens-chrome-extension/releases/tag/v0.11.0-beta.4) and download `reprolens-v0.11.0-beta.4.zip` from **Assets**. Do not use GitHub's automatic source archive.
+1. Open the official [v0.11.1-beta.1 GitHub release](https://github.com/J-Jessen/consolehawk-chrome-extension/releases/tag/v0.11.1-beta.1) and download `consolehawk-v0.11.1-beta.1.zip` from **Assets**. Do not use GitHub's automatic source archive.
 2. Extract the ZIP into a folder you will keep for the duration of the beta.
 3. Confirm that the folder contains `manifest.json`, `START_HERE.md`, and this guide.
 4. Open `chrome://extensions` in Chrome.
 5. Enable **Developer mode**.
 6. Choose **Load unpacked** and select the extracted folder containing `manifest.json`.
-7. Pin **ReproLens Beta** from Chrome's Extensions menu.
+7. Pin **ConsoleHawk Beta** from Chrome's Extensions menu.
 
-ReproLens requires desktop Chrome 118 or newer.
+ConsoleHawk requires desktop Chrome 118 or newer.
 
 Chrome shows a debugging banner during a 3.5-second trace. This is expected. The debugger detaches automatically when the trace ends.
 
@@ -32,16 +32,16 @@ When you choose **Select element for one-step trace** or **Record a user journey
 
 ## Part A: first trace
 
-Use the hosted [failed-request demo](https://j-jessen.github.io/reprolens-chrome-extension/demo/failure.html) for the first trace. It uses dummy data and deliberately requests a missing local file. You can use a local or staging page that you are authorized to inspect after completing this comparable first test.
+Use the hosted [failed-request demo](https://j-jessen.github.io/consolehawk-chrome-extension/demo/failure.html) for the first trace. It uses dummy data and deliberately requests a missing local file. You can use a local or staging page that you are authorized to inspect after completing this comparable first test.
 
-1. Open the hosted failed-request demo and, before installing or opening ReproLens, choose **Send failing request** once.
-2. Open ReproLens from the toolbar.
+1. Open the hosted failed-request demo and, before installing or opening ConsoleHawk, choose **Send failing request** once.
+2. Open ConsoleHawk from the toolbar.
 3. Choose **Select element for one-step trace** and approve access to this website if Chrome asks.
 4. Move over the page and click the chosen element.
 5. Leave **Detect automatically** selected and choose **Record selected interaction**.
 6. Perform the same interaction once.
 7. Wait for the trace to complete.
-8. Before reading ReproLens, look only at the tested page and write three short answers: what happened, what you think caused it, and what you would inspect first in DevTools.
+8. Before reading ConsoleHawk, look only at the tested page and write three short answers: what happened, what you think caused it, and what you would inspect first in DevTools.
 9. Read **What happened** without opening **Technical trace**, then answer the same three questions again.
 10. Record what became clearer, what changed, and whether the suggested first check became more specific.
 11. Record how long it took from step 2 until you understood the result.

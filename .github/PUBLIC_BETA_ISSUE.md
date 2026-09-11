@@ -1,13 +1,13 @@
-ReproLens is now available as a public beta for frontend developers, full-stack developers, and QA engineers.
+ConsoleHawk is now available as a public beta for frontend developers, full-stack developers, and QA engineers.
 
 ## Start here
 
-- [See the product, walkthrough, and safe demo](https://j-jessen.github.io/reprolens-chrome-extension/)
-- [Download v0.11.0-beta.4](https://github.com/J-Jessen/reprolens-chrome-extension/releases/tag/v0.11.0-beta.4)
-- [Volunteer for a focused 15-minute guided test](https://github.com/J-Jessen/reprolens-chrome-extension/issues/new?template=guided-beta-session.yml)
-- [Run the 10-minute self-guided test](https://github.com/J-Jessen/reprolens-chrome-extension/blob/main/QUICK_TEST.md)
-- [Run the complete 45–60 minute evaluation](https://github.com/J-Jessen/reprolens-chrome-extension/blob/main/BETA_TEST_GUIDE.md)
-- [Report a sanitized bug or submit feedback](https://github.com/J-Jessen/reprolens-chrome-extension/issues/new/choose)
+- [See the product, walkthrough, and safe demo](https://j-jessen.github.io/consolehawk-chrome-extension/)
+- [Download v0.11.1-beta.1](https://github.com/J-Jessen/consolehawk-chrome-extension/releases/tag/v0.11.1-beta.1)
+- [Volunteer for a focused 15-minute guided test](https://github.com/J-Jessen/consolehawk-chrome-extension/issues/new?template=guided-beta-session.yml)
+- [Run the 10-minute self-guided test](https://github.com/J-Jessen/consolehawk-chrome-extension/blob/main/QUICK_TEST.md)
+- [Run the complete 45–60 minute evaluation](https://github.com/J-Jessen/consolehawk-chrome-extension/blob/main/BETA_TEST_GUIDE.md)
+- [Report a sanitized bug or submit feedback](https://github.com/J-Jessen/consolehawk-chrome-extension/issues/new/choose)
 
 ## What we need to learn
 
@@ -19,7 +19,7 @@ ReproLens is now available as a public beta for frontend developers, full-stack 
 
 ## Safety
 
-Test only on the supplied local demo or a local/staging website you are authorized to inspect. Never post credentials, cookies, tokens, customer data, private URLs, raw traces, or unreviewed exports. Use [private vulnerability reporting](https://github.com/J-Jessen/reprolens-chrome-extension/security/advisories/new) for a security or privacy concern.
+Test only on the supplied local demo or a local/staging website you are authorized to inspect. Never post credentials, cookies, tokens, customer data, private URLs, raw traces, or unreviewed exports. Use [private vulnerability reporting](https://github.com/J-Jessen/consolehawk-chrome-extension/security/advisories/new) for a security or privacy concern.
 
 ## Public scorecard
 

@@ -8,7 +8,7 @@ const puppeteer = require("puppeteer");
 const root = path.resolve(__dirname, "..");
 const storeDirectory = path.join(root, "store-assets");
 const siteAssetDirectory = path.join(root, "beta-site", "assets");
-const temporaryDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "reprolens-marketing-"));
+const temporaryDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "consolehawk-marketing-"));
 
 function runPanelCapture(caseId, filename) {
   const result = spawnSync(process.execPath, [path.join(root, "e2e", "runner.js")], {
@@ -106,7 +106,7 @@ async function composeStoreScreenshot(page, demo, panel, output, panelOffset = 0
 }
 
 async function capturePromoTile(page, output) {
-  const icon = `data:image/svg+xml;base64,${fs.readFileSync(path.join(root, "assets", "reprolens-mark.svg")).toString("base64")}`;
+  const icon = `data:image/svg+xml;base64,${fs.readFileSync(path.join(root, "assets", "consolehawk-mark.svg")).toString("base64")}`;
   await page.setViewport({ width: 440, height: 280, deviceScaleFactor: 1 });
   await page.setContent(`<!doctype html>
     <html><head><style>
@@ -117,9 +117,42 @@ async function capturePromoTile(page, output) {
       h1 { max-width: 360px; margin: 0; font-size: 29px; line-height: 1.08; letter-spacing: -1px; }
       p { margin: 0; color: #c5c0d6; font-size: 15px; font-weight: 650; }
     </style></head><body>
-      <header><img src="${icon}" alt=""><span>ReproLens</span></header>
+      <header><img src="${icon}" alt=""><span>ConsoleHawk</span></header>
       <h1>See what happened after one browser interaction.</h1>
       <p>Explain the failure. Build the report. Start the test.</p>
+    </body></html>`);
+  await waitForImages(page);
+  await page.screenshot({ path: output });
+}
+
+async function captureSocialPreview(page, output) {
+  const icon = `data:image/svg+xml;base64,${fs.readFileSync(path.join(root, "assets", "consolehawk-mark.svg")).toString("base64")}`;
+  await page.setViewport({ width: 1280, height: 640, deviceScaleFactor: 1 });
+  await page.setContent(`<!doctype html>
+    <html><head><style>
+      * { box-sizing: border-box; }
+      html, body { width: 1280px; height: 640px; margin: 0; overflow: hidden; }
+      body { padding: 64px 72px; color: #f8f7ff; background: radial-gradient(circle at 78% 8%, #3d327b 0, transparent 330px), radial-gradient(circle at 20% 105%, #211854 0, transparent 390px), #0d0c14; font-family: Inter, system-ui, sans-serif; }
+      header { display: flex; align-items: center; gap: 20px; }
+      header img { width: 76px; height: 76px; border-radius: 18px; box-shadow: 0 20px 50px rgba(92, 68, 221, .35); }
+      .brand { font-size: 56px; font-weight: 850; letter-spacing: -2.5px; }
+      h1 { max-width: 920px; margin: 42px 0 18px; font-size: 58px; line-height: 1.02; letter-spacing: -2.4px; }
+      .lede { max-width: 890px; margin: 0; color: #c9c5d6; font-size: 23px; line-height: 1.45; }
+      ol { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin: 54px 0 0; padding: 0; list-style: none; }
+      li { min-height: 92px; padding: 18px; border: 1px solid #403a59; border-radius: 16px; background: rgba(28, 26, 40, .86); }
+      li span { display: block; margin-bottom: 9px; color: #a99fff; font-size: 12px; font-weight: 800; letter-spacing: 1.3px; }
+      li strong { font-size: 17px; line-height: 1.25; }
+    </style></head><body>
+      <header><img src="${icon}" alt=""><span class="brand">ConsoleHawk</span></header>
+      <h1>See what happened after a click.</h1>
+      <p class="lede">Turn one browser interaction into an evidence-aware explanation, a safer bug report, and a Playwright test starting point.</p>
+      <ol>
+        <li><span>01</span><strong>Interaction</strong></li>
+        <li><span>02</span><strong>Page code</strong></li>
+        <li><span>03</span><strong>Request or error</strong></li>
+        <li><span>04</span><strong>Bug report</strong></li>
+        <li><span>05</span><strong>Playwright test</strong></li>
+      </ol>
     </body></html>`);
   await waitForImages(page);
   await page.screenshot({ path: output });
@@ -251,12 +284,13 @@ async function main() {
     await composeStoreScreenshot(page, successDemo, successPanel, successScreenshot);
     await composeStoreScreenshot(page, failureDemo, failurePanel, reportScreenshot, 720);
     await capturePromoTile(page, path.join(storeDirectory, "small-promo-tile.png"));
+    await captureSocialPreview(page, path.join(root, "assets", "consolehawk-social-preview.png"));
     await createWalkthrough(page, [
       { image: failureScreenshot, title: "Trigger a safe demo failure", detail: "No production website, account, or customer data is needed." },
-      { image: failureScreenshot, title: "Connect the click to the 404", detail: "ReproLens identifies the handler, exact failed request, and visible result." },
+      { image: failureScreenshot, title: "Connect the click to the 404", detail: "ConsoleHawk identifies the handler, exact failed request, and visible result." },
       { image: successScreenshot, title: "Separate evidence from observation", detail: "Direct links and later observations are labelled with different certainty." },
       { image: reportScreenshot, title: "Turn the trace into useful work", detail: "Review a redacted bug report and generate a Playwright starting point." }
-    ], path.join(siteAssetDirectory, "reprolens-walkthrough.webm"));
+    ], path.join(siteAssetDirectory, "consolehawk-walkthrough.webm"));
   } finally {
     if (browser) await browser.close();
     server.closeAllConnections();

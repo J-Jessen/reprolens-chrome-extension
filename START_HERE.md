@@ -1,8 +1,8 @@
-# Start here – ReproLens public beta
+# Start here – ConsoleHawk public beta
 
-Download `reprolens-v0.11.0-beta.4.zip` from the [official GitHub release](https://github.com/J-Jessen/reprolens-chrome-extension/releases/tag/v0.11.0-beta.4). Do not use GitHub's automatic source archive. You do not need to change any code.
+Download `consolehawk-v0.11.1-beta.1.zip` from the [official GitHub release](https://github.com/J-Jessen/consolehawk-chrome-extension/releases/tag/v0.11.1-beta.1). Do not use GitHub's automatic source archive. You do not need to change any code.
 
-Before installing, you can see the product, watch the walkthrough, and open the safe demo on the [public beta page](https://j-jessen.github.io/reprolens-chrome-extension/).
+Before installing, you can see the product, watch the walkthrough, and open the safe demo on the [public beta page](https://j-jessen.github.io/consolehawk-chrome-extension/).
 
 The package is provided for evaluation and feedback under the terms in `LICENSE.md`.
 

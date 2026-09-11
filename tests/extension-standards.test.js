@@ -24,7 +24,7 @@ test("manifest follows the extension's Chrome 118+ permission policy", () => {
   assert.equal(manifest.host_permissions, undefined);
   assert.equal(manifest.content_scripts, undefined);
   assert.equal(manifest.side_panel.default_path, "panel.html");
-  assert.equal(manifest.action.default_title, "Open ReproLens");
+  assert.equal(manifest.action.default_title, "Open ConsoleHawk");
 });
 
 test("every manifest and panel runtime reference exists locally", () => {
@@ -136,7 +136,7 @@ test("public beta site is accessible, CSP-safe, and ships complete media", () =>
   assert.deepEqual(pngDimensions("store-assets/store-screenshot-success.png"), { width: 1280, height: 800 });
   assert.deepEqual(pngDimensions("store-assets/store-screenshot-report.png"), { width: 1280, height: 800 });
   assert.deepEqual(pngDimensions("store-assets/small-promo-tile.png"), { width: 440, height: 280 });
-  assert.ok(fs.statSync(path.join(root, "beta-site/assets/reprolens-walkthrough.webm")).size > 100_000);
+  assert.ok(fs.statSync(path.join(root, "beta-site/assets/consolehawk-walkthrough.webm")).size > 100_000);
   assert.ok(fs.existsSync(path.join(root, ".github/ISSUE_TEMPLATE/guided-beta-session.yml")));
   assert.ok(fs.existsSync(path.join(root, "BETA_STUDY_PROTOCOL.md")));
   assert.ok(fs.existsSync(path.join(root, "OUTREACH_SCORECARD.md")));
@@ -154,7 +154,7 @@ test("product and tester documentation stays English", () => {
   assert.doesNotMatch(read("scripts/package-beta-kit.js"), /START_HER\.md/);
   assert.ok(fs.existsSync(path.join(root, "QUICK_TEST.md")));
   assert.ok(fs.existsSync(path.join(root, "PROMOTION_KIT.md")));
-  assert.ok(fs.existsSync(path.join(root, "assets", "reprolens-social-preview.png")));
+  assert.ok(fs.existsSync(path.join(root, "assets", "consolehawk-social-preview.png")));
 });
 
 test("public beta surfaces use the current release and safe reporting guidance", () => {
@@ -171,9 +171,9 @@ test("public beta surfaces use the current release and safe reporting guidance",
     "CHROMEWEBSTORE.md",
   ].map(read).join("\n");
 
-  assert.match(panel, /REPROLENS · PUBLIC BETA/);
+  assert.match(panel, /CONSOLEHAWK · PUBLIC BETA/);
   assert.doesNotMatch(panel, /PRIVATE BETA/i);
-  assert.match(publicBetaDocs, /v0\.11\.0-beta\.4/);
+  assert.match(publicBetaDocs, /v0\.11\.1-beta\.1/);
   assert.match(publicBetaDocs, /private vulnerability reporting/i);
   assert.doesNotMatch(publicBetaDocs, /private[- ]beta/i);
   assert.doesNotMatch(publicBetaDocs, /v0\.11\.0-beta\.[123]/);

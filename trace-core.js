@@ -1501,7 +1501,7 @@
       "",
       safe(report.actualResult),
       "",
-      "## ReproLens diagnosis",
+      "## ConsoleHawk diagnosis",
       "",
       safe(report.diagnosis.headline),
       "",

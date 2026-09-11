@@ -1,4 +1,4 @@
-# ReproLens beta bug report
+# ConsoleHawk beta bug report
 
 Make one copy of this file per distinct problem. Submit sanitized information through the repository's **Beta bug report** issue form, or send this file privately to the owner.
 
@@ -10,7 +10,7 @@ Do not include credentials, tokens, cookies, customer data, private URLs, or a r
 
 ## Environment
 
-- Beta version: v0.11.0-beta.4
+- Beta version: v0.11.1-beta.1
 - Chrome version:
 - Operating system:
 - Framework:

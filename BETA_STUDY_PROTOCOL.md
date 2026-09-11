@@ -1,14 +1,14 @@
-# ReproLens 15-minute guided beta study
+# ConsoleHawk 15-minute guided beta study
 
-Use this script for the first five observed sessions. The objective is to measure whether ReproLens improves a developer's first debugging decision, not whether the interface receives compliments.
+Use this script for the first five observed sessions. The objective is to measure whether ConsoleHawk improves a developer's first debugging decision, not whether the interface receives compliments.
 
 ## Before the call
 
 - Use desktop Chrome 118 or newer.
-- Open the [public beta page](https://j-jessen.github.io/reprolens-chrome-extension/) and the safe demo only.
+- Open the [public beta page](https://j-jessen.github.io/consolehawk-chrome-extension/) and the safe demo only.
 - Do not request access to the participant's work application, production data, credentials, or private source code.
 - Ask before recording the call. The product test does not require a recording.
-- Prepare two comparable failure tasks. Alternate their order between participants so ReproLens does not always receive the second, more familiar attempt.
+- Prepare two comparable failure tasks. Alternate their order between participants so ConsoleHawk does not always receive the second, more familiar attempt.
 
 ## Metrics
 
@@ -18,11 +18,11 @@ Record aggregate results without names or contact details:
 - installation completed without help;
 - installation time;
 - time to a correct likely cause with DevTools;
-- time to a correct likely cause with ReproLens;
+- time to a correct likely cause with ConsoleHawk;
 - time to a usable bug report in each workflow;
 - whether the first debugging check changed after reading **What happened**;
 - explanation trust from 1 to 5;
-- whether the participant wants to use ReproLens again on an authorized local or staging project.
+- whether the participant wants to use ConsoleHawk again on an authorized local or staging project.
 
 ## Session script
 
@@ -46,15 +46,15 @@ Do not guide their debugging. Stop when they state a likely cause and first fix/
 
 ### Minute 6–9: installation
 
-Ask the participant to install ReproLens from the unlisted Web Store link. Until that link is approved, use the official GitHub release ZIP and record that this was the developer-mode path.
+Ask the participant to install ConsoleHawk from the unlisted Web Store link. Until that link is approved, use the official GitHub release ZIP and record that this was the developer-mode path.
 
 Do not help unless they are blocked. Record every hesitation separately from explanation feedback.
 
-### Minute 9–13: ReproLens task
+### Minute 9–13: ConsoleHawk task
 
 Give the participant the comparable second failure.
 
-Before they read ReproLens, ask them to state:
+Before they read ConsoleHawk, ask them to state:
 
 1. What happened?
 2. What is the likely cause?
@@ -68,7 +68,7 @@ Ask:
 
 1. What, if anything, became faster or more specific?
 2. Which statement did you trust least, and why?
-3. Did ReproLens save work or mainly add another artifact?
+3. Did ConsoleHawk save work or mainly add another artifact?
 4. Would you use it again on an authorized local or staging project?
 5. What is the single most important reason you might not use it?
 
@@ -77,9 +77,9 @@ Do not pitch or defend the product during these answers.
 ## Directional success thresholds after five sessions
 
 - Four participants install without help in two minutes or less through the Web Store path.
-- At least three reach the correct likely cause at least 30% faster with ReproLens.
+- At least three reach the correct likely cause at least 30% faster with ConsoleHawk.
 - Four understand the difference between directly connected and later-observed evidence.
-- At least two ask to try ReproLens again on an authorized local or staging project.
+- At least two ask to try ConsoleHawk again on an authorized local or staging project.
 - No participant exposes production, customer, credential, or private trace data.
 
 Five sessions are directional evidence, not a statistically significant comparison.

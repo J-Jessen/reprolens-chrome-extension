@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">ConsoleHawk</title>
+  <desc id="desc">A stylized hawk eye following a three-point browser trace.</desc>
+  <defs>
+    <linearGradient id="iris" x1="36" y1="35" x2="86" y2="88" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#a99fff"/>
+      <stop offset="1" stop-color="#684cf0"/>
+    </linearGradient>
+    <linearGradient id="brow" x1="18" y1="28" x2="112" y2="75" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8b7cff"/>
+      <stop offset="1" stop-color="#5a43db"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="#14131f"/>
+  <path d="M18 48C38 26 70 20 110 35 91 36 78 43 68 54 56 45 40 43 18 48Z" fill="url(#brow)"/>
+  <path d="M24 59C42 42 67 40 91 54 79 76 57 87 31 78 40 75 47 70 52 64 43 60 34 58 24 59Z" fill="#f5f3ff"/>
+  <path d="M35 59C48 48 66 48 82 56 73 70 58 76 43 70 49 68 54 64 57 60 50 58 43 57 35 59Z" fill="url(#iris)"/>
+  <circle cx="61" cy="60" r="8" fill="#14131f"/>
+  <circle cx="58" cy="57" r="2.5" fill="#fff"/>
+  <path d="M69 76 82 87 96 82 108 94" fill="none" stroke="#a99fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="69" cy="76" r="4" fill="#fff"/>
+  <circle cx="96" cy="82" r="4" fill="#fff"/>
+  <circle cx="108" cy="94" r="4" fill="#fff"/>
+</svg>

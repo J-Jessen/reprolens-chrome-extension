@@ -1,4 +1,4 @@
-# ReproLens public beta feedback
+# ConsoleHawk public beta feedback
 
 Complete this once after the test guide. Submit sanitized feedback through the repository's **Beta feedback** issue form, or send this file privately to the owner. Submit it even if you found no defects.
 
@@ -39,12 +39,12 @@ Rate each area from 1 (not useful) to 5 (very useful), or write “not available
 
 - Successful trace before/after: what did you think caused the result before reading **What happened**, and what changed afterward?
 - Failed trace before/after: what did you think caused the result before reading **What happened**, and what changed afterward?
-- Did ReproLens make your first debugging check more specific, or mainly add another artifact?
+- Did ConsoleHawk make your first debugging check more specific, or mainly add another artifact?
 - Most valuable part:
 - Most confusing or frustrating part:
 - A trace you understood differently after opening Technical trace:
 - Missing or misleading evidence:
-- Would you use ReproLens again? For which debugging task?
+- Would you use ConsoleHawk again? For which debugging task?
 - One improvement you would prioritize:
 - Which feature should receive the most development effort next, and why?
 - Which feature could be removed with the least impact, and why?

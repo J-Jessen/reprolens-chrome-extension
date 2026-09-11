@@ -25,14 +25,14 @@ jobs:
         if: contains(github.ref_name, '-beta.')
         run: node scripts/package-beta-kit.js
       - name: Create installable archive
-        run: cd dist && zip -r "../reprolens-${GITHUB_REF_NAME}.zip" .
+        run: cd dist && zip -r "../consolehawk-${GITHUB_REF_NAME}.zip" .
       - name: Publish beta pre-release
         if: contains(github.ref_name, '-beta.')
-        run: gh release create "$GITHUB_REF_NAME" "reprolens-${GITHUB_REF_NAME}.zip" --notes-file BETA_RELEASE_NOTES.md --prerelease --latest=false
+        run: gh release create "$GITHUB_REF_NAME" "consolehawk-${GITHUB_REF_NAME}.zip" --notes-file BETA_RELEASE_NOTES.md --prerelease --latest=false
         env:
           GH_TOKEN: ${{ github.token }}
       - name: Publish stable release
         if: contains(github.ref_name, '-beta.') == false
-        run: gh release create "$GITHUB_REF_NAME" "reprolens-${GITHUB_REF_NAME}.zip" --generate-notes
+        run: gh release create "$GITHUB_REF_NAME" "consolehawk-${GITHUB_REF_NAME}.zip" --generate-notes
         env:
           GH_TOKEN: ${{ github.token }}

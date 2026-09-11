@@ -1,12 +1,12 @@
 name: Volunteer for a guided beta test
-description: Request a focused 15-minute ReproLens test using only the supplied safe demo
+description: Request a focused 15-minute ConsoleHawk test using only the supplied safe demo
 title: "[Guided beta test] "
 labels: ["beta-session"]
 body:
   - type: markdown
     attributes:
       value: |
-        Thank you for helping. The session uses ReproLens's supplied demo and does not require a work project, production access, or private data. This issue is public, so do not include an email address, customer name, private URL, or other personal information. The project owner will reply here to coordinate the next step.
+        Thank you for helping. The session uses ConsoleHawk's supplied demo and does not require a work project, production access, or private data. This issue is public, so do not include an email address, customer name, private URL, or other personal information. The project owner will reply here to coordinate the next step.
   - type: dropdown
     id: role
     attributes:

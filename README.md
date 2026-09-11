@@ -1,16 +1,16 @@
-# ReproLens
+# ConsoleHawk
 
-![ReproLens turns an interaction into handler, network, bug-report, and Playwright-test evidence](assets/reprolens-social-preview.png)
+![ConsoleHawk turns an interaction into handler, network, bug-report, and Playwright-test evidence](assets/consolehawk-social-preview.png)
 
-[![CI](https://github.com/J-Jessen/reprolens-chrome-extension/actions/workflows/ci.yml/badge.svg)](https://github.com/J-Jessen/reprolens-chrome-extension/actions/workflows/ci.yml)
+[![CI](https://github.com/J-Jessen/consolehawk-chrome-extension/actions/workflows/ci.yml/badge.svg)](https://github.com/J-Jessen/consolehawk-chrome-extension/actions/workflows/ci.yml)
 
-[See the public beta](https://j-jessen.github.io/reprolens-chrome-extension/) · [Download the extension](https://github.com/J-Jessen/reprolens-chrome-extension/releases/tag/v0.11.0-beta.4) · [Try it in 10 minutes](QUICK_TEST.md) · [Volunteer for a guided test](https://github.com/J-Jessen/reprolens-chrome-extension/issues/new?template=guided-beta-session.yml)
+[See the public beta](https://j-jessen.github.io/consolehawk-chrome-extension/) · [Download the extension](https://github.com/J-Jessen/consolehawk-chrome-extension/releases/tag/v0.11.1-beta.1) · [Try it in 10 minutes](QUICK_TEST.md) · [Volunteer for a guided test](https://github.com/J-Jessen/consolehawk-chrome-extension/issues/new?template=guided-beta-session.yml)
 
-Current build: **0.11.0**
+Current build: **0.11.1**
 
-Public beta: **v0.11.0-beta.4**
+Public beta: **v0.11.1-beta.1**
 
-> See what broke. Reproduce it. Fix it.
+> See what happened after a click.
 
 A local-first Chrome Manifest V3 proof-of-concept for the product hypothesis:
 
@@ -61,15 +61,15 @@ All trace processing is local. The current build has no backend, analytics, logi
 
 ## Public beta
 
-Begin with the [public beta page](https://j-jessen.github.io/reprolens-chrome-extension/), which includes an actual product walkthrough, hosted safe demos, and a 15-minute guided-test option. Download the installable archive from the [v0.11.0-beta.4 release](https://github.com/J-Jessen/reprolens-chrome-extension/releases/tag/v0.11.0-beta.4), extract it, and begin with `START_HERE.md`. Use the release asset named `reprolens-v0.11.0-beta.4.zip`, not GitHub's automatic source archive.
+Begin with the [public beta page](https://j-jessen.github.io/consolehawk-chrome-extension/), which includes an actual product walkthrough, hosted safe demos, and a 15-minute guided-test option. Download the installable archive from the [v0.11.1-beta.1 release](https://github.com/J-Jessen/consolehawk-chrome-extension/releases/tag/v0.11.1-beta.1), extract it, and begin with `START_HERE.md`. Use the release asset named `consolehawk-v0.11.1-beta.1.zip`, not GitHub's automatic source archive.
 
 The unlisted Chrome Web Store beta is being prepared to replace the temporary developer-mode installation with a one-click install. The current Web Store copy, permission justifications, privacy disclosures, reviewer steps, and submission checklist are in `CHROMEWEBSTORE.md`.
 
 The repository is public so testers can inspect the code, download the current release, report sanitized problems, and propose changes through pull requests. Public visibility does not give anyone write access to the repository.
 
-ReproLens is source-available for beta evaluation, but it is not currently open source. The public beta release may be downloaded and run for evaluation and feedback. No permission is granted to redistribute the code, publish modified versions, or reuse it in another product. See [LICENSE.md](LICENSE.md).
+ConsoleHawk is source-available for beta evaluation, but it is not currently open source. The public beta release may be downloaded and run for evaluation and feedback. No permission is granted to redistribute the code, publish modified versions, or reuse it in another product. See [LICENSE.md](LICENSE.md).
 
-Never post credentials, customer data, private URLs, raw traces, or unreviewed exports in a public issue. Use [private vulnerability reporting](https://github.com/J-Jessen/reprolens-chrome-extension/security/advisories/new) for a security or privacy exposure.
+Never post credentials, customer data, private URLs, raw traces, or unreviewed exports in a public issue. Use [private vulnerability reporting](https://github.com/J-Jessen/consolehawk-chrome-extension/security/advisories/new) for a security or privacy exposure.
 
 ## Install
 
@@ -85,7 +85,7 @@ Chrome will show a debugging banner while a 3.5-second trace is active. This is 
 
 ## Run the deterministic demo
 
-The zero-setup version is hosted at `https://j-jessen.github.io/reprolens-chrome-extension/demo/`. Use the local command below only when developing or when GitHub Pages is unavailable.
+The zero-setup version is hosted at `https://j-jessen.github.io/consolehawk-chrome-extension/demo/`. Use the local command below only when developing or when GitHub Pages is unavailable.
 
 Run this command from the project root:
 
@@ -151,7 +151,7 @@ npm test
 ```
 
 GitHub Actions runs the same test suite and rebuilds the checked-in React demo on every push and pull request.
-After the tests pass, CI also creates an installable `reprolens-extension` artifact containing runtime files only. A matching `v*` tag creates a GitHub release archive automatically.
+After the tests pass, CI also creates an installable `consolehawk-extension` artifact containing runtime files only. A matching `v*` tag creates a GitHub release archive automatically.
 
 The public beta plan, recruitment messages, tester instructions, and distribution guide are in `BETA.md`, `TESTER_RECRUITMENT.md`, `BETA_TEST_GUIDE.md`, and `GITHUB_SHARING_GUIDE.md`.
 Privacy and security details are documented in `PRIVACY.md` and `SECURITY.md`. Contribution and verification requirements are in `CONTRIBUTING.md`.

@@ -14,10 +14,10 @@ const files = [
   "panel.html",
   "panel.js",
   "panel.css",
-  "icons/reprolens-icon-16.png",
-  "icons/reprolens-icon-32.png",
-  "icons/reprolens-icon-48.png",
-  "icons/reprolens-icon-128.png",
+  "icons/consolehawk-icon-16.png",
+  "icons/consolehawk-icon-32.png",
+  "icons/consolehawk-icon-48.png",
+  "icons/consolehawk-icon-128.png",
   "vendor/trace-mapping.js",
   "vendor/TRACE_MAPPING_LICENSE.txt"
 ];

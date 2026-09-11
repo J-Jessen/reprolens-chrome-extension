@@ -1,6 +1,6 @@
 # Contributing
 
-External contributors should fork the public repository, create a focused branch, and open a pull request. Public visibility does not grant direct write access. By submitting a contribution, you confirm that you have the right to provide it for inclusion in ReproLens.
+External contributors should fork the public repository, create a focused branch, and open a pull request. Public visibility does not grant direct write access. By submitting a contribution, you confirm that you have the right to provide it for inclusion in ConsoleHawk.
 
 ## Local verification
 
